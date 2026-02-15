@@ -2,6 +2,8 @@
 // GAME.JS - Main game loop, update, draw, and core gameplay
 // =============================================================================
 
+import { setGameFunctions } from './pickup.js';
+import { levelUp } from './ui.js';
 import { GAME, META, keys, saveGame } from './gameState.js';
 import { CONFIG } from './config.js';
 import { ASSETS } from './assets.js';
@@ -11,6 +13,9 @@ import { enemies, Enemy } from './enemy.js';
 import { projectiles } from './projectile.js';
 import { pickups } from './pickup.js';
 import { updateUI, gameOver } from './ui.js';
+
+// Connect the functions after module loads
+setGameFunctions(addFloatingText, levelUp);
 
 // Floating text array
 export const floatingTexts = [];
