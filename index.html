@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dust Cloaks</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- UI Overlay (Hidden initially) -->
+    <div id="ui-layer" style="display: none;">
+        <div id="xp-bar-container"><div id="xp-bar"></div></div>
+        
+        <div id="top-hud" class="hud-panel">
+            <div style="display:flex; flex-direction:column; align-items:center;">
+                <span style="font-size:10px; color:#ddd;">CONDITION</span>
+                <div id="hp-container"><div id="hp-bar"></div></div>
+            </div>
+            <div style="display:flex; flex-direction:column; align-items:center;">
+                <span style="font-size:10px; color:#ddd;">LUCK</span>
+                <div id="luck-container">
+                    <div id="luck-bar"></div>
+                    <div id="luck-text">0 / 100</div>
+                </div>
+            </div>
+            <div style="font-size:24px;" id="timer">00:00</div>
+            <div style="font-size:18px;">Lvl <span id="level-display">1</span></div>
+            <div style="font-size:18px;">Squad: <span id="squad-count">0/12</span></div>
+            <div style="font-size:18px; color:#ffd700;">Gold: <span id="gold-hud">0</span></div>
+        </div>
+        
+        <div id="formation-indicator">Formation: WEDGE</div>
+    </div>
+
+    <!-- START MENU -->
+    <div id="start-screen" class="screen menu-screen">
+        <h1>Dust Cloaks</h1>
+        <button class="btn" id="play-btn">PLAY</button>
+        <button class="btn" id="camp-btn">CAMP</button>
+        <button class="btn" id="roster-btn">ROSTER</button>
+        <button class="btn" id="manual-btn">MANUAL</button>
+    </div>
+
+    <!-- CHARACTER CREATION -->
+    <div id="char-creation-screen" class="screen menu-screen hidden">
+        <h1>Create Your Leader</h1>
+        <h2>Choose Class</h2>
+        <div id="class-grid" style="display:flex; gap:15px; flex-wrap:wrap; justify-content:center; max-width:900px;"></div>
+        <h2 style="margin-top:30px;">Choose Race</h2>
+        <div id="race-grid" style="display:flex; gap:15px; flex-wrap:wrap; justify-content:center; max-width:900px;"></div>
+        <div style="margin-top:30px;">
+            <button class="btn" id="create-char-btn">START ADVENTURE</button>
+            <button class="btn btn-small" id="cancel-create-btn">BACK</button>
+        </div>
+    </div>
+
+    <!-- CAMP SCREEN -->
+    <div id="camp-screen" class="screen menu-screen hidden">
+        <h1>Camp Upgrades</h1>
+        <div id="camp-grid"></div>
+        <button class="btn" id="camp-back-btn" style="margin-top:30px;">BACK</button>
+    </div>
+
+    <!-- ROSTER SCREEN -->
+    <div id="roster-screen" class="screen menu-screen hidden">
+        <h1>Your Roster</h1>
+        <div id="roster-grid"></div>
+        <button class="btn" id="roster-back-btn" style="margin-top:30px;">BACK</button>
+    </div>
+
+    <!-- MANUAL SCREEN -->
+    <div id="manual-screen" class="screen menu-screen hidden">
+        <h1>Manual</h1>
+        <div id="manual-content"></div>
+        <button class="btn" id="manual-back-btn" style="margin-top:30px;">BACK</button>
+    </div>
+
+    <!-- LEVEL UP SCREEN -->
+    <div id="levelup-screen" class="screen overlay-screen hidden">
+        <h1>LEVEL UP!</h1>
+        <div id="levelup-grid" style="display:flex; gap:20px; flex-wrap:wrap; justify-content:center; max-width:900px;"></div>
+    </div>
+
+    <!-- GAME OVER SCREEN -->
+    <div id="gameover-screen" class="screen overlay-screen hidden">
+        <h1>YOU DIED</h1>
+        <p id="death-stats" style="font-size:20px; margin:20px 0;"></p>
+        <button class="btn" id="resurrect-btn">RESURRECT (10g)</button>
+        <button class="btn btn-small" id="gameover-menu-btn">MAIN MENU</button>
+    </div>
+
+    <!-- WIN SCREEN -->
+    <div id="win-screen" class="screen overlay-screen hidden">
+        <h1>VICTORY!</h1>
+        <p style="font-size:24px;">You survived 20 minutes!</p>
+        <button class="btn" id="win-menu-btn">MAIN MENU</button>
+    </div>
+
+    <!-- Main Application Script -->
+    <script type="module">
+        import { loadAssets } from './assets.js';
+        import { loadGame } from './gameState.js';
+        import { initGame } from './game.js';
+        import { initUI } from './ui.js';
+
+        // Load save data
+        loadGame();
+
+        // Load assets, then initialize
+        loadAssets(() => {
+            initGame();
+            initUI();
+        });
+    </script>
+
+</body>
+</html>

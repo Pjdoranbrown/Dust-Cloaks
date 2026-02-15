@@ -1,0 +1,321 @@
+/* =============================================================================
+   STYLES.CSS - All game styling
+   ============================================================================= */
+
+body {
+    margin: 0;
+    overflow: hidden;
+    background-color: #1a1815;
+    font-family: 'Georgia', 'Times New Roman', serif;
+    color: #2a2520;
+    user-select: none;
+}
+
+#gameCanvas {
+    display: block;
+    image-rendering: pixelated;
+}
+
+/* HUD Layer */
+#ui-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    color: #fff;
+    font-weight: bold;
+    text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+}
+
+.hud-panel {
+    position: absolute;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 2px solid #5d4e3e;
+    pointer-events: none;
+    border-radius: 4px;
+}
+
+#top-hud {
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 30px;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 15px 25px;
+    border-radius: 8px;
+    border: 2px solid #d4af37;
+}
+
+#luck-container {
+    position: relative;
+    width: 150px;
+    height: 16px;
+    background: #222;
+    border: 2px solid #555;
+}
+
+#luck-bar {
+    height: 100%;
+    width: 0%;
+    background: #d4af37;
+    transition: width 0.1s;
+}
+
+#luck-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 12px;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 1px 1px 0 #000;
+    z-index: 2;
+}
+
+#hp-container {
+    width: 150px;
+    height: 16px;
+    background: #222;
+    border: 2px solid #555;
+}
+
+#hp-bar {
+    height: 100%;
+    width: 100%;
+    background: #b22222;
+    transition: width 0.1s;
+}
+
+#xp-bar-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 8px;
+    background: #000;
+    z-index: 5;
+}
+
+#xp-bar {
+    height: 100%;
+    background: #4169e1;
+    width: 0%;
+    transition: width 0.2s;
+}
+
+#formation-indicator {
+    position: absolute;
+    bottom: 30px;
+    left: 30px;
+    font-size: 20px;
+    color: #fff;
+}
+
+/* GENERAL SCREEN STYLES */
+.screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    pointer-events: auto;
+    z-index: 10;
+}
+
+/* MENU SCREENS (Parchment Background) */
+.menu-screen {
+    background: url('parchmentFoldedCrinkled.png') no-repeat center center fixed;
+    background-size: cover;
+    color: #2a2520;
+}
+
+.menu-screen h1 {
+    color: #4a3b2a;
+    text-shadow: none;
+    font-weight: 900;
+    font-size: 64px;
+    text-decoration: underline;
+    font-variant: small-caps;
+    margin-bottom: 20px;
+}
+
+.menu-screen h2 {
+    color: #4a3b2a;
+    text-shadow: none;
+    font-weight: 700;
+    font-size: 32px;
+    margin: 20px 0 10px 0;
+}
+
+.menu-screen p, .menu-screen div {
+    text-shadow: none;
+    color: #2a2520;
+    font-weight: 500;
+}
+
+/* OVERLAY SCREENS (Game Over, Level Up) */
+.overlay-screen {
+    background: rgba(0,0,0,0.85);
+    color: #dcdcdc;
+}
+
+.overlay-screen h1 {
+    text-shadow: 2px 2px 0 #000;
+    color: #d4af37;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* BUTTONS */
+.btn {
+    background: #4a3b2a;
+    border: 3px solid #2a2520;
+    color: #f0e6d2;
+    padding: 15px 40px;
+    font-size: 22px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 20px;
+    font-family: 'Georgia', serif;
+    transition: all 0.2s;
+    box-shadow: 4px 4px 8px rgba(0,0,0,0.4);
+    border-radius: 4px;
+}
+
+.btn:hover {
+    background: #5d4e3e;
+    color: #fff;
+    transform: scale(1.05);
+}
+
+.btn-small {
+    padding: 10px 25px;
+    font-size: 18px;
+    margin: 10px;
+    display: inline-block;
+}
+
+.btn-disabled {
+    opacity: 0.5;
+    pointer-events: none;
+    border-color: #555;
+    color: #777;
+    background: #333;
+}
+
+/* Camp/Roster/Manual/Creation Layouts */
+#camp-screen, #roster-screen, #char-creation-screen, #manual-screen {
+    justify-content: flex-start;
+    padding-top: 40px;
+    overflow-y: auto;
+}
+
+#camp-grid, #roster-grid, #manual-content {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    max-width: 1100px;
+    justify-content: center;
+    padding-bottom: 60px;
+}
+
+.camp-section, .manual-section-header {
+    width: 100%;
+    text-align: center;
+    color: #4a3b2a;
+    border-bottom: 3px solid #4a3b2a;
+    margin: 30px 0 20px 0;
+    font-weight: 800;
+    font-size: 28px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+/* CARDS (Used for Upgrades, Roster, Level Up) */
+.upgrade-card {
+    background: rgba(245, 235, 215, 0.9);
+    border: 2px solid #4a3b2a;
+    width: 200px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
+    position: relative;
+    color: #1a1a1a;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+    border-radius: 4px;
+}
+
+.upgrade-card:hover {
+    transform: translateY(-5px);
+    background: #fff;
+    border-color: #000;
+    box-shadow: 4px 4px 10px rgba(0,0,0,0.4);
+}
+
+.upgrade-card.disabled {
+    opacity: 0.6;
+    pointer-events: none;
+    background: #ccc;
+}
+
+.upgrade-card.selected {
+    border-color: #228b22;
+    background: #e0f0e0;
+    border-width: 3px;
+}
+
+.card-icon {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 10px;
+    image-rendering: pixelated;
+    border: 1px solid #aaa;
+    background: rgba(0,0,0,0.05);
+    border-radius: 4px;
+}
+
+.card-title {
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 5px;
+    color: #000;
+}
+
+.card-role {
+    font-size: 14px;
+    font-style: italic;
+    text-align: center;
+    margin-bottom: 8px;
+    color: #444;
+    font-weight: bold;
+}
+
+.card-desc {
+    font-size: 13px;
+    text-align: center;
+    line-height: 1.4;
+    color: #333;
+}
+
+.card-cost {
+    font-size: 16px;
+    font-weight: bold;
+    margin-top: 8px;
+    color: #8b0000;
+}
