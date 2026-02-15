@@ -106,13 +106,15 @@
         import { initGame } from './game.js';
         import { initUI } from './ui.js';
 
-        // Load save data
+        // Load save data first
         loadGame();
+        
+        // Initialize UI immediately (don't wait for assets)
+        initUI();
 
-        // Load assets, then initialize
+        // Load assets, then initialize game
         loadAssets(() => {
             initGame();
-            initUI();
         });
     </script>
 
