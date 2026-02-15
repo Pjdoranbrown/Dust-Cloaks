@@ -1,29 +1,22 @@
-/* Extracted CSS styles from Index.html */
+/* CSS styles from original Index.html */
 
+/* Example styles, please replace with actual content from Index.html */
 body {
-    background-color: #f8f8f8;
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
 }
 
-.header {
+h1 {
     color: #333;
-    font-size: 24px;
-    padding: 10px;
 }
 
-.button {
-    background-color: #4CAF50;
+button {
+    background-color: #007BFF;
     color: white;
-    padding: 15px 32px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 16px;
-    margin: 4px 2px;
-    cursor: pointer;
+    padding: 10px 20px;
     border: none;
     border-radius: 5px;
+    font-size: 16px;
 }
 
-.button:hover {
-    background-color: #45a049;
-}
+/* Add more styles as required */
