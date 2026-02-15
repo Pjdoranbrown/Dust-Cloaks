@@ -7,7 +7,16 @@ import { CONFIG } from './config.js';
 import { ASSETS } from './assets.js';
 import { player } from './player.js';
 import { distance } from './utils.js';
-import { addFloatingText, levelUp } from './game.js';
+
+// Import these separately to avoid circular dependency
+let addFloatingText;
+let levelUp;
+
+// This function will be called by game.js to provide the imports
+export function setGameFunctions(floatingTextFn, levelUpFn) {
+    addFloatingText = floatingTextFn;
+    levelUp = levelUpFn;
+}
 
 export const pickups = [];
 
@@ -42,18 +51,24 @@ export class Pickup {
         if (dist < player.radius + this.radius) {
             if (this.type === 'XP') {
                 GAME.xp += this.value;
-                addFloatingText(this.x, this.y, `+${this.value} XP`, '#4169e1');
+                if (addFloatingText) {
+                    addFloatingText(this.x, this.y, `+${this.value} XP`, '#4169e1');
+                }
                 
                 // Level up check
                 if (GAME.xp >= GAME.xpReq) {
                     GAME.xp -= GAME.xpReq;
                     GAME.level++;
                     GAME.xpReq = Math.floor(GAME.xpReq * 1.15);
-                    levelUp();
+                    if (levelUp) {
+                        levelUp();
+                    }
                 }
             } else if (this.type === 'GOLD') {
                 META.gold += this.value;
-                addFloatingText(this.x, this.y, `+${this.value}g`, '#ffd700');
+                if (addFloatingText) {
+                    addFloatingText(this.x, this.y, `+${this.value}g`, '#ffd700');
+                }
             }
             
             this.markedForDeletion = true;
