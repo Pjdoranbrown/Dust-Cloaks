@@ -13,18 +13,7 @@
             color: #dcdcdc;
             user-select: none;
         }
-        #background-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            background-image: url('parchmentFoldedCrinkled.jpg');
-            background-size: cover;
-            background-position: center;
-            opacity: 0.6; 
-        }
+        /* No separate background layer needed for canvas, we draw it */
         #gameCanvas {
             display: block;
             image-rendering: pixelated;
@@ -122,12 +111,15 @@
         }
         /* Specific Override for Start Screen Background */
         #start-screen {
-            background: url('parchmentFoldedCrinkled.jpg') no-repeat center center fixed; 
+            background: url('battlfield_tileset.jpg') no-repeat center center fixed; 
             background-size: cover;
         }
-        /* Improve text readability on parchment background */
+        /* Improve text readability on background */
         #start-screen h1, #start-screen p, #start-screen div {
             text-shadow: 2px 2px 4px #000;
+            background-color: rgba(0,0,0,0.4); /* Slight backing for legibility */
+            padding: 5px 10px;
+            border-radius: 5px;
         }
 
         .hidden {
@@ -373,11 +365,10 @@
 </head>
 <body>
 
-    <div id="background-layer"></div>
     <canvas id="gameCanvas"></canvas>
 
-    <!-- UI Overlay -->
-    <div id="ui-layer">
+    <!-- UI Overlay (Hidden initially) -->
+    <div id="ui-layer" class="hidden">
         <div id="xp-bar-container"><div id="xp-bar"></div></div>
         
         <div id="top-hud" class="hud-panel">
@@ -965,7 +956,7 @@ function loadAssets() {
         SCOUNDREL: 'tile_0100.png',
         WITCH: 'tile_0111.png',
         FOLK_HERO: 'tile_0112.png',
-        BACKGROUND: 'parchmentFoldedCrinkled.jpg',
+        BACKGROUND: 'battlfield_tileset.jpg',
         
         // Enemies
         RAT: 'tile_0123.png',
@@ -1672,6 +1663,9 @@ function initGame(charData) {
 
 function startGame(charData) {
     document.getElementById('start-screen').classList.add('hidden');
+    // Reveal HUD
+    document.getElementById('ui-layer').classList.remove('hidden');
+    
     GAME.state = 'PLAY';
     GAME.hp = GAME.maxHp;
     GAME.score = 0;
@@ -2090,6 +2084,14 @@ function update() {
 
 function draw() {
     ctx.clearRect(0,0, canvas.width, canvas.height);
+    
+    // Draw Tiled Background for Gameplay
+    const bgImg = ASSETS['BACKGROUND'];
+    if (bgImg && bgImg.complete && bgImg.naturalWidth !== 0) {
+        const ptrn = ctx.createPattern(bgImg, 'repeat'); 
+        ctx.fillStyle = ptrn;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
 
     pickups.forEach(p => p.draw());
 
