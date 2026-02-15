@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dust Cloaks: Survivor</title>
+    <title>Dust Cloaks</title>
     <style>
         body {
             margin: 0;
@@ -120,6 +120,16 @@
             pointer-events: auto;
             z-index: 10;
         }
+        /* Specific Override for Start Screen Background */
+        #start-screen {
+            background: url('parchmentFoldedCrinkled.jpg') no-repeat center center fixed; 
+            background-size: cover;
+        }
+        /* Improve text readability on parchment background */
+        #start-screen h1, #start-screen p, #start-screen div {
+            text-shadow: 2px 2px 4px #000;
+        }
+
         .hidden {
             display: none !important;
         }
@@ -414,7 +424,6 @@
     <!-- Start Screen -->
     <div id="start-screen" class="screen">
         <h1>Dust Cloaks</h1>
-        <p>A Mercenary Company Sim</p>
         <div id="gold-display">Gold: 0</div>
         
         <div style="margin-top: 20px; display: flex; gap: 20px;">
@@ -614,7 +623,7 @@ var creationData = { race: null, classKey: null, name: "" };
 
 function getRandomName(raceKey) {
     const list = NAMES[raceKey] || NAMES.HUMAN;
-    return list[Math.floor(Math.random() * list.length)] + " " + Math.floor(Math.random()*100);
+    return list[Math.floor(Math.random() * list.length)];
 }
 
 function startCreation() {
