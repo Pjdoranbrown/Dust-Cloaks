@@ -9,8 +9,8 @@
             margin: 0;
             overflow: hidden;
             background-color: #1a1815;
-            font-family: 'Courier New', Courier, monospace;
-            color: #dcdcdc;
+            font-family: 'Georgia', 'Times New Roman', serif; /* Thematic Serif Font */
+            color: #2a2520;
             user-select: none;
         }
         #gameCanvas {
@@ -25,28 +25,36 @@
             width: 100%;
             height: 100%;
             pointer-events: none;
+            color: #fff; /* HUD needs white text to show over gameplay */
+            font-weight: bold;
+            text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
         }
         .hud-panel {
             position: absolute;
             padding: 10px;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.6);
             border: 2px solid #5d4e3e;
             pointer-events: none;
+            border-radius: 4px;
         }
         #top-hud {
             top: 10px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 20px;
+            gap: 30px;
             align-items: center;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px 25px;
+            border-radius: 8px;
+            border: 2px solid #d4af37;
         }
         #luck-container {
             position: relative;
-            width: 200px;
-            height: 20px;
-            background: #333;
-            border: 2px solid #888;
+            width: 150px;
+            height: 16px;
+            background: #222;
+            border: 2px solid #555;
         }
         #luck-bar {
             height: 100%;
@@ -63,12 +71,13 @@
             font-weight: bold;
             color: #fff;
             text-shadow: 1px 1px 0 #000;
+            z-index: 2;
         }
         #hp-container {
-            width: 200px;
-            height: 20px;
-            background: #333;
-            border: 2px solid #8a2be2;
+            width: 150px;
+            height: 16px;
+            background: #222;
+            border: 2px solid #555;
         }
         #hp-bar {
             height: 100%;
@@ -81,19 +90,22 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: 5px;
+            height: 8px;
             background: #000;
+            z-index: 5;
         }
         #xp-bar {
             height: 100%;
             background: #4169e1;
             width: 0%;
+            transition: width 0.2s;
         }
         #formation-indicator {
             position: absolute;
-            bottom: 20px;
-            left: 20px;
-            font-size: 18px;
+            bottom: 30px;
+            left: 30px;
+            font-size: 20px;
+            color: #fff;
         }
         
         /* GENERAL SCREEN STYLES */
@@ -121,18 +133,26 @@
             color: #4a3b2a;
             text-shadow: none;
             font-weight: 900;
-            font-size: 56px;
+            font-size: 64px;
             text-decoration: underline;
+            font-variant: small-caps;
+            margin-bottom: 20px;
         }
         .menu-screen p, .menu-screen div {
             text-shadow: none;
             color: #2a2520;
+            font-weight: 500;
         }
         
-        /* OVERLAY SCREENS (Game Over, Level Up - Dark Background) */
+        /* OVERLAY SCREENS (Game Over, Level Up) */
+        /* Changed to use parchment card style in center, but dark backdrop */
         .overlay-screen {
-            background: rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.85); 
             color: #dcdcdc;
+        }
+        .overlay-screen h1 {
+            text-shadow: 2px 2px 0 #000;
+            color: #d4af37;
         }
 
         .hidden {
@@ -142,51 +162,58 @@
         /* BUTTONS */
         .btn {
             background: #4a3b2a;
-            border: 2px solid #2a2520;
-            color: #d4af37;
-            padding: 15px 30px;
-            font-size: 20px;
+            border: 3px solid #2a2520;
+            color: #f0e6d2;
+            padding: 15px 40px;
+            font-size: 22px;
+            font-weight: bold;
             cursor: pointer;
             margin-top: 20px;
-            font-family: inherit;
-            transition: background 0.2s;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+            font-family: 'Georgia', serif;
+            transition: all 0.2s;
+            box-shadow: 4px 4px 8px rgba(0,0,0,0.4);
+            border-radius: 4px;
         }
-        .btn:hover { background: #2a2520; color: #fff; }
-        .btn-small { padding: 10px 20px; font-size: 16px; margin: 10px; display: inline-block; }
-        .btn-disabled { opacity: 0.5; pointer-events: none; border-color: #555; color: #555; }
+        .btn:hover { 
+            background: #5d4e3e; 
+            color: #fff; 
+            transform: scale(1.05);
+        }
+        .btn-small { padding: 10px 25px; font-size: 18px; margin: 10px; display: inline-block; }
+        .btn-disabled { opacity: 0.5; pointer-events: none; border-color: #555; color: #777; background: #333; }
         
         /* Camp/Roster/Manual/Creation Layouts */
         #camp-screen, #roster-screen, #char-creation-screen, #manual-screen {
             justify-content: flex-start;
-            padding-top: 50px;
+            padding-top: 40px;
             overflow-y: auto;
         }
         #camp-grid, #roster-grid, #manual-content {
             display: flex;
             flex-wrap: wrap;
-            gap: 15px;
-            max-width: 1000px;
+            gap: 20px;
+            max-width: 1100px;
             justify-content: center;
-            padding-bottom: 50px;
+            padding-bottom: 60px;
         }
         .camp-section, .manual-section-header {
             width: 100%;
             text-align: center;
             color: #4a3b2a;
-            border-bottom: 2px solid #4a3b2a;
-            margin: 25px 0 15px 0;
-            font-weight: bold;
-            font-size: 24px;
+            border-bottom: 3px solid #4a3b2a;
+            margin: 30px 0 20px 0;
+            font-weight: 800;
+            font-size: 28px;
             text-transform: uppercase;
             letter-spacing: 2px;
         }
 
-        /* UPGRADE & ROSTER CARDS (Adapted for Parchment) */
+        /* CARDS (Used for Upgrades, Roster, Level Up) */
+        /* Standardizing to Parchment look for readability */
         .upgrade-card {
-            background: rgba(255, 255, 255, 0.4);
+            background: rgba(245, 235, 215, 0.9); /* Opaque parchment */
             border: 2px solid #4a3b2a;
-            width: 180px;
+            width: 200px;
             padding: 15px;
             display: flex;
             flex-direction: column;
@@ -194,80 +221,83 @@
             cursor: pointer;
             transition: transform 0.2s, background 0.2s;
             position: relative;
-            color: #2a2520;
-        }
-        .overlay-screen .upgrade-card {
-            /* Keep dark style for level up screen */
-            background: #2a2520;
-            border: 2px solid #666;
-            color: #ddd;
+            color: #1a1a1a; /* Dark text always */
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+            border-radius: 4px;
         }
         .upgrade-card:hover {
             transform: translateY(-5px);
-            background: rgba(255, 255, 255, 0.7);
+            background: #fff;
             border-color: #000;
+            box-shadow: 4px 4px 10px rgba(0,0,0,0.4);
         }
-        .overlay-screen .upgrade-card:hover {
-            background: #3a332a;
-            border-color: #d4af37;
+        .upgrade-card.disabled { opacity: 0.6; pointer-events: none; background: #ccc; }
+        .upgrade-card.selected {
+            border-color: #228b22;
+            background: #e0f0e0;
+            border-width: 3px;
         }
-        .upgrade-card.disabled { opacity: 0.5; pointer-events: none; }
         
-        .card-icon { width: 48px; height: 48px; margin-bottom: 10px; image-rendering: pixelated; }
-        .card-title { font-size: 16px; font-weight: bold; text-align: center; margin-bottom: 8px; }
-        .card-role { font-size: 12px; font-style: italic; text-align: center; margin-bottom: 8px; }
-        .card-desc { font-size: 11px; text-align: center; line-height: 1.4; }
+        .card-icon { width: 64px; height: 64px; margin-bottom: 10px; image-rendering: pixelated; border: 1px solid #aaa; background: rgba(0,0,0,0.05); border-radius: 4px; }
+        .card-title { font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 5px; color: #000; }
+        .card-role { font-size: 14px; font-style: italic; text-align: center; margin-bottom: 8px; color: #444; font-weight: bold; }
+        .card-desc { font-size: 13px; text-align: center; line-height: 1.4; color: #333; }
         
         /* Camp Buttons Specifics */
         .upgrade-btn {
-            background: rgba(255, 255, 255, 0.4);
+            background: rgba(245, 235, 215, 0.85);
             border: 2px solid #4a3b2a;
-            width: 200px;
-            padding: 10px;
+            width: 220px;
+            padding: 12px;
             cursor: pointer;
             position: relative;
             text-align: left;
             transition: all 0.2s;
             color: #2a2520;
+            font-family: 'Georgia', serif;
+            font-weight: bold;
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
         }
-        .upgrade-btn:hover { background: rgba(255, 255, 255, 0.7); border-color: #000; }
-        .upgrade-btn.purchased { background: rgba(65, 105, 225, 0.2); border-color: #4169e1; }
-        .upgrade-name { font-weight: bold; font-size: 14px; }
-        .upgrade-cost { font-size: 12px; float: right; font-weight: bold; }
+        .upgrade-btn:hover { background: #fff; border-color: #000; transform: scale(1.02); }
+        .upgrade-btn.purchased { background: #d0e0d0; border-color: #228b22; opacity: 0.8; }
+        .upgrade-name { font-size: 15px; display: block; }
+        .upgrade-cost { font-size: 14px; float: right; color: #8b0000; font-weight: bold; }
+        .upgrade-btn.purchased .upgrade-cost { color: #228b22; }
         .upgrade-desc {
             display: none;
             position: absolute;
             bottom: 100%;
             left: 0;
-            width: 200px;
-            background: #eee;
-            border: 1px solid #000;
+            width: 220px;
+            background: #fff;
+            border: 2px solid #000;
             padding: 10px;
             z-index: 100;
-            font-size: 12px;
+            font-size: 13px;
             color: #000;
             pointer-events: none;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            box-shadow: 4px 4px 8px rgba(0,0,0,0.3);
         }
         .upgrade-btn:hover .upgrade-desc { display: block; }
 
         /* Manual Cards */
         .manual-card {
-            background: rgba(255, 255, 255, 0.4);
+            background: rgba(245, 235, 215, 0.9);
             border: 2px solid #4a3b2a;
-            width: 300px;
-            padding: 15px;
+            width: 320px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
             align-items: flex-start;
             color: #2a2520;
             margin-bottom: 10px;
+            box-shadow: 3px 3px 6px rgba(0,0,0,0.2);
         }
         .manual-card-header {
             display: flex;
             align-items: center;
             width: 100%;
-            border-bottom: 1px solid #4a3b2a;
+            border-bottom: 2px solid #4a3b2a;
             padding-bottom: 10px;
             margin-bottom: 10px;
         }
@@ -276,47 +306,56 @@
             height: 64px;
             margin-right: 15px;
             image-rendering: pixelated;
-            border: 1px solid #4a3b2a;
-            background: rgba(0,0,0,0.1);
+            border: 2px solid #4a3b2a;
+            background: rgba(255,255,255,0.5);
+            border-radius: 4px;
         }
-        .manual-title { font-size: 20px; font-weight: bold; }
-        .manual-role { font-size: 14px; font-style: italic; }
+        .manual-title { font-size: 22px; font-weight: bold; color: #000; }
+        .manual-role { font-size: 15px; font-style: italic; color: #555; }
         .manual-stats {
-            font-size: 14px;
+            font-size: 15px;
             width: 100%;
             margin-bottom: 10px;
             background: rgba(0,0,0,0.05);
-            padding: 5px;
+            padding: 8px;
             border-radius: 4px;
+            font-weight: bold;
         }
-        .manual-stat-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
-        .manual-desc { font-size: 13px; line-height: 1.4; font-style: italic; }
+        .manual-stat-row { display: flex; justify-content: space-between; margin-bottom: 4px; border-bottom: 1px dotted #aaa; }
+        .manual-desc { font-size: 14px; line-height: 1.5; font-style: italic; color: #333; }
 
         .damage-text {
             position: absolute;
-            font-weight: bold;
+            font-weight: 900;
             pointer-events: none;
             animation: floatUp 0.8s forwards;
-            text-shadow: 1px 1px 0 #000;
+            font-size: 20px;
+            /* Heavy stroke for visibility on muddy background */
+            text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
         }
         @keyframes floatUp {
-            0% { opacity: 1; transform: translateY(0); }
-            100% { opacity: 0; transform: translateY(-30px); }
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-40px) scale(1.2); }
         }
 
         #tutorial {
             position: absolute;
-            top: 60px;
-            left: 20px;
-            color: #888;
-            font-size: 14px;
+            top: 70px;
+            left: 30px;
+            color: #fff;
+            font-size: 16px;
+            text-shadow: 1px 1px 2px #000;
+            background: rgba(0,0,0,0.5);
+            padding: 10px;
+            border-radius: 4px;
         }
         
         #gold-display {
-            font-size: 24px;
+            font-size: 28px;
             color: #4a3b2a;
             margin-top: 10px;
-            font-weight: bold;
+            font-weight: 900;
+            text-shadow: 1px 1px 0px #fff;
         }
 
         #creation-steps {
@@ -335,11 +374,14 @@
         }
         #char-name-input {
             padding: 10px;
-            font-size: 20px;
-            background: rgba(255, 255, 255, 0.6);
+            font-size: 24px;
+            background: rgba(255, 255, 255, 0.8);
             color: #000;
             border: 2px solid #4a3b2a;
             font-family: inherit;
+            font-weight: bold;
+            width: 300px;
+            text-align: center;
         }
     </style>
 </head>
@@ -353,36 +395,36 @@
         
         <div id="top-hud" class="hud-panel">
             <div style="display:flex; flex-direction:column; align-items:center;">
-                <span style="font-size:10px; color:#aaa;">CONDITION</span>
+                <span style="font-size:10px; color:#ddd;">CONDITION</span>
                 <div id="hp-container"><div id="hp-bar"></div></div>
             </div>
             <div style="display:flex; flex-direction:column; align-items:center;">
-                <span style="font-size:10px; color:#aaa;">LUCK (PRESS Q)</span>
+                <span style="font-size:10px; color:#ddd;">LUCK (PRESS Q)</span>
                 <div id="luck-container">
                     <div id="luck-bar"></div>
                     <div id="luck-text">0 / 10</div>
                 </div>
             </div>
             <div>
-                <span style="font-size:10px; color:#aaa;">TIME</span><br>
+                <span style="font-size:10px; color:#ddd;">TIME</span><br>
                 <span id="timer" style="font-size:20px;">00:00</span>
             </div>
             <div>
-                <span style="font-size:10px; color:#aaa;">SQUAD</span><br>
+                <span style="font-size:10px; color:#ddd;">SQUAD</span><br>
                 <span id="squad-count" style="font-size:20px;">1/6</span>
             </div>
             <div>
-                <span style="font-size:10px; color:#aaa;">LEVEL</span><br>
+                <span style="font-size:10px; color:#ddd;">LEVEL</span><br>
                 <span id="level-display" style="font-size:20px;">1</span>
             </div>
             <div>
-                <span style="font-size:10px; color:#aaa;">GOLD</span><br>
+                <span style="font-size:10px; color:#ddd;">GOLD</span><br>
                 <span id="gold-hud" style="font-size:20px; color: gold;">0</span>
             </div>
         </div>
 
         <div id="formation-indicator" class="hud-panel">
-            TACTIC: <span id="tactic-name" style="color:#d4af37">WEDGE</span> <span style="font-size:12px; color:#888;">[SPACE]</span>
+            TACTIC: <span id="tactic-name" style="color:#d4af37">WEDGE</span> <span style="font-size:12px; color:#aaa;">[SPACE]</span>
         </div>
 
         <div id="tutorial">
@@ -397,11 +439,11 @@
         <h1>Dust Cloaks</h1>
         <div id="gold-display">Gold: 0</div>
         
-        <div style="margin-top: 20px; display: flex; gap: 20px;">
+        <div style="margin-top: 30px; display: flex; gap: 20px;">
             <button class="btn" onclick="startCreation()">RECRUIT SQUAD LEADER</button>
         </div>
         
-        <div style="margin-top: 10px;">
+        <div style="margin-top: 15px;">
             <button class="btn btn-small" onclick="openRoster()">ROSTER</button>
             <button class="btn btn-small" onclick="openCamp()">CAMP UPGRADES</button>
             <button class="btn btn-small" onclick="openManual()">PLAYER'S MANUAL</button>
@@ -422,7 +464,7 @@
             </div>
             <!-- Step 3: Name -->
             <div id="step-name" class="creation-step">
-                <p>Identity Confirmation</p>
+                <p style="font-size:24px; font-weight:bold;">Identity Confirmation</p>
                 <div id="name-input-container">
                     <input type="text" id="char-name-input" placeholder="Enter Name">
                     <button class="btn btn-small" onclick="randomizeName()">Randomize</button>
@@ -443,7 +485,7 @@
     <!-- Camp Screen -->
     <div id="camp-screen" class="screen menu-screen hidden">
         <h1>Camp Upgrades</h1>
-        <div id="camp-gold" style="color:#4a3b2a; font-size:20px; margin-bottom:10px; font-weight:bold;">Gold: 0</div>
+        <div id="camp-gold" style="color:#8b0000; font-size:24px; margin-bottom:10px; font-weight:bold;">Gold: 0</div>
         <button class="btn btn-small" onclick="closeCamp()">BACK TO CONTRACTS</button>
         <div id="camp-grid"></div>
     </div>
@@ -631,7 +673,7 @@ function renderRaceSelection() {
         card.innerHTML = `
             <div class="card-title">${race.name}</div>
             <div class="card-desc">${race.desc}</div>
-            <div class="card-desc" style="color:#d4af37; margin-top:5px; font-weight:bold;">${race.statsText}</div>
+            <div class="card-desc" style="color:#8b0000; margin-top:5px; font-weight:bold;">${race.statsText}</div>
         `;
         card.onclick = () => {
             creationData.race = key;
@@ -840,7 +882,7 @@ function renderManual() {
             </div>
             <div class="manual-desc" style="margin-bottom:10px;">${race.desc}</div>
             <div class="manual-stats">
-                <div class="manual-stat-row" style="color: #d4af37; text-align:center;">${race.statsText}</div>
+                <div class="manual-stat-row" style="color: #8b0000; text-align:center;">${race.statsText}</div>
             </div>
         `;
         container.appendChild(card);
@@ -871,9 +913,9 @@ function renderManual() {
                 </div>
             </div>
             <div class="manual-stats">
-                <div class="manual-stat-row"><span>Damage:</span> <span style="color:#b22222">${def.damage}</span></div>
-                <div class="manual-stat-row"><span>Range:</span> <span style="color:#4169e1">${def.range}</span></div>
-                <div class="manual-stat-row"><span>Attack Speed:</span> <span style="color:#228b22">${attackSpeed}/sec</span></div>
+                <div class="manual-stat-row"><span>Damage:</span> <span style="color:#8b0000">${def.damage}</span></div>
+                <div class="manual-stat-row"><span>Range:</span> <span style="color:#00008b">${def.range}</span></div>
+                <div class="manual-stat-row"><span>Attack Speed:</span> <span style="color:#006400">${attackSpeed}/sec</span></div>
             </div>
             <div class="manual-desc">${def.desc}</div>
         `;
@@ -992,32 +1034,32 @@ window.addEventListener('keyup', e => {
 
 var CLASS_DEFS = {
     SOLDIER: { 
-        name: 'Soldier', role: 'Vanguard', color: '#A0A0A0', 
+        name: 'Soldier', role: 'Vanguard', color: '#404040', /* Dark grey reads better */
         desc: 'Melee sweep. Lvl 3 unlocks Shield Wall formation.', 
         range: 60, cooldown: 60, damage: 18, imgKey: 'SOLDIER'
     },
     SCOUNDREL: { 
-        name: 'Scoundrel', role: 'DPS', color: '#404040', 
+        name: 'Scoundrel', role: 'DPS', color: '#1a1a1a', 
         desc: 'Single Target Stab. Lvl 3 drops slowing traps.', 
         range: 40, cooldown: 40, damage: 35, imgKey: 'SCOUNDREL' 
     },
     MAGE: { 
-        name: 'Mage', role: 'Artillery', color: '#4169E1', 
+        name: 'Mage', role: 'Artillery', color: '#00008b', 
         desc: 'Fast projectiles. Lvl 3 summons Fireball Zones.', 
         range: 400, cooldown: 35, damage: 12, imgKey: 'MAGE'
     },
     CLERIC: { 
-        name: 'Cleric', role: 'Support', color: '#DAA520', 
+        name: 'Cleric', role: 'Support', color: '#b8860b', 
         desc: 'AoE Knockback. Lvl 3 heals squad every 10s.', 
         range: 80, cooldown: 80, damage: 12, imgKey: 'CLERIC'
     },
     WITCH: { 
-        name: 'Witch', role: 'Debuffer', color: '#800080', 
+        name: 'Witch', role: 'Debuffer', color: '#4b0082', 
         desc: 'Permanent Poison DoT. Lvl 3 Fears enemies.', 
         range: 250, cooldown: 70, damage: 3, imgKey: 'WITCH' 
     },
     FOLK_HERO: { 
-        name: 'Folk Hero', role: 'Control', color: '#228B22', 
+        name: 'Folk Hero', role: 'Control', color: '#006400', 
         desc: 'Directional shot. Lvl 3 increases XP collection.', 
         range: 300, cooldown: 50, damage: 14, imgKey: 'FOLK_HERO'
     }
@@ -2135,4 +2177,3 @@ function animate() {
 </script>
 </body>
 </html>
-
