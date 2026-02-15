@@ -1,40 +1,65 @@
-/* CSS styles extracted from Index.html lines 7-368 */
-/* Body styles */
+/* CSS extracted from Index.html lines 7-369 */
+
 body {
-    /* Define body styles here */
+    /* Complete styling for body */
+    margin: 0;
+    padding: 0;
+    background-color: #f0f0f0;
 }
 
-/* Canvas styles */
 canvas {
-    /* Define canvas styles here */
+    /* Complete styling for canvas */
+    display: block;
+    margin: 0 auto;
 }
 
-/* HUD elements styles */
 .hud {
-    /* Define HUD styles here */
+    /* Complete styling for HUD */
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* Add further styling as needed */
 }
 
-/* Screens styles */
 .screen {
-    /* Define screen styles here */
+    /* Complete styling for screens */
+    display: none;
+    /* Add further styling as needed */
 }
 
-/* Buttons styles */
 .button {
-    /* Define button styles here */
+    /* Complete styling for buttons */
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
 }
 
-/* Grids styles */
 .grid {
-    /* Define grid styles here */
+    /* Complete styling for grids */
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 10px;
 }
 
-/* Cards styles */
 .card {
-    /* Define card styles here */
+    /* Complete styling for cards */
+    background-color: white;
+    border: 1px solid #ddd;
+    padding: 15px;
+    transition: transform 0.3s;
 }
 
-/* Animations */
-@keyframes animationName {
-
+.card:hover {
+    transform: scale(1.05);
 }
+
+@keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+/* Add more CSS rules as needed for animations */
