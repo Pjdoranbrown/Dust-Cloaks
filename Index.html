@@ -220,6 +220,11 @@
             border-color: #d4af37;
             background: #3a332a;
         }
+        .upgrade-card.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+            border-color: #444;
+        }
         .card-icon {
             width: 48px;
             height: 48px;
@@ -488,7 +493,9 @@ const CONFIG = {
     ENEMY_SPAWN_RATE: 25, 
     XP_BASE_REQ: 10,
     XP_SCALING: 1.5,
-    MAX_SQUAD_SIZE: 6,
+    MAX_TOTAL_SQUAD_SIZE: 12,
+    SQUAD_SIZE_PER_LEADER: 6,
+    SECOND_LEADER_COST: 20,
     BASE_PICKUP_RADIUS: 100
 };
 
@@ -705,26 +712,59 @@ class SquadMate extends Entity {
         // Formation Logic
         let targetX, targetY;
         const spacing = 25;
+        let commanderX = leaderX;
+        let commanderY = leaderY;
+        let commanderAngle = leaderAngle;
+
+        // Squad 1 Leader: Index 0 (Follows Player Input logic)
+        // Squad 2 Leader: Index 6 (Follows Player logic)
         
+        // Determine Commander
+        if (this.index >= 7) {
+            // Member of Squad 2, Follow Leader 2 (Index 6)
+            const leader2 = squad[6];
+            commanderX = leader2.x;
+            commanderY = leader2.y;
+            // Approximate angle based on movement if available, or just keep leaderAngle
+            // For simplicity, we use global leader angle or we could calc angle between leader2 current and prev pos
+            // We'll use leaderAngle for consistent facing
+        } 
+        
+        // Movement Calculation
         if (this.index === 0) {
             this.x = leaderX;
             this.y = leaderY;
+        } else if (this.index === 6) {
+            // Second Leader Logic: Follows Player with a trailing offset
+            // Place them further back
+            const trailDist = 80;
+            targetX = leaderX - Math.cos(leaderAngle) * trailDist;
+            targetY = leaderY - Math.sin(leaderAngle) * trailDist;
+            
+            this.x += (targetX - this.x) * (CONFIG.SQUAD_FOLLOW_SPEED * 0.8); // Slower follow
+            this.y += (targetY - this.y) * (CONFIG.SQUAD_FOLLOW_SPEED * 0.8);
         } else {
+            // Regular Squad Mates (1-5 follow Player, 7-11 follow Leader 2)
+            // Calculate local index within the squad (0-5)
+            const localIndex = this.index >= 7 ? this.index - 6 : this.index; 
+            
             if (formation === 'WEDGE') {
-                const side = this.index % 2 === 0 ? 1 : -1;
-                const row = Math.ceil(this.index / 2);
+                const side = localIndex % 2 === 0 ? 1 : -1;
+                const row = Math.ceil(localIndex / 2);
                 const offsetX = -row * spacing * 1.5; 
                 const offsetY = side * row * spacing; 
-                const rotX = offsetX * Math.cos(leaderAngle) - offsetY * Math.sin(leaderAngle);
-                const rotY = offsetX * Math.sin(leaderAngle) + offsetY * Math.cos(leaderAngle);
-                targetX = leaderX + rotX;
-                targetY = leaderY + rotY;
+                const rotX = offsetX * Math.cos(commanderAngle) - offsetY * Math.sin(commanderAngle);
+                const rotY = offsetX * Math.sin(commanderAngle) + offsetY * Math.cos(commanderAngle);
+                targetX = commanderX + rotX;
+                targetY = commanderY + rotY;
             } else { // SHIELD WALL
-                const totalMates = squad.length - 1; 
-                const angleStep = (Math.PI * 2) / Math.max(1, squad.length - 1);
-                const angle = (this.index - 1) * angleStep;
-                targetX = leaderX + Math.cos(angle) * spacing;
-                targetY = leaderY + Math.sin(angle) * spacing;
+                // Circle around commander
+                // 5 mates per squad excluding leader
+                const totalMates = 5; 
+                const angleStep = (Math.PI * 2) / totalMates;
+                const angle = (localIndex - 1) * angleStep;
+                targetX = commanderX + Math.cos(angle) * spacing;
+                targetY = commanderY + Math.sin(angle) * spacing;
             }
             this.x += (targetX - this.x) * CONFIG.SQUAD_FOLLOW_SPEED;
             this.y += (targetY - this.y) * CONFIG.SQUAD_FOLLOW_SPEED;
@@ -766,10 +806,20 @@ class SquadMate extends Entity {
     
     draw() {
         if (this.index === 0) return; // Drawn by player logic
+        
         const img = ASSETS[this.stats.imgKey];
         if (img && img.complete && img.naturalWidth !== 0) {
             const size = this.radius * 3.0; 
             ctx.drawImage(img, this.x - size/2, this.y - size/2, size, size);
+            
+            // Draw ring for 2nd Leader
+            if (this.index === 6) {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius * 1.5, 0, Math.PI * 2);
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = "#D4AF37";
+                ctx.stroke();
+            }
         } else {
             super.draw();
         }
@@ -1281,7 +1331,19 @@ function burnLuck() {
 }
 
 function addSquadMate(type) {
-    if (squad.length >= CONFIG.MAX_SQUAD_SIZE) return;
+    if (squad.length >= CONFIG.MAX_TOTAL_SQUAD_SIZE) return;
+    
+    // Check if we are recruiting a second leader logic
+    // Usually handled by levelUp click, but simple logic here
+    if (squad.length === 6) {
+        // This is the 2nd Leader (Index 6)
+        if (META.gold >= CONFIG.SECOND_LEADER_COST) {
+            META.gold -= CONFIG.SECOND_LEADER_COST;
+            saveGame();
+            addFloatingText(player.x, player.y, "-20 Gold", "gold");
+        }
+    }
+    
     squad.push(new SquadMate(type, squad.length)); 
     checkSquadSynergies();
     updateUI();
@@ -1407,13 +1469,69 @@ function levelUp() {
     });
 
     // SECTION 2: RECRUIT NEW
+    // Logic: 
+    // If squad.length < 6: Recruit Normal
+    // If squad.length == 6: Recruit 2nd Captain (Cost 20)
+    // If squad.length > 6 and < 12: Recruit Normal
+    // If squad.length == 12: Rations
+    
     const recruitHeader = document.createElement('div');
     recruitHeader.className = 'section-header';
     recruitHeader.innerText = "RECRUIT NEW";
     recruitHeader.style.marginTop = "20px";
     grid.appendChild(recruitHeader);
 
-    if (squad.length < CONFIG.MAX_SQUAD_SIZE) {
+    // Case: Recruit 2nd Captain
+    if (squad.length === 6) {
+        const classKeys = Object.keys(CLASS_DEFS);
+        const shuffled = classKeys.sort(() => 0.5 - Math.random());
+        const choices = shuffled.slice(0, 3);
+        
+        choices.forEach(key => {
+            const def = CLASS_DEFS[key];
+            const card = document.createElement('div');
+            card.className = 'upgrade-card';
+            const canAfford = META.gold >= CONFIG.SECOND_LEADER_COST;
+            
+            card.style.borderColor = canAfford ? '#d4af37' : '#444'; 
+            if (!canAfford) card.classList.add('disabled');
+            
+            const imgSrc = ASSETS[def.imgKey] ? ASSETS[def.imgKey].src : '';
+
+            card.innerHTML = `
+                <img src="${imgSrc}" class="card-icon">
+                <div class="card-title">RECRUIT CAPTAIN</div>
+                <div class="card-role" style="color:${def.color}">2nd Squad Leader</div>
+                <div class="card-desc" style="color: gold">Cost: ${CONFIG.SECOND_LEADER_COST}g</div>
+            `;
+            
+            if (canAfford) {
+                card.onclick = () => {
+                    addSquadMate(key);
+                    closeLevelUp();
+                };
+            }
+            grid.appendChild(card);
+        });
+        
+        // Also add Rations option if they can't afford
+        if (META.gold < CONFIG.SECOND_LEADER_COST) {
+             const card = document.createElement('div');
+            card.className = 'upgrade-card';
+            card.style.borderColor = '#00ff00';
+            card.innerHTML = `
+                <div class="card-title">RATIONS</div>
+                <div class="card-desc">Heal 30% HP</div>
+            `;
+            card.onclick = () => {
+                GAME.hp = Math.min(GAME.maxHp, GAME.hp + (GAME.maxHp * 0.3));
+                closeLevelUp();
+            };
+            grid.appendChild(card);
+        }
+
+    } else if (squad.length < CONFIG.MAX_TOTAL_SQUAD_SIZE) {
+        // Standard Recruit
         const classKeys = Object.keys(CLASS_DEFS);
         const shuffled = classKeys.sort(() => 0.5 - Math.random());
         const choices = shuffled.slice(0, 3);
@@ -1438,6 +1556,7 @@ function levelUp() {
             grid.appendChild(card);
         });
     } else {
+        // Full Roster (12)
          const card = document.createElement('div');
         card.className = 'upgrade-card';
         card.style.borderColor = '#00ff00';
@@ -1586,7 +1705,7 @@ function updateUI() {
     const mins = Math.floor(GAME.time / 60).toString().padStart(2, '0');
     const secs = (GAME.time % 60).toString().padStart(2, '0');
     document.getElementById('timer').innerText = `${mins}:${secs}`;
-    document.getElementById('squad-count').innerText = `${squad.length}/${CONFIG.MAX_SQUAD_SIZE}`;
+    document.getElementById('squad-count').innerText = `${squad.length}/${CONFIG.MAX_TOTAL_SQUAD_SIZE}`;
     document.getElementById('level-display').innerText = GAME.level;
     document.getElementById('gold-hud').innerText = META.gold;
 }
