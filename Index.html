@@ -112,7 +112,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.95);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -138,14 +138,15 @@
         }
         .btn:hover { background: #3e332a; }
         .btn-small { padding: 10px 20px; font-size: 16px; margin: 10px; display: inline-block; }
+        .btn-disabled { opacity: 0.5; pointer-events: none; border-color: #555; color: #555; }
         
         /* Camp Screen Styles */
-        #camp-screen {
+        #camp-screen, #roster-screen, #char-creation-screen, #manual-screen {
             justify-content: flex-start;
             padding-top: 50px;
             overflow-y: auto;
         }
-        #camp-grid {
+        #camp-grid, #roster-grid, #manual-content {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
@@ -153,14 +154,16 @@
             justify-content: center;
             padding-bottom: 50px;
         }
-        .camp-section {
+        .camp-section, .manual-section-header {
             width: 100%;
             text-align: center;
             color: #d4af37;
             border-bottom: 1px solid #555;
-            margin: 15px 0 5px 0;
+            margin: 25px 0 15px 0;
             font-weight: bold;
-            font-size: 20px;
+            font-size: 24px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
         }
         .upgrade-btn {
             background: #2a2520;
@@ -193,28 +196,16 @@
         .upgrade-btn:hover .upgrade-desc { display: block; }
 
         /* Manual Screen Styles */
-        #manual-screen {
-            justify-content: flex-start;
-            padding-top: 50px;
-            overflow-y: auto;
-        }
-        #manual-content {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            max-width: 1000px;
-            justify-content: center;
-            padding-bottom: 50px;
-        }
         .manual-card {
             background: #1a1a1a;
             border: 2px solid #5d4e3e;
-            width: 280px;
+            width: 300px;
             padding: 15px;
             display: flex;
             flex-direction: column;
             align-items: flex-start;
             color: #ddd;
+            margin-bottom: 10px;
         }
         .manual-card-header {
             display: flex;
@@ -246,6 +237,9 @@
             font-size: 14px;
             width: 100%;
             margin-bottom: 10px;
+            background: #111;
+            padding: 5px;
+            border-radius: 4px;
         }
         .manual-stat-row {
             display: flex;
@@ -256,10 +250,11 @@
             font-size: 13px;
             line-height: 1.4;
             color: #ccc;
+            font-style: italic;
         }
 
         /* Card Grid for Level Up */
-        #upgrade-grid {
+        #upgrade-grid, #char-selection-grid, #race-selection-grid {
             display: flex;
             gap: 15px;
             margin-top: 20px;
@@ -290,6 +285,10 @@
             opacity: 0.5;
             pointer-events: none;
             border-color: #444;
+        }
+        .upgrade-card.selected {
+            border-color: #00ff00;
+            background: #1a3a1a;
         }
         .card-icon {
             width: 48px;
@@ -331,20 +330,34 @@
             font-size: 14px;
         }
         
-        #class-selection {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin-top: 20px;
-            max-width: 1000px;
-        }
-        
         #gold-display {
             font-size: 24px;
             color: gold;
             margin-top: 10px;
             text-shadow: 1px 1px 2px black;
+        }
+
+        #creation-steps {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .creation-step { display: none; width: 100%; align-items: center; flex-direction: column; }
+        .creation-step.active { display: flex; }
+        
+        #name-input-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        #char-name-input {
+            padding: 10px;
+            font-size: 20px;
+            background: #222;
+            color: white;
+            border: 2px solid #555;
+            font-family: inherit;
         }
     </style>
 </head>
@@ -401,15 +414,50 @@
     <!-- Start Screen -->
     <div id="start-screen" class="screen">
         <h1>Dust Cloaks</h1>
-        <p>Choose your Squad Leader to begin the contract.</p>
+        <p>A Mercenary Company Sim</p>
         <div id="gold-display">Gold: 0</div>
-        <div>
+        
+        <div style="margin-top: 20px; display: flex; gap: 20px;">
+            <button class="btn" onclick="startCreation()">RECRUIT SQUAD LEADER</button>
+        </div>
+        
+        <div style="margin-top: 10px;">
+            <button class="btn btn-small" onclick="openRoster()">ROSTER</button>
             <button class="btn btn-small" onclick="openCamp()">CAMP UPGRADES</button>
             <button class="btn btn-small" onclick="openManual()">PLAYER'S MANUAL</button>
         </div>
-        <div id="class-selection">
-            <!-- Buttons generated by JS -->
+    </div>
+    
+    <!-- Character Creation Screen -->
+    <div id="char-creation-screen" class="screen hidden">
+        <h1 id="creation-title">Select Race</h1>
+        <div id="creation-steps">
+            <!-- Step 1: Race -->
+            <div id="step-race" class="creation-step active">
+                <div id="race-selection-grid"></div>
+            </div>
+            <!-- Step 2: Class -->
+            <div id="step-class" class="creation-step">
+                <div id="char-selection-grid"></div>
+            </div>
+            <!-- Step 3: Name -->
+            <div id="step-name" class="creation-step">
+                <p>Identity Confirmation</p>
+                <div id="name-input-container">
+                    <input type="text" id="char-name-input" placeholder="Enter Name">
+                    <button class="btn btn-small" onclick="randomizeName()">Randomize</button>
+                </div>
+                <button class="btn" onclick="finalizeCreation()">SIGN CONTRACT</button>
+            </div>
         </div>
+        <button class="btn btn-small" style="margin-top: 20px;" onclick="closeCreation()">CANCEL</button>
+    </div>
+
+    <!-- Roster Screen -->
+    <div id="roster-screen" class="screen hidden">
+        <h1>Active Roster</h1>
+        <button class="btn btn-small" onclick="closeRoster()">BACK</button>
+        <div id="roster-grid"></div>
     </div>
     
     <!-- Camp Screen -->
@@ -440,6 +488,7 @@
     <div id="gameover-screen" class="screen hidden">
         <h1 style="color: #b22222;">SQUAD BROKEN</h1>
         <p id="death-stats">You survived for 00:00</p>
+        <button id="resurrect-btn" class="btn" style="border-color: #4169e1; color: #4169e1;" onclick="resurrectLeader()">RESURRECT LEADER (10g)</button>
         <button class="btn" onclick="location.reload()">RETURN TO GUILD</button>
     </div>
 
@@ -453,22 +502,25 @@
 <script>
 /**
  * DUST CLOAKS: SURVIVOR PROTOTYPE
- * Core Systems: Squad Boids, Classes, Luck Mechanic, Persistent Upgrades
+ * Core Systems: Squad Boids, Classes, Luck Mechanic, Persistent Upgrades, Character Creation
  */
 
 // --- PERSISTENCE ---
-const SAVE_KEY = 'dust_cloaks_v2';
-let META = {
+var SAVE_KEY = 'dust_cloaks_v3';
+var META = {
     gold: 0,
-    upgrades: {} // { upgradeId: boolean }
+    upgrades: {}, 
+    roster: [] // Array of { type, race, name, kills, gp, xp }
 };
 
 function loadGame() {
     const data = localStorage.getItem(SAVE_KEY);
     if (data) {
         try {
-            META = JSON.parse(data);
-            if (!META.upgrades) META.upgrades = {};
+            const parsed = JSON.parse(data);
+            META.gold = parsed.gold || 0;
+            META.upgrades = parsed.upgrades || {};
+            META.roster = parsed.roster || [];
         } catch(e) { console.error("Save Corrupt"); }
     }
     updateGoldUI();
@@ -480,13 +532,238 @@ function saveGame() {
 }
 
 function updateGoldUI() {
-    document.getElementById('gold-display').innerText = `Gold: ${META.gold}`;
-    document.getElementById('camp-gold').innerText = `Gold: ${META.gold}`;
-    document.getElementById('gold-hud').innerText = META.gold;
+    const displays = ['gold-display', 'camp-gold', 'gold-hud'];
+    displays.forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.innerText = (id === 'gold-hud' ? '' : 'Gold: ') + META.gold;
+    });
+}
+
+// --- RACES & NAMES ---
+var RACES = {
+    ELVES: { 
+        name: "Elf", 
+        moveSpeed: 1.10, // +10% Speed
+        hp: -15, // -15 HP
+        desc: "A race as diverse as the realms they inhabit, elves are bound by their timeless grace. Fleet of foot but fragile.",
+        statsText: "Movement Speed: +10% | Max HP: -15" 
+    },
+    GREENSKINS: { 
+        name: "Green Skin", 
+        moveSpeed: 0.95, // -5% Speed
+        dmgMult: 1.10, // +10% Dmg
+        hp: 15, // +15 HP
+        desc: "A label for fierce orcs, cunning goblins, and brutal hobgoblins. Tough survivors who hit hard.",
+        statsText: "Max HP: +15 | Damage: +10% | Speed: -5%" 
+    },
+    HUMAN: { 
+        name: "Human", 
+        dmgFlat: 5, 
+        hp: 5, 
+        moveSpeed: 1.05, 
+        luck: -3, 
+        desc: "Ambitious and adaptable, humans have risen to dominate the world. Good at everything, but cursed by fate.",
+        statsText: "All Stats: +3 (Approx) | Luck: -3"
+    },
+    MUDDLED: { 
+        name: "Muddled", 
+        dmgFlat: 2, 
+        hp: 2, 
+        moveSpeed: 1.05, 
+        luck: 2, 
+        desc: "Those of mixed heritage who straddle the line between worlds. A balanced jack-of-all-trades.",
+        statsText: "All Stats: +1 | Luck: +2" 
+    },
+    OUTSIDER: { 
+        name: "Outsider", 
+        cooldownMult: 0.85, // 15% Faster attacks
+        hp: -20, 
+        desc: "Born of infernal, divine or otherworldly unions. They channel power quickly but their forms are unstable.",
+        statsText: "Attack Speed: +15% | Max HP: -20" 
+    },
+    SHORTFOLK: { 
+        name: "Short Folk", 
+        dmgMult: 1.05, 
+        moveSpeed: 0.95, 
+        luck: 5, 
+        desc: "Dwarves, gnomes, and halflings. Stout and surprisingly dangerous, they find fortune where others find death.",
+        statsText: "Luck: +5 | Damage: +5% | Speed: -5%" 
+    }
+};
+
+var NAMES = {
+    ELVES: ["Aelrindel", "Faenor", "Lyra", "Thalia", "Silaqui", "Erendil"],
+    GREENSKINS: ["Grok", "Mog", "Snagga", "Kruel", "Boz", "Griznut"],
+    HUMAN: ["Baldric", "Osric", "Edith", "Wulf", "Godfrey", "Rowan"],
+    MUDDLED: ["Half-Jack", "Mix", "Cross", "Blur", "Twain", "Mingle"],
+    OUTSIDER: ["Xol", "Vex", "Null", "Void", "Entropy", "Kaos"],
+    SHORTFOLK: ["Bramble", "Took", "Pip", "Knub", "Shorty", "Fumble"]
+};
+
+// --- GLOBAL VARIABLES ---
+var player;
+var squad = [];
+var enemies = [];
+var pickups = [];
+var projectiles = [];
+var floatingTexts = [];
+var currentRunStats = { kills: 0, gold: 0 };
+var creationData = { race: null, classKey: null, name: "" };
+
+// --- CHARACTER CREATION & ROSTER ---
+
+function getRandomName(raceKey) {
+    const list = NAMES[raceKey] || NAMES.HUMAN;
+    return list[Math.floor(Math.random() * list.length)] + " " + Math.floor(Math.random()*100);
+}
+
+function startCreation() {
+    document.getElementById('start-screen').classList.add('hidden');
+    document.getElementById('char-creation-screen').classList.remove('hidden');
+    
+    // Reset
+    creationData = { race: null, classKey: null, name: "" };
+    showCreationStep('race');
+    renderRaceSelection();
+}
+
+function showCreationStep(step) {
+    document.querySelectorAll('.creation-step').forEach(el => el.classList.remove('active'));
+    document.getElementById(`step-${step}`).classList.add('active');
+    
+    const titles = {
+        'race': "Select Race",
+        'class': "Select Speciality",
+        'name': "Enter Name"
+    };
+    document.getElementById('creation-title').innerText = titles[step];
+}
+
+function renderRaceSelection() {
+    const grid = document.getElementById('race-selection-grid');
+    grid.innerHTML = '';
+    for (const key in RACES) {
+        const race = RACES[key];
+        const card = document.createElement('div');
+        card.className = 'upgrade-card';
+        card.innerHTML = `
+            <div class="card-title">${race.name}</div>
+            <div class="card-desc">${race.desc}</div>
+            <div class="card-desc" style="color:#d4af37; margin-top:5px; font-weight:bold;">${race.statsText}</div>
+        `;
+        card.onclick = () => {
+            creationData.race = key;
+            showCreationStep('class');
+            renderClassSelection();
+        };
+        grid.appendChild(card);
+    }
+}
+
+function renderClassSelection() {
+    const grid = document.getElementById('char-selection-grid');
+    grid.innerHTML = '';
+    for (const key in CLASS_DEFS) {
+        const def = CLASS_DEFS[key];
+        const card = document.createElement('div');
+        card.className = 'upgrade-card';
+        const imgSrc = ASSETS[def.imgKey] ? ASSETS[def.imgKey].src : '';
+        card.innerHTML = `
+            <img src="${imgSrc}" class="card-icon">
+            <div class="card-title" style="color:${def.color}">${def.name}</div>
+            <div class="card-desc">${def.desc}</div>
+        `;
+        card.onclick = () => {
+            creationData.classKey = key;
+            showCreationStep('name');
+            randomizeName();
+        };
+        grid.appendChild(card);
+    }
+}
+
+function randomizeName() {
+    const name = getRandomName(creationData.race);
+    document.getElementById('char-name-input').value = name;
+}
+
+function finalizeCreation() {
+    const nameInput = document.getElementById('char-name-input').value;
+    creationData.name = nameInput || getRandomName(creationData.race);
+    
+    document.getElementById('char-creation-screen').classList.add('hidden');
+    startGame(creationData);
+}
+
+function closeCreation() {
+    document.getElementById('char-creation-screen').classList.add('hidden');
+    document.getElementById('start-screen').classList.remove('hidden');
+}
+
+// Roster
+function openRoster() {
+    document.getElementById('start-screen').classList.add('hidden');
+    document.getElementById('roster-screen').classList.remove('hidden');
+    
+    const grid = document.getElementById('roster-grid');
+    grid.innerHTML = '';
+    
+    if (META.roster.length === 0) {
+        grid.innerHTML = "<p>No active mercenaries available.</p>";
+        return;
+    }
+    
+    META.roster.forEach((char, index) => {
+        const def = CLASS_DEFS[char.type];
+        const race = RACES[char.race];
+        const card = document.createElement('div');
+        card.className = 'upgrade-card';
+        const imgSrc = ASSETS[def.imgKey] ? ASSETS[def.imgKey].src : '';
+        
+        card.innerHTML = `
+            <img src="${imgSrc}" class="card-icon">
+            <div class="card-title" style="color:${def.color}">${char.name}</div>
+            <div class="card-role">${race.name} ${def.name}</div>
+            <div class="card-desc">Kills: ${char.kills || 0}<br>Earned: ${char.gp || 0}g</div>
+        `;
+        card.onclick = () => {
+            // Remove from roster and start
+            META.roster.splice(index, 1);
+            saveGame();
+            document.getElementById('roster-screen').classList.add('hidden');
+            startGame(char); // Char object has same structure as creationData
+        };
+        grid.appendChild(card);
+    });
+}
+
+function closeRoster() {
+    document.getElementById('roster-screen').classList.add('hidden');
+    document.getElementById('start-screen').classList.remove('hidden');
+}
+
+function resurrectLeader() {
+    if (META.gold >= 10 && player) {
+        META.gold -= 10;
+        
+        // Find leader
+        const leader = squad[0];
+        const charData = {
+            type: leader.type,
+            race: leader.race,
+            name: leader.name,
+            kills: currentRunStats.kills, // Accumulate? For now just last run
+            gp: currentRunStats.gold
+        };
+        
+        META.roster.push(charData);
+        saveGame();
+        location.reload(); // Reload to refresh state cleanly
+    }
 }
 
 // --- UPGRADE DEFINITIONS ---
-const UPGRADES = [
+var UPGRADES = [
     { category: "Camp Followers", id: "brothel", name: "Brothel", desc: "Max Luck +2", cost: 50 },
     { category: "Camp Followers", id: "kitchen", name: "Kitchen", desc: "Max HP +20", cost: 50 },
     { category: "Camp Followers", id: "housing", name: "Housing", desc: "HP Regen +0.5/sec", cost: 100 },
@@ -565,6 +842,35 @@ function renderManual() {
     const container = document.getElementById('manual-content');
     container.innerHTML = '';
     
+    // RACES SECTION
+    const raceHeader = document.createElement('div');
+    raceHeader.className = 'manual-section-header';
+    raceHeader.innerText = "Backgrounds (Races)";
+    container.appendChild(raceHeader);
+
+    for (const key in RACES) {
+        const race = RACES[key];
+        const card = document.createElement('div');
+        card.className = 'manual-card';
+        card.innerHTML = `
+            <div class="manual-card-header">
+                <div class="manual-title">${race.name}</div>
+            </div>
+            <div class="manual-desc" style="margin-bottom:10px;">${race.desc}</div>
+            <div class="manual-stats">
+                <div class="manual-stat-row" style="color: gold; text-align:center;">${race.statsText}</div>
+            </div>
+        `;
+        container.appendChild(card);
+    }
+
+    // SPECIALTIES SECTION
+    const classHeader = document.createElement('div');
+    classHeader.className = 'manual-section-header';
+    classHeader.innerText = "Specialties (Classes)";
+    classHeader.style.marginTop = "30px";
+    container.appendChild(classHeader);
+    
     for (const key in CLASS_DEFS) {
         const def = CLASS_DEFS[key];
         const imgSrc = ASSETS[def.imgKey] ? ASSETS[def.imgKey].src : '';
@@ -605,7 +911,7 @@ function closeManual() {
 }
 
 // --- CONFIG & STATE ---
-const CONFIG = {
+var CONFIG = {
     PLAYER_SPEED_WEDGE: 3.5,
     PLAYER_SPEED_SHIELD: 2.0,
     SQUAD_FOLLOW_SPEED: 0.1, 
@@ -618,7 +924,7 @@ const CONFIG = {
     BASE_PICKUP_RADIUS: 100
 };
 
-const GAME = {
+var GAME = {
     state: 'START',
     width: window.innerWidth,
     height: window.innerHeight,
@@ -637,11 +943,11 @@ const GAME = {
     canUseShieldWall: false
 };
 
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+var canvas = document.getElementById('gameCanvas');
+var ctx = canvas.getContext('2d');
 
 // --- ASSET MANAGEMENT ---
-const ASSETS = {};
+var ASSETS = {};
 function loadAssets() {
     const sources = {
         SOLDIER: 'tile_0087.png',
@@ -667,7 +973,7 @@ function loadAssets() {
 loadAssets();
 
 // Input Handling
-const keys = { w:false, a:false, s:false, d:false, space:false, q:false };
+var keys = { w:false, a:false, s:false, d:false, space:false, q:false };
 
 window.addEventListener('resize', () => {
     canvas.width = window.innerWidth;
@@ -702,40 +1008,40 @@ window.addEventListener('keyup', e => {
 
 // --- CLASSES & DEFINITIONS ---
 
-const CLASS_DEFS = {
+var CLASS_DEFS = {
     SOLDIER: { 
         name: 'Soldier', role: 'Vanguard', color: '#A0A0A0', 
         desc: 'Melee sweep. Lvl 3 unlocks Shield Wall formation.', 
-        range: 60, cooldown: 60, damage: 15, imgKey: 'SOLDIER'
+        range: 60, cooldown: 60, damage: 18, imgKey: 'SOLDIER'
     },
     SCOUNDREL: { 
         name: 'Scoundrel', role: 'DPS', color: '#404040', 
         desc: 'Single Target Stab. Lvl 3 drops slowing traps.', 
-        range: 40, cooldown: 45, damage: 30, imgKey: 'SCOUNDREL' 
+        range: 40, cooldown: 40, damage: 35, imgKey: 'SCOUNDREL' 
     },
     MAGE: { 
         name: 'Mage', role: 'Artillery', color: '#4169E1', 
         desc: 'Fast projectiles. Lvl 3 summons Fireball Zones.', 
-        range: 400, cooldown: 40, damage: 10, imgKey: 'MAGE'
+        range: 400, cooldown: 35, damage: 12, imgKey: 'MAGE'
     },
     CLERIC: { 
         name: 'Cleric', role: 'Support', color: '#DAA520', 
         desc: 'AoE Knockback. Lvl 3 heals squad every 10s.', 
-        range: 80, cooldown: 90, damage: 8, imgKey: 'CLERIC'
+        range: 80, cooldown: 80, damage: 12, imgKey: 'CLERIC'
     },
     WITCH: { 
         name: 'Witch', role: 'Debuffer', color: '#800080', 
         desc: 'Permanent Poison DoT. Lvl 3 Fears enemies.', 
-        range: 250, cooldown: 80, damage: 2, imgKey: 'WITCH' 
+        range: 250, cooldown: 70, damage: 3, imgKey: 'WITCH' 
     },
     FOLK_HERO: { 
         name: 'Folk Hero', role: 'Control', color: '#228B22', 
         desc: 'Directional shot. Lvl 3 increases XP collection.', 
-        range: 300, cooldown: 50, damage: 12, imgKey: 'FOLK_HERO'
+        range: 300, cooldown: 50, damage: 14, imgKey: 'FOLK_HERO'
     }
 };
 
-const ENEMY_DEFS = {
+var ENEMY_DEFS = {
     RAT: {
         name: 'Rat', hp: 15, speed: 0.8, damage: 3, xp: 5, 
         imgKey: 'RAT', color: '#654321', scale: 2.0
@@ -772,24 +1078,33 @@ class Entity {
 }
 
 class SquadMate extends Entity {
-    constructor(type, index) {
+    constructor(type, index, raceKey = 'HUMAN', name = 'Grunt') {
         super(0, 0, 10, CLASS_DEFS[type].color);
         this.type = type;
+        this.race = raceKey;
+        this.name = name;
         this.stats = { ...CLASS_DEFS[type] }; // Clone stats
         this.cooldownTimer = 0;
-        this.specialTimer = 0; // For secondary effects like healing
+        this.specialTimer = 0; 
         this.index = index; 
-        this.level = META.upgrades['guildhall'] ? 2 : 1; // Guild Hall Upgrade
+        this.level = META.upgrades['guildhall'] ? 2 : 1; 
         this.applyUpgrades();
+        this.applyRaceStats();
+    }
+
+    applyRaceStats() {
+        const r = RACES[this.race];
+        if (r) {
+            if (r.dmgMult) this.stats.damage = Math.ceil(this.stats.damage * r.dmgMult);
+            if (r.dmgFlat) this.stats.damage += r.dmgFlat;
+            if (r.cooldownMult) this.stats.cooldown = Math.ceil(this.stats.cooldown * r.cooldownMult);
+        }
     }
 
     applyUpgrades() {
         // Global Dmg
         if (META.upgrades['blacksmith']) this.stats.damage = Math.ceil(this.stats.damage * 1.1);
         if (META.upgrades['command']) this.stats.cooldown = Math.ceil(this.stats.cooldown * 0.95);
-        if (META.upgrades['carpentry']) {
-            // Logic handled in projectile speed, but we can mark it here if needed
-        }
         
         // Class Specific
         let dmgMult = 1.0;
@@ -805,13 +1120,12 @@ class SquadMate extends Entity {
 
     upgrade() {
         this.level++;
-        // Stat scaling based on class
         if (this.type === 'CLERIC') {
             this.stats.damage = Math.floor(this.stats.damage * 1.5);
-            this.stats.range += 15; // Bigger AoE
+            this.stats.range += 15; 
         } else if (this.type === 'FOLK_HERO') {
             this.stats.damage += 5;
-            this.stats.cooldown = Math.max(10, Math.floor(this.stats.cooldown * 0.8)); // Faster
+            this.stats.cooldown = Math.max(10, Math.floor(this.stats.cooldown * 0.8)); 
         } else if (this.type === 'MAGE') {
             this.stats.damage += 5;
         } else if (this.type === 'SCOUNDREL') {
@@ -822,49 +1136,33 @@ class SquadMate extends Entity {
             this.stats.cooldown = Math.max(10, Math.floor(this.stats.cooldown * 0.9));
         }
         
-        // Refresh flags
         checkSquadSynergies();
         addFloatingText(player.x, player.y, `LVL UP!`, "#4169e1");
     }
 
     update(leaderX, leaderY, leaderAngle, formation) {
-        // Formation Logic
         let targetX, targetY;
         const spacing = 25;
         let commanderX = leaderX;
         let commanderY = leaderY;
         let commanderAngle = leaderAngle;
 
-        // Squad 1 Leader: Index 0 (Follows Player Input logic)
-        // Squad 2 Leader: Index 6 (Follows Player logic)
-        
-        // Determine Commander
         if (this.index >= 7) {
-            // Member of Squad 2, Follow Leader 2 (Index 6)
             const leader2 = squad[6];
             commanderX = leader2.x;
             commanderY = leader2.y;
-            // Approximate angle based on movement if available, or just keep leaderAngle
-            // For simplicity, we use global leader angle or we could calc angle between leader2 current and prev pos
-            // We'll use leaderAngle for consistent facing
         } 
         
-        // Movement Calculation
         if (this.index === 0) {
             this.x = leaderX;
             this.y = leaderY;
         } else if (this.index === 6) {
-            // Second Leader Logic: Follows Player with a trailing offset
-            // Place them further back
             const trailDist = 80;
             targetX = leaderX - Math.cos(leaderAngle) * trailDist;
             targetY = leaderY - Math.sin(leaderAngle) * trailDist;
-            
-            this.x += (targetX - this.x) * (CONFIG.SQUAD_FOLLOW_SPEED * 0.8); // Slower follow
+            this.x += (targetX - this.x) * (CONFIG.SQUAD_FOLLOW_SPEED * 0.8);
             this.y += (targetY - this.y) * (CONFIG.SQUAD_FOLLOW_SPEED * 0.8);
         } else {
-            // Regular Squad Mates (1-5 follow Player, 7-11 follow Leader 2)
-            // Calculate local index within the squad (0-5)
             const localIndex = this.index >= 7 ? this.index - 6 : this.index; 
             
             if (formation === 'WEDGE') {
@@ -876,9 +1174,7 @@ class SquadMate extends Entity {
                 const rotY = offsetX * Math.sin(commanderAngle) + offsetY * Math.cos(commanderAngle);
                 targetX = commanderX + rotX;
                 targetY = commanderY + rotY;
-            } else { // SHIELD WALL
-                // Circle around commander
-                // 5 mates per squad excluding leader
+            } else { 
                 const totalMates = 5; 
                 const angleStep = (Math.PI * 2) / totalMates;
                 const angle = (localIndex - 1) * angleStep;
@@ -889,15 +1185,13 @@ class SquadMate extends Entity {
             this.y += (targetY - this.y) * CONFIG.SQUAD_FOLLOW_SPEED;
         }
 
-        // Lvl 3 Passive Logic (Periodic)
         if (this.level >= 3) {
             if (this.type === 'CLERIC') {
                 this.specialTimer++;
-                if (this.specialTimer >= 600) { // 10 seconds (60fps)
+                if (this.specialTimer >= 600) {
                     GAME.hp = Math.min(GAME.hp + 15, GAME.maxHp);
                     addFloatingText(this.x, this.y - 20, "+SQUAD HEAL", "#gold");
                     this.specialTimer = 0;
-                    // Visual
                     ctx.save();
                     ctx.beginPath();
                     ctx.arc(this.x, this.y, 100, 0, Math.PI*2);
@@ -908,8 +1202,7 @@ class SquadMate extends Entity {
                 }
             } else if (this.type === 'MAGE') {
                 this.specialTimer++;
-                if (this.specialTimer >= 240) { // 4 seconds
-                     // Random Fireball nearby
+                if (this.specialTimer >= 240) { 
                      const fx = this.x + (Math.random() * 300 - 150);
                      const fy = this.y + (Math.random() * 300 - 150);
                      projectiles.push(new FireballZone(fx, fy));
@@ -918,20 +1211,18 @@ class SquadMate extends Entity {
             }
         }
 
-        // Auto Attack Logic
         if (this.cooldownTimer > 0) this.cooldownTimer--;
         else this.performAttack(leaderAngle);
     }
     
     draw() {
-        if (this.index === 0) return; // Drawn by player logic
+        if (this.index === 0) return; 
         
         const img = ASSETS[this.stats.imgKey];
         if (img && img.complete && img.naturalWidth !== 0) {
             const size = this.radius * 3.0; 
             ctx.drawImage(img, this.x - size/2, this.y - size/2, size, size);
             
-            // Draw ring for 2nd Leader
             if (this.index === 6) {
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius * 1.5, 0, Math.PI * 2);
@@ -956,19 +1247,16 @@ class SquadMate extends Entity {
             this.cooldownTimer = this.stats.cooldown;
         }
         else if (this.type === 'SCOUNDREL') {
-             // Melee Stab
              if (enemy) {
                 projectiles.push(new DaggerMelee(this.x, this.y, enemy.x, enemy.y, this.stats.damage));
                 this.cooldownTimer = this.stats.cooldown;
              }
-             // Lvl 3 Trap Logic
-             if (this.level >= 3 && Math.random() > 0.7) { // Chance to drop trap
+             if (this.level >= 3 && Math.random() > 0.7) { 
                  projectiles.push(new Trap(this.x, this.y, this.stats.damage));
              }
         }
         else if (this.type === 'CLERIC') {
-            // AoE Knockback Shockwave
-            if (getNearestEnemy(this.x, this.y, this.stats.range)) { // Only if enemy nearby
+            if (getNearestEnemy(this.x, this.y, this.stats.range)) { 
                 projectiles.push(new Shockwave(this.x, this.y, this.stats.range, this.stats.damage));
                 this.cooldownTimer = this.stats.cooldown;
             }
@@ -979,7 +1267,6 @@ class SquadMate extends Entity {
             this.cooldownTimer = this.stats.cooldown;
         }
         else if (this.type === 'FOLK_HERO') {
-            // Directional Shot
             projectiles.push(new StraightShot(this.x, this.y, angle, this.stats.damage));
             this.cooldownTimer = this.stats.cooldown;
         }
@@ -1122,6 +1409,7 @@ class GoldOrb extends Entity {
             this.y += (player.y - this.y) * 0.15;
         }
         if (dist < player.radius + 10) {
+            currentRunStats.gold += 1;
             META.gold += 1;
             saveGame(); // Save immediately or debounce
             addFloatingText(this.x, this.y, "+1g", "gold");
@@ -1322,14 +1610,6 @@ class StraightShot extends Projectile {
     }
 }
 
-// --- GLOBAL VARIABLES ---
-let player;
-let squad = [];
-let enemies = [];
-let pickups = [];
-let projectiles = [];
-let floatingTexts = [];
-
 // --- CORE FUNCTIONS ---
 
 function checkSquadSynergies() {
@@ -1352,40 +1632,20 @@ function checkSquadSynergies() {
     `;
 }
 
-function generateStartScreen() {
-    loadGame(); // Load Gold
-    
-    const container = document.getElementById('class-selection');
-    container.innerHTML = '';
-    for (const key in CLASS_DEFS) {
-        const def = CLASS_DEFS[key];
-        const btn = document.createElement('div');
-        btn.className = 'upgrade-card';
-        // Add image to start screen button
-        const imgSrc = ASSETS[def.imgKey] ? ASSETS[def.imgKey].src : '';
-        
-        btn.innerHTML = `
-            <img src="${imgSrc}" class="card-icon">
-            <div class="card-title" style="color:${def.color}">${def.name}</div>
-            <div class="card-role">${def.role}</div>
-            <div class="card-desc">${def.desc}</div>
-        `;
-        btn.onclick = () => startGame(key);
-        container.appendChild(btn);
-    }
-}
-
 // Ensure assets are loaded before gen
-setTimeout(generateStartScreen, 100); 
+setTimeout(() => {
+    loadGame();
+    // Pre-load logic not needed here but kept for structure
+}, 100); 
 
-function initGame(startingClassKey) {
+function initGame(charData) {
     player = {
         x: GAME.width / 2,
         y: GAME.height / 2,
         radius: 12,
         color: '#D4AF37', 
         angle: 0,
-        imgKey: CLASS_DEFS[startingClassKey].imgKey
+        imgKey: CLASS_DEFS[charData.classKey || charData.type].imgKey
     };
     
     squad = [];
@@ -1394,10 +1654,14 @@ function initGame(startingClassKey) {
     projectiles = [];
     floatingTexts = [];
     
-    addSquadMate(startingClassKey);
+    // Init stats for this run
+    currentRunStats = { kills: 0, gold: 0 };
+    
+    // Add Leader (Use charData stats)
+    addSquadMate(charData.classKey || charData.type, charData.race || 'HUMAN', charData.name);
 }
 
-function startGame(startingClassKey) {
+function startGame(charData) {
     document.getElementById('start-screen').classList.add('hidden');
     GAME.state = 'PLAY';
     GAME.hp = GAME.maxHp;
@@ -1416,7 +1680,21 @@ function startGame(startingClassKey) {
     if (META.upgrades['kitchen']) { GAME.maxHp += 20; GAME.hp = GAME.maxHp; }
     if (META.upgrades['church']) { GAME.maxHp += 50; GAME.hp = GAME.maxHp; }
     
-    initGame(startingClassKey);
+    // Initialize Player Object First!
+    initGame(charData);
+
+    // Apply Leader Race Modifiers (Global)
+    const race = RACES[charData.race || 'HUMAN'];
+    if (race) {
+        if (race.hp) { GAME.maxHp += race.hp; GAME.hp = GAME.maxHp; }
+        if (race.luck) { GAME.maxLuck += race.luck; GAME.luck = Math.min(GAME.luck, GAME.maxLuck); }
+        if (race.dmgFlat) { /* Applied via addSquadMate -> applyRaceStats */ }
+        // Movement speed is applied in update loop based on race config
+        player.raceSpeedMult = race.moveSpeed || 1.0;
+    } else {
+        player.raceSpeedMult = 1.0;
+    }
+    
     animate();
 }
 
@@ -1449,11 +1727,10 @@ function burnLuck() {
     }
 }
 
-function addSquadMate(type) {
+function addSquadMate(type, race = null, name = null) {
     if (squad.length >= CONFIG.MAX_TOTAL_SQUAD_SIZE) return;
     
     // Check if we are recruiting a second leader logic
-    // Usually handled by levelUp click, but simple logic here
     if (squad.length === 6) {
         // This is the 2nd Leader (Index 6)
         if (META.gold >= CONFIG.SECOND_LEADER_COST) {
@@ -1463,7 +1740,16 @@ function addSquadMate(type) {
         }
     }
     
-    squad.push(new SquadMate(type, squad.length)); 
+    // Randomize if not provided
+    if (!race) {
+        const raceKeys = Object.keys(RACES);
+        race = raceKeys[Math.floor(Math.random() * raceKeys.length)];
+    }
+    if (!name) {
+        name = getRandomName(race);
+    }
+    
+    squad.push(new SquadMate(type, squad.length, race, name)); 
     checkSquadSynergies();
     updateUI();
 }
@@ -1512,6 +1798,7 @@ function takeEnemyDamage(enemy, dmg, knockback = false) {
         
         GAME.luck = Math.min(GAME.luck + 1, GAME.maxLuck);
         GAME.score += 10;
+        currentRunStats.kills++;
     }
 }
 
@@ -1588,12 +1875,6 @@ function levelUp() {
     });
 
     // SECTION 2: RECRUIT NEW
-    // Logic: 
-    // If squad.length < 6: Recruit Normal
-    // If squad.length == 6: Recruit 2nd Captain (Cost 20)
-    // If squad.length > 6 and < 12: Recruit Normal
-    // If squad.length == 12: Rations
-    
     const recruitHeader = document.createElement('div');
     recruitHeader.className = 'section-header';
     recruitHeader.innerText = "RECRUIT NEW";
@@ -1608,6 +1889,9 @@ function levelUp() {
         
         choices.forEach(key => {
             const def = CLASS_DEFS[key];
+            const raceKey = Object.keys(RACES)[Math.floor(Math.random() * 6)];
+            const race = RACES[raceKey];
+            
             const card = document.createElement('div');
             card.className = 'upgrade-card';
             const canAfford = META.gold >= CONFIG.SECOND_LEADER_COST;
@@ -1620,13 +1904,13 @@ function levelUp() {
             card.innerHTML = `
                 <img src="${imgSrc}" class="card-icon">
                 <div class="card-title">RECRUIT CAPTAIN</div>
-                <div class="card-role" style="color:${def.color}">2nd Squad Leader</div>
+                <div class="card-role" style="color:${def.color}">${race.name} ${def.name}</div>
                 <div class="card-desc" style="color: gold">Cost: ${CONFIG.SECOND_LEADER_COST}g</div>
             `;
             
             if (canAfford) {
                 card.onclick = () => {
-                    addSquadMate(key);
+                    addSquadMate(key, raceKey);
                     closeLevelUp();
                 };
             }
@@ -1657,6 +1941,11 @@ function levelUp() {
         
         choices.forEach(key => {
             const def = CLASS_DEFS[key];
+            // Random Race for Recruit
+            const raceKey = Object.keys(RACES)[Math.floor(Math.random() * 6)];
+            const race = RACES[raceKey];
+            const name = getRandomName(raceKey);
+
             const card = document.createElement('div');
             card.className = 'upgrade-card';
             card.style.borderColor = '#d4af37'; 
@@ -1665,11 +1954,11 @@ function levelUp() {
             card.innerHTML = `
                 <img src="${imgSrc}" class="card-icon">
                 <div class="card-title">RECRUIT</div>
-                <div class="card-role" style="color:${def.color}">${def.name}</div>
-                <div class="card-desc">${def.desc}</div>
+                <div class="card-role" style="color:${def.color}">${race.name} ${def.name}</div>
+                <div class="card-desc">${name}</div>
             `;
             card.onclick = () => {
-                addSquadMate(key);
+                addSquadMate(key, raceKey, name);
                 closeLevelUp();
             };
             grid.appendChild(card);
@@ -1700,8 +1989,19 @@ function closeLevelUp() {
 
 function gameOver() {
     GAME.state = 'GAMEOVER';
-    saveGame(); // Save any gold collected
+    saveGame(); 
     document.getElementById('death-stats').innerText = `Survived: ${document.getElementById('timer').innerText} | Level: ${GAME.level} | Gold: ${META.gold}`;
+    
+    // Check if can afford resurrection
+    const rezBtn = document.getElementById('resurrect-btn');
+    if (META.gold >= 10) {
+        rezBtn.classList.remove('btn-disabled');
+        rezBtn.innerHTML = "RESURRECT LEADER (10g)";
+    } else {
+        rezBtn.classList.add('btn-disabled');
+        rezBtn.innerHTML = "RESURRECT LEADER (Too Poor)";
+    }
+    
     document.getElementById('gameover-screen').classList.remove('hidden');
 }
 
@@ -1731,6 +2031,8 @@ function update() {
 
     let moveSpeed = GAME.formation === 'WEDGE' ? CONFIG.PLAYER_SPEED_WEDGE : CONFIG.PLAYER_SPEED_SHIELD;
     if (META.upgrades['stables']) moveSpeed *= 1.1;
+    // Apply Player Race Modifier
+    if (player && player.raceSpeedMult) moveSpeed *= player.raceSpeedMult;
     
     let dx = 0, dy = 0;
     if (keys.w) dy -= 1;
