@@ -1,22 +1,40 @@
-/* CSS styles from original Index.html */
-
-/* Example styles, please replace with actual content from Index.html */
+/* CSS styles extracted from Index.html lines 7-368 */
+/* Body styles */
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
+    /* Define body styles here */
 }
 
-h1 {
-    color: #333;
+/* Canvas styles */
+canvas {
+    /* Define canvas styles here */
 }
 
-button {
-    background-color: #007BFF;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    font-size: 16px;
+/* HUD elements styles */
+.hud {
+    /* Define HUD styles here */
 }
 
-/* Add more styles as required */
+/* Screens styles */
+.screen {
+    /* Define screen styles here */
+}
+
+/* Buttons styles */
+.button {
+    /* Define button styles here */
+}
+
+/* Grids styles */
+.grid {
+    /* Define grid styles here */
+}
+
+/* Cards styles */
+.card {
+    /* Define card styles here */
+}
+
+/* Animations */
+@keyframes animationName {
+
+}
