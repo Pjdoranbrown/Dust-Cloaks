@@ -1,8 +1,29 @@
-/* Example CSS extracted from Index.html */
+/* Extracted CSS styles from Index.html */
+
 body {
-    background-color: #f0f0f0;
-    font-family: Arial, sans-serif;
+    background-color: #f8f8f8;
 }
-h1 {
+
+.header {
     color: #333;
+    font-size: 24px;
+    padding: 10px;
+}
+
+.button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border: none;
+    border-radius: 5px;
+}
+
+.button:hover {
+    background-color: #45a049;
 }
