@@ -5,11 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dust Cloaks</title>
     <style>
+        /* --- CSS STYLES --- */
         body {
             margin: 0;
             overflow: hidden;
             background-color: #1a1815;
-            font-family: 'Georgia', 'Times New Roman', serif; /* Thematic Serif Font */
+            font-family: 'Georgia', 'Times New Roman', serif;
             color: #2a2520;
             user-select: none;
         }
@@ -17,7 +18,7 @@
             display: block;
             image-rendering: pixelated;
         }
-        /* HUD Layer - Hidden by default */
+        /* HUD Layer */
         #ui-layer {
             position: absolute;
             top: 0;
@@ -25,7 +26,7 @@
             width: 100%;
             height: 100%;
             pointer-events: none;
-            color: #fff; /* HUD needs white text to show over gameplay */
+            color: #fff;
             font-weight: bold;
             text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
         }
@@ -49,7 +50,7 @@
             border-radius: 8px;
             border: 2px solid #d4af37;
         }
-        #luck-container {
+        #luck-container, #hp-container {
             position: relative;
             width: 150px;
             height: 16px;
@@ -59,7 +60,7 @@
         #luck-bar {
             height: 100%;
             width: 0%;
-            background: #d4af37; /* Gold */
+            background: #d4af37;
             transition: width 0.1s;
         }
         #luck-text {
@@ -72,12 +73,6 @@
             color: #fff;
             text-shadow: 1px 1px 0 #000;
             z-index: 2;
-        }
-        #hp-container {
-            width: 150px;
-            height: 16px;
-            background: #222;
-            border: 2px solid #555;
         }
         #hp-bar {
             height: 100%;
@@ -108,7 +103,7 @@
             color: #fff;
         }
         
-        /* GENERAL SCREEN STYLES */
+        /* Screens */
         .screen {
             position: absolute;
             top: 0;
@@ -122,12 +117,10 @@
             pointer-events: auto;
             z-index: 10;
         }
-        
-        /* MENU SCREENS (Parchment Background) */
         .menu-screen {
             background: url('parchmentFoldedCrinkled.png') no-repeat center center fixed;
             background-size: cover;
-            color: #2a2520; /* Ink color for text */
+            color: #2a2520;
         }
         .menu-screen h1 {
             color: #4a3b2a;
@@ -143,9 +136,6 @@
             color: #2a2520;
             font-weight: 500;
         }
-        
-        /* OVERLAY SCREENS (Game Over, Level Up) */
-        /* Changed to use parchment card style in center, but dark backdrop */
         .overlay-screen {
             background: rgba(0,0,0,0.85); 
             color: #dcdcdc;
@@ -154,12 +144,9 @@
             text-shadow: 2px 2px 0 #000;
             color: #d4af37;
         }
+        .hidden { display: none !important; }
 
-        .hidden {
-            display: none !important;
-        }
-
-        /* BUTTONS */
+        /* Components */
         .btn {
             background: #4a3b2a;
             border: 3px solid #2a2520;
@@ -174,20 +161,11 @@
             box-shadow: 4px 4px 8px rgba(0,0,0,0.4);
             border-radius: 4px;
         }
-        .btn:hover { 
-            background: #5d4e3e; 
-            color: #fff; 
-            transform: scale(1.05);
-        }
+        .btn:hover { background: #5d4e3e; color: #fff; transform: scale(1.05); }
         .btn-small { padding: 10px 25px; font-size: 18px; margin: 10px; display: inline-block; }
         .btn-disabled { opacity: 0.5; pointer-events: none; border-color: #555; color: #777; background: #333; }
         
-        /* Camp/Roster/Manual/Creation Layouts */
-        #camp-screen, #roster-screen, #char-creation-screen, #manual-screen {
-            justify-content: flex-start;
-            padding-top: 40px;
-            overflow-y: auto;
-        }
+        /* Grids */
         #camp-grid, #roster-grid, #manual-content {
             display: flex;
             flex-wrap: wrap;
@@ -196,6 +174,58 @@
             justify-content: center;
             padding-bottom: 60px;
         }
+        #camp-screen, #roster-screen, #char-creation-screen, #manual-screen {
+            justify-content: flex-start;
+            padding-top: 40px;
+            overflow-y: auto;
+        }
+        
+        /* --- NEW GRID FOR RACE SELECTION --- */
+        #race-selection-grid, #char-selection-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* 3 Columns, 2 Rows */
+            gap: 20px;
+            max-width: 900px;
+            justify-items: center;
+        }
+
+        /* Split Upgrade Grid */
+        #upgrade-grid {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 20px;
+            width: 95%;
+            max-width: 1300px;
+            margin-top: 20px;
+        }
+        .upgrade-column {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-content: flex-start;
+            gap: 15px;
+            flex: 1;
+            padding: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            min-height: 400px;
+        }
+        .column-header {
+            width: 100%;
+            text-align: center;
+            color: #d4af37;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #4a3b2a;
+            text-transform: uppercase;
+            padding-bottom: 5px;
+        }
+
         .camp-section, .manual-section-header {
             width: 100%;
             text-align: center;
@@ -208,10 +238,9 @@
             letter-spacing: 2px;
         }
 
-        /* CARDS (Used for Upgrades, Roster, Level Up) */
-        /* Standardizing to Parchment look for readability */
+        /* Cards */
         .upgrade-card {
-            background: rgba(245, 235, 215, 0.9); /* Opaque parchment */
+            background: rgba(245, 235, 215, 0.9);
             border: 2px solid #4a3b2a;
             width: 200px;
             padding: 15px;
@@ -221,7 +250,7 @@
             cursor: pointer;
             transition: transform 0.2s, background 0.2s;
             position: relative;
-            color: #1a1a1a; /* Dark text always */
+            color: #1a1a1a;
             box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
             border-radius: 4px;
         }
@@ -232,18 +261,35 @@
             box-shadow: 4px 4px 10px rgba(0,0,0,0.4);
         }
         .upgrade-card.disabled { opacity: 0.6; pointer-events: none; background: #ccc; }
-        .upgrade-card.selected {
-            border-color: #228b22;
-            background: #e0f0e0;
-            border-width: 3px;
-        }
+        .upgrade-card.selected { border-color: #228b22; background: #e0f0e0; border-width: 3px; }
         
         .card-icon { width: 64px; height: 64px; margin-bottom: 10px; image-rendering: pixelated; border: 1px solid #aaa; background: rgba(0,0,0,0.05); border-radius: 4px; }
         .card-title { font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 5px; color: #000; }
         .card-role { font-size: 14px; font-style: italic; text-align: center; margin-bottom: 8px; color: #444; font-weight: bold; }
         .card-desc { font-size: 13px; text-align: center; line-height: 1.4; color: #333; }
         
-        /* Camp Buttons Specifics */
+        /* Manual Cards */
+        .manual-card {
+            background: rgba(245, 235, 215, 0.9);
+            border: 2px solid #4a3b2a;
+            width: 320px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            color: #2a2520;
+            margin-bottom: 10px;
+            box-shadow: 3px 3px 6px rgba(0,0,0,0.2);
+        }
+        .manual-card-header { display: flex; align-items: center; width: 100%; border-bottom: 2px solid #4a3b2a; padding-bottom: 10px; margin-bottom: 10px; }
+        .manual-icon { width: 64px; height: 64px; margin-right: 15px; image-rendering: pixelated; border: 2px solid #4a3b2a; background: rgba(255,255,255,0.5); border-radius: 4px; }
+        .manual-title { font-size: 22px; font-weight: bold; color: #000; }
+        .manual-role { font-size: 15px; font-style: italic; color: #555; }
+        .manual-stats { font-size: 15px; width: 100%; margin-bottom: 10px; background: rgba(0,0,0,0.05); padding: 8px; border-radius: 4px; font-weight: bold; }
+        .manual-stat-row { display: flex; justify-content: space-between; margin-bottom: 4px; border-bottom: 1px dotted #aaa; }
+        .manual-desc { font-size: 14px; line-height: 1.5; font-style: italic; color: #333; }
+        
+        /* Camp Buttons */
         .upgrade-btn {
             background: rgba(245, 235, 215, 0.85);
             border: 2px solid #4a3b2a;
@@ -257,12 +303,23 @@
             font-family: 'Georgia', serif;
             font-weight: bold;
             box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+            /* New Flex for Icon */
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
         .upgrade-btn:hover { background: #fff; border-color: #000; transform: scale(1.02); }
         .upgrade-btn.purchased { background: #d0e0d0; border-color: #228b22; opacity: 0.8; }
         .upgrade-name { font-size: 15px; display: block; }
         .upgrade-cost { font-size: 14px; float: right; color: #8b0000; font-weight: bold; }
         .upgrade-btn.purchased .upgrade-cost { color: #228b22; }
+        
+        .upgrade-btn-icon {
+            width: 32px;
+            height: 32px;
+            image-rendering: pixelated;
+        }
+
         .upgrade-desc {
             display: none;
             position: absolute;
@@ -280,108 +337,34 @@
         }
         .upgrade-btn:hover .upgrade-desc { display: block; }
 
-        /* Manual Cards */
-        .manual-card {
-            background: rgba(245, 235, 215, 0.9);
-            border: 2px solid #4a3b2a;
-            width: 320px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            color: #2a2520;
-            margin-bottom: 10px;
-            box-shadow: 3px 3px 6px rgba(0,0,0,0.2);
-        }
-        .manual-card-header {
-            display: flex;
-            align-items: center;
-            width: 100%;
-            border-bottom: 2px solid #4a3b2a;
-            padding-bottom: 10px;
-            margin-bottom: 10px;
-        }
-        .manual-icon {
-            width: 64px;
-            height: 64px;
-            margin-right: 15px;
-            image-rendering: pixelated;
-            border: 2px solid #4a3b2a;
-            background: rgba(255,255,255,0.5);
-            border-radius: 4px;
-        }
-        .manual-title { font-size: 22px; font-weight: bold; color: #000; }
-        .manual-role { font-size: 15px; font-style: italic; color: #555; }
-        .manual-stats {
-            font-size: 15px;
-            width: 100%;
-            margin-bottom: 10px;
-            background: rgba(0,0,0,0.05);
-            padding: 8px;
-            border-radius: 4px;
-            font-weight: bold;
-        }
-        .manual-stat-row { display: flex; justify-content: space-between; margin-bottom: 4px; border-bottom: 1px dotted #aaa; }
-        .manual-desc { font-size: 14px; line-height: 1.5; font-style: italic; color: #333; }
-
-        .damage-text {
-            position: absolute;
-            font-weight: 900;
-            pointer-events: none;
-            animation: floatUp 0.8s forwards;
-            font-size: 20px;
-            /* Heavy stroke for visibility on muddy background */
-            text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
-        }
-        @keyframes floatUp {
-            0% { opacity: 1; transform: translateY(0) scale(1); }
-            100% { opacity: 0; transform: translateY(-40px) scale(1.2); }
-        }
-
-        #tutorial {
-            position: absolute;
-            top: 70px;
-            left: 30px;
-            color: #fff;
-            font-size: 16px;
-            text-shadow: 1px 1px 2px #000;
-            background: rgba(0,0,0,0.5);
-            padding: 10px;
-            border-radius: 4px;
-        }
+        /* Misc */
+        .damage-text { position: absolute; font-weight: 900; pointer-events: none; animation: floatUp 0.8s forwards; font-size: 20px; text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
+        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-40px) scale(1.2); } }
         
-        #gold-display {
-            font-size: 28px;
-            color: #4a3b2a;
-            margin-top: 10px;
-            font-weight: 900;
-            text-shadow: 1px 1px 0px #fff;
-        }
-
-        #creation-steps {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+        #tutorial { position: absolute; top: 70px; left: 30px; color: #fff; font-size: 16px; text-shadow: 1px 1px 2px #000; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 4px; }
+        #gold-display { font-size: 28px; color: #4a3b2a; margin-top: 10px; font-weight: 900; text-shadow: 1px 1px 0px #fff; }
+        #creation-steps { width: 100%; display: flex; flex-direction: column; align-items: center; }
         .creation-step { display: none; width: 100%; align-items: center; flex-direction: column; }
         .creation-step.active { display: flex; }
-        
-        #name-input-container {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
+        #name-input-container { display: flex; gap: 10px; margin-top: 20px; }
+        #char-name-input { padding: 10px; font-size: 24px; background: rgba(255, 255, 255, 0.8); color: #000; border: 2px solid #4a3b2a; font-family: inherit; font-weight: bold; width: 300px; text-align: center; }
+
+        /* Camp Visuals on Start Screen */
+        #camp-visuals {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            height: 200px;
+            pointer-events: none;
+            z-index: 1; 
         }
-        #char-name-input {
-            padding: 10px;
-            font-size: 24px;
-            background: rgba(255, 255, 255, 0.8);
-            color: #000;
-            border: 2px solid #4a3b2a;
-            font-family: inherit;
-            font-weight: bold;
-            width: 300px;
-            text-align: center;
+        .camp-building {
+            position: absolute;
+            bottom: 0;
+            transform: translateX(-50%);
+            image-rendering: pixelated;
+            width: 64px; 
         }
     </style>
 </head>
@@ -389,7 +372,7 @@
 
     <canvas id="gameCanvas"></canvas>
 
-    <!-- UI Overlay (Hidden initially) -->
+    <!-- UI Overlay -->
     <div id="ui-layer" class="hidden">
         <div id="xp-bar-container"><div id="xp-bar"></div></div>
         
@@ -448,21 +431,17 @@
             <button class="btn btn-small" onclick="openCamp()">CAMP UPGRADES</button>
             <button class="btn btn-small" onclick="openManual()">PLAYER'S MANUAL</button>
         </div>
+
+        <!-- VISUALS CONTAINER -->
+        <div id="camp-visuals"></div>
     </div>
     
     <!-- Character Creation Screen -->
     <div id="char-creation-screen" class="screen menu-screen hidden">
         <h1 id="creation-title">Select Race</h1>
         <div id="creation-steps">
-            <!-- Step 1: Race -->
-            <div id="step-race" class="creation-step active">
-                <div id="race-selection-grid"></div>
-            </div>
-            <!-- Step 2: Class -->
-            <div id="step-class" class="creation-step">
-                <div id="char-selection-grid"></div>
-            </div>
-            <!-- Step 3: Name -->
+            <div id="step-race" class="creation-step active"><div id="race-selection-grid"></div></div>
+            <div id="step-class" class="creation-step"><div id="char-selection-grid"></div></div>
             <div id="step-name" class="creation-step">
                 <p style="font-size:24px; font-weight:bold;">Identity Confirmation</p>
                 <div id="name-input-container">
@@ -501,9 +480,7 @@
     <div id="levelup-screen" class="screen overlay-screen hidden">
         <h1 style="font-size: 32px;">RECRUITMENT</h1>
         <p style="color:#aaa;">Upgrade Squad or Recruit New</p>
-        <div id="upgrade-grid">
-            <!-- Cards generated via JS -->
-        </div>
+        <div id="upgrade-grid"></div>
     </div>
 
     <!-- Game Over Screen (In-Game Overlay) -->
@@ -524,418 +501,14 @@
 <script>
 /**
  * DUST CLOAKS: SURVIVOR PROTOTYPE
- * Core Systems: Squad Boids, Classes, Luck Mechanic, Persistent Upgrades, Character Creation
+ * Refactored for Stability
  */
 
-// --- PERSISTENCE ---
-var SAVE_KEY = 'dust_cloaks_v3';
-var META = {
-    gold: 0,
-    upgrades: {}, 
-    roster: [] // Array of { type, race, name, kills, gp, xp }
-};
+// ==========================================
+// 1. DATA DEFINITIONS & CONFIGURATION
+// ==========================================
 
-function loadGame() {
-    const data = localStorage.getItem(SAVE_KEY);
-    if (data) {
-        try {
-            const parsed = JSON.parse(data);
-            META.gold = parsed.gold || 0;
-            META.upgrades = parsed.upgrades || {};
-            META.roster = parsed.roster || [];
-        } catch(e) { console.error("Save Corrupt"); }
-    }
-    updateGoldUI();
-}
-
-function saveGame() {
-    localStorage.setItem(SAVE_KEY, JSON.stringify(META));
-    updateGoldUI();
-}
-
-function updateGoldUI() {
-    const displays = ['gold-display', 'camp-gold', 'gold-hud'];
-    displays.forEach(id => {
-        const el = document.getElementById(id);
-        if(el) {
-            el.innerText = (id === 'gold-hud' ? '' : 'Gold: ') + META.gold;
-        }
-    });
-}
-
-// --- RACES & NAMES ---
-var RACES = {
-    ELVES: { 
-        name: "Elf", 
-        moveSpeed: 1.10, // +10% Speed
-        hp: -15, // -15 HP
-        desc: "A race as diverse as the realms they inhabit, elves are bound by their timeless grace. Fleet of foot but fragile.",
-        statsText: "Movement Speed: +10% | Max HP: -15" 
-    },
-    GREENSKINS: { 
-        name: "Green Skin", 
-        moveSpeed: 0.95, // -5% Speed
-        dmgMult: 1.10, // +10% Dmg
-        hp: 15, // +15 HP
-        desc: "A label for fierce orcs, cunning goblins, and brutal hobgoblins. Tough survivors who hit hard.",
-        statsText: "Max HP: +15 | Damage: +10% | Speed: -5%" 
-    },
-    HUMAN: { 
-        name: "Human", 
-        dmgFlat: 5, 
-        hp: 5, 
-        moveSpeed: 1.05, 
-        luck: -3, 
-        desc: "Ambitious and adaptable, humans have risen to dominate the world. Good at everything, but cursed by fate.",
-        statsText: "All Stats: +3 (Approx) | Luck: -3"
-    },
-    MUDDLED: { 
-        name: "Muddled", 
-        dmgFlat: 2, 
-        hp: 2, 
-        moveSpeed: 1.05, 
-        luck: 2, 
-        desc: "Those of mixed heritage who straddle the line between worlds. A balanced jack-of-all-trades.",
-        statsText: "All Stats: +1 | Luck: +2" 
-    },
-    OUTSIDER: { 
-        name: "Outsider", 
-        cooldownMult: 0.85, // 15% Faster attacks
-        hp: -20, 
-        desc: "Born of infernal, divine or otherworldly unions. They channel power quickly but their forms are unstable.",
-        statsText: "Attack Speed: +15% | Max HP: -20" 
-    },
-    SHORTFOLK: { 
-        name: "Short Folk", 
-        dmgMult: 1.05, 
-        moveSpeed: 0.95, 
-        luck: 5, 
-        desc: "Dwarves, gnomes, and halflings. Stout and surprisingly dangerous, they find fortune where others find death.",
-        statsText: "Luck: +5 | Damage: +5% | Speed: -5%" 
-    }
-};
-
-var NAMES = {
-    ELVES: ["Aelrindel", "Faenor", "Lyra", "Thalia", "Silaqui", "Erendil"],
-    GREENSKINS: ["Grok", "Mog", "Snagga", "Kruel", "Boz", "Griznut"],
-    HUMAN: ["Baldric", "Osric", "Edith", "Wulf", "Godfrey", "Rowan"],
-    MUDDLED: ["Half-Jack", "Mix", "Cross", "Blur", "Twain", "Mingle"],
-    OUTSIDER: ["Xol", "Vex", "Null", "Void", "Entropy", "Kaos"],
-    SHORTFOLK: ["Bramble", "Took", "Pip", "Knub", "Shorty", "Fumble"]
-};
-
-// --- GLOBAL VARIABLES ---
-var player;
-var squad = [];
-var enemies = [];
-var pickups = [];
-var projectiles = [];
-var floatingTexts = [];
-var currentRunStats = { kills: 0, gold: 0 };
-var creationData = { race: null, classKey: null, name: "" };
-
-// --- CHARACTER CREATION & ROSTER ---
-
-function getRandomName(raceKey) {
-    const list = NAMES[raceKey] || NAMES.HUMAN;
-    return list[Math.floor(Math.random() * list.length)];
-}
-
-function startCreation() {
-    document.getElementById('start-screen').classList.add('hidden');
-    document.getElementById('char-creation-screen').classList.remove('hidden');
-    
-    // Reset
-    creationData = { race: null, classKey: null, name: "" };
-    showCreationStep('race');
-    renderRaceSelection();
-}
-
-function showCreationStep(step) {
-    document.querySelectorAll('.creation-step').forEach(el => el.classList.remove('active'));
-    document.getElementById(`step-${step}`).classList.add('active');
-    
-    const titles = {
-        'race': "Select Race",
-        'class': "Select Speciality",
-        'name': "Enter Name"
-    };
-    document.getElementById('creation-title').innerText = titles[step];
-}
-
-function renderRaceSelection() {
-    const grid = document.getElementById('race-selection-grid');
-    grid.innerHTML = '';
-    for (const key in RACES) {
-        const race = RACES[key];
-        const card = document.createElement('div');
-        card.className = 'upgrade-card';
-        card.innerHTML = `
-            <div class="card-title">${race.name}</div>
-            <div class="card-desc">${race.desc}</div>
-            <div class="card-desc" style="color:#8b0000; margin-top:5px; font-weight:bold;">${race.statsText}</div>
-        `;
-        card.onclick = () => {
-            creationData.race = key;
-            showCreationStep('class');
-            renderClassSelection();
-        };
-        grid.appendChild(card);
-    }
-}
-
-function renderClassSelection() {
-    const grid = document.getElementById('char-selection-grid');
-    grid.innerHTML = '';
-    for (const key in CLASS_DEFS) {
-        const def = CLASS_DEFS[key];
-        const card = document.createElement('div');
-        card.className = 'upgrade-card';
-        const imgSrc = ASSETS[def.imgKey] ? ASSETS[def.imgKey].src : '';
-        card.innerHTML = `
-            <img src="${imgSrc}" class="card-icon">
-            <div class="card-title" style="color:${def.color}">${def.name}</div>
-            <div class="card-desc">${def.desc}</div>
-        `;
-        card.onclick = () => {
-            creationData.classKey = key;
-            showCreationStep('name');
-            randomizeName();
-        };
-        grid.appendChild(card);
-    }
-}
-
-function randomizeName() {
-    const name = getRandomName(creationData.race);
-    document.getElementById('char-name-input').value = name;
-}
-
-function finalizeCreation() {
-    const nameInput = document.getElementById('char-name-input').value;
-    creationData.name = nameInput || getRandomName(creationData.race);
-    
-    document.getElementById('char-creation-screen').classList.add('hidden');
-    startGame(creationData);
-}
-
-function closeCreation() {
-    document.getElementById('char-creation-screen').classList.add('hidden');
-    document.getElementById('start-screen').classList.remove('hidden');
-}
-
-// Roster
-function openRoster() {
-    document.getElementById('start-screen').classList.add('hidden');
-    document.getElementById('roster-screen').classList.remove('hidden');
-    
-    const grid = document.getElementById('roster-grid');
-    grid.innerHTML = '';
-    
-    if (META.roster.length === 0) {
-        grid.innerHTML = "<p>No active mercenaries available.</p>";
-        return;
-    }
-    
-    META.roster.forEach((char, index) => {
-        const def = CLASS_DEFS[char.type];
-        const race = RACES[char.race];
-        const card = document.createElement('div');
-        card.className = 'upgrade-card';
-        const imgSrc = ASSETS[def.imgKey] ? ASSETS[def.imgKey].src : '';
-        
-        card.innerHTML = `
-            <img src="${imgSrc}" class="card-icon">
-            <div class="card-title" style="color:${def.color}">${char.name}</div>
-            <div class="card-role">${race.name} ${def.name}</div>
-            <div class="card-desc">Kills: ${char.kills || 0}<br>Earned: ${char.gp || 0}g</div>
-        `;
-        card.onclick = () => {
-            // Remove from roster and start
-            META.roster.splice(index, 1);
-            saveGame();
-            document.getElementById('roster-screen').classList.add('hidden');
-            startGame(char); // Char object has same structure as creationData
-        };
-        grid.appendChild(card);
-    });
-}
-
-function closeRoster() {
-    document.getElementById('roster-screen').classList.add('hidden');
-    document.getElementById('start-screen').classList.remove('hidden');
-}
-
-function resurrectLeader() {
-    if (META.gold >= 10 && player) {
-        META.gold -= 10;
-        
-        // Find leader
-        const leader = squad[0];
-        const charData = {
-            type: leader.type,
-            race: leader.race,
-            name: leader.name,
-            kills: currentRunStats.kills, // Accumulate? For now just last run
-            gp: currentRunStats.gold
-        };
-        
-        META.roster.push(charData);
-        saveGame();
-        location.reload(); // Reload to refresh state cleanly
-    }
-}
-
-// --- UPGRADE DEFINITIONS ---
-var UPGRADES = [
-    { category: "Camp Followers", id: "brothel", name: "Brothel", desc: "Max Luck +2", cost: 50 },
-    { category: "Camp Followers", id: "kitchen", name: "Kitchen", desc: "Max HP +20", cost: 50 },
-    { category: "Camp Followers", id: "housing", name: "Housing", desc: "HP Regen +0.5/sec", cost: 100 },
-    { category: "Command", id: "command", name: "Command Tent", desc: "Attack Cooldowns -5%", cost: 300 },
-    { category: "Command", id: "guildhall", name: "Guild Hall", desc: "Start at Level 2", cost: 500 },
-    { category: "Magical", id: "alchemy", name: "Alchemy Lab", desc: "Witch Damage +25%", cost: 150 },
-    { category: "Magical", id: "magetower", name: "Mage Tower", desc: "Mage Damage +25%", cost: 150 },
-    { category: "Medical", id: "hospital", name: "Field Hospital", desc: "Heal 20 HP on Level Up", cost: 100 },
-    { category: "Medical", id: "herbalist", name: "Herbalist", desc: "Pickup Range +20%", cost: 75 },
-    { category: "Economy", id: "merchant", name: "Merchant Stalls", desc: "Gold Drop Rate +5%", cost: 200 },
-    { category: "Economy", id: "cells", name: "Prisoner Cells", desc: "XP Gain +10%", cost: 100 },
-    { category: "Class Specific", id: "ranger", name: "Ranger's Hut", desc: "Folk Hero Damage +25%", cost: 150 },
-    { category: "Class Specific", id: "chapel", name: "Chapel", desc: "Cleric Damage +25%", cost: 150 },
-    { category: "Class Specific", id: "church", name: "Church", desc: "Max HP +50", cost: 250 },
-    { category: "Class Specific", id: "pens", name: "Slave Pens", desc: "Scoundrel Damage +25%", cost: 150 },
-    { category: "Storage", id: "armory", name: "Armory", desc: "Soldier Damage +25%", cost: 150 },
-    { category: "Storage", id: "stables", name: "Stables", desc: "Move Speed +10%", cost: 100 },
-    { category: "Training", id: "grounds", name: "Training Grounds", desc: "XP Gain +20%", cost: 200 },
-    { category: "Workshops", id: "blacksmith", name: "Blacksmith Forge", desc: "Global Damage +10%", cost: 300 },
-    { category: "Workshops", id: "carpentry", name: "Carpentry Shop", desc: "Projectile Speed +20%", cost: 100 },
-    { category: "Workshops", id: "engineering", name: "Engineering", desc: "Effect Duration +20%", cost: 150 },
-    { category: "Workshops", id: "leather", name: "Leatherworking", desc: "Damage Reduction +1", cost: 200 },
-];
-
-function renderCamp() {
-    const grid = document.getElementById('camp-grid');
-    grid.innerHTML = '';
-    
-    let currentCat = '';
-    
-    UPGRADES.forEach(u => {
-        if (u.category !== currentCat) {
-            const header = document.createElement('div');
-            header.className = 'camp-section';
-            header.innerText = u.category;
-            grid.appendChild(header);
-            currentCat = u.category;
-        }
-        
-        const isBought = META.upgrades[u.id];
-        const btn = document.createElement('div');
-        btn.className = `upgrade-btn ${isBought ? 'purchased' : ''}`;
-        btn.innerHTML = `
-            <span class="upgrade-name">${u.name}</span>
-            <span class="upgrade-cost">${isBought ? 'OWNED' : u.cost + 'g'}</span>
-            <div class="upgrade-desc">${u.desc}</div>
-        `;
-        if (!isBought) {
-            btn.onclick = () => buyUpgrade(u.id, u.cost);
-        }
-        grid.appendChild(btn);
-    });
-}
-
-function buyUpgrade(id, cost) {
-    if (META.gold >= cost) {
-        META.gold -= cost;
-        META.upgrades[id] = true;
-        saveGame();
-        renderCamp();
-    }
-}
-
-function openCamp() {
-    document.getElementById('start-screen').classList.add('hidden');
-    document.getElementById('camp-screen').classList.remove('hidden');
-    renderCamp();
-}
-
-function closeCamp() {
-    document.getElementById('camp-screen').classList.add('hidden');
-    document.getElementById('start-screen').classList.remove('hidden');
-}
-
-function renderManual() {
-    const container = document.getElementById('manual-content');
-    container.innerHTML = '';
-    
-    // RACES SECTION
-    const raceHeader = document.createElement('div');
-    raceHeader.className = 'manual-section-header';
-    raceHeader.innerText = "Backgrounds (Races)";
-    container.appendChild(raceHeader);
-
-    for (const key in RACES) {
-        const race = RACES[key];
-        const card = document.createElement('div');
-        card.className = 'manual-card';
-        card.innerHTML = `
-            <div class="manual-card-header">
-                <div class="manual-title">${race.name}</div>
-            </div>
-            <div class="manual-desc" style="margin-bottom:10px;">${race.desc}</div>
-            <div class="manual-stats">
-                <div class="manual-stat-row" style="color: #8b0000; text-align:center;">${race.statsText}</div>
-            </div>
-        `;
-        container.appendChild(card);
-    }
-
-    // SPECIALTIES SECTION
-    const classHeader = document.createElement('div');
-    classHeader.className = 'manual-section-header';
-    classHeader.innerText = "Specialties (Classes)";
-    classHeader.style.marginTop = "30px";
-    container.appendChild(classHeader);
-    
-    for (const key in CLASS_DEFS) {
-        const def = CLASS_DEFS[key];
-        const imgSrc = ASSETS[def.imgKey] ? ASSETS[def.imgKey].src : '';
-        
-        // Calculate readable stats
-        const attackSpeed = (60 / def.cooldown).toFixed(1); // Attacks per second
-        
-        const card = document.createElement('div');
-        card.className = 'manual-card';
-        card.innerHTML = `
-            <div class="manual-card-header">
-                <img src="${imgSrc}" class="manual-icon">
-                <div>
-                    <div class="manual-title">${def.name}</div>
-                    <div class="manual-role">${def.role}</div>
-                </div>
-            </div>
-            <div class="manual-stats">
-                <div class="manual-stat-row"><span>Damage:</span> <span style="color:#8b0000">${def.damage}</span></div>
-                <div class="manual-stat-row"><span>Range:</span> <span style="color:#00008b">${def.range}</span></div>
-                <div class="manual-stat-row"><span>Attack Speed:</span> <span style="color:#006400">${attackSpeed}/sec</span></div>
-            </div>
-            <div class="manual-desc">${def.desc}</div>
-        `;
-        container.appendChild(card);
-    }
-}
-
-function openManual() {
-    document.getElementById('start-screen').classList.add('hidden');
-    document.getElementById('manual-screen').classList.remove('hidden');
-    renderManual();
-}
-
-function closeManual() {
-    document.getElementById('manual-screen').classList.add('hidden');
-    document.getElementById('start-screen').classList.remove('hidden');
-}
-
-// --- CONFIG & STATE ---
-var CONFIG = {
+const CONFIG = {
     PLAYER_SPEED_WEDGE: 3.5,
     PLAYER_SPEED_SHIELD: 2.0,
     SQUAD_FOLLOW_SPEED: 0.1, 
@@ -948,45 +521,159 @@ var CONFIG = {
     BASE_PICKUP_RADIUS: 100
 };
 
-var GAME = {
-    state: 'START',
-    width: window.innerWidth,
-    height: window.innerHeight,
-    frames: 0,
-    time: 0,
-    score: 0,
-    level: 1,
-    xp: 0,
-    xpReq: CONFIG.XP_BASE_REQ,
-    formation: 'WEDGE', 
-    luck: 0,
-    maxLuck: 20, 
-    luckBurnCount: 0,
-    hp: 100,
-    maxHp: 100,
-    canUseShieldWall: false
+const RACES = {
+    ELVES: { name: "Elf", moveSpeed: 1.10, hp: -15, desc: "A race as diverse as the realms they inhabit. Fleet of foot but fragile.", statsText: "Movement Speed: +10% | Max HP: -15" },
+    GREENSKINS: { name: "Green Skin", moveSpeed: 0.95, dmgMult: 1.10, hp: 15, desc: "Fierce orcs, cunning goblins, and brutal hobgoblins. Tough survivors who hit hard.", statsText: "Max HP: +15 | Damage: +10% | Speed: -5%" },
+    HUMAN: { name: "Human", dmgFlat: 5, hp: 5, moveSpeed: 1.05, luck: -3, desc: "Ambitious and adaptable. Good at everything, but cursed by fate.", statsText: "All Stats: +3 (Approx) | Luck: -3" },
+    MUDDLED: { name: "Muddled", dmgFlat: 2, hp: 2, moveSpeed: 1.05, luck: 2, desc: "Those of mixed heritage who straddle the line between worlds.", statsText: "All Stats: +1 | Luck: +2" },
+    OUTSIDER: { name: "Outsider", cooldownMult: 0.85, hp: -20, desc: "Born of infernal or divine unions. Channel power quickly but unstable forms.", statsText: "Attack Speed: +15% | Max HP: -20" },
+    SHORTFOLK: { name: "Short Folk", dmgMult: 1.05, moveSpeed: 0.95, luck: 5, desc: "Dwarves, gnomes, and halflings. Stout and lucky.", statsText: "Luck: +5 | Damage: +5% | Speed: -5%" }
 };
 
-var canvas = document.getElementById('gameCanvas');
-var ctx = canvas.getContext('2d');
+const NAMES = {
+    ELVES: ["Aelrindel", "Faenor", "Lyra", "Thalia", "Silaqui", "Erendil"],
+    GREENSKINS: ["Grok", "Mog", "Snagga", "Kruel", "Boz", "Griznut"],
+    HUMAN: ["Baldric", "Osric", "Edith", "Wulf", "Godfrey", "Rowan"],
+    MUDDLED: ["Half-Jack", "Mix", "Cross", "Blur", "Twain", "Mingle"],
+    OUTSIDER: ["Xol", "Vex", "Null", "Void", "Entropy", "Kaos"],
+    SHORTFOLK: ["Bramble", "Took", "Pip", "Knub", "Shorty", "Fumble"]
+};
 
-// --- ASSET MANAGEMENT ---
-var ASSETS = {};
+const CLASS_DEFS = {
+    SOLDIER: { name: 'Soldier', role: 'Vanguard', color: '#404040', desc: 'Melee sweep. Lvl 3 unlocks Shield Wall formation.', range: 60, cooldown: 60, damage: 18, imgKey: 'SOLDIER' },
+    SCOUNDREL: { name: 'Scoundrel', role: 'DPS', color: '#1a1a1a', desc: 'Single Target Stab. Lvl 3 drops slowing traps.', range: 40, cooldown: 40, damage: 35, imgKey: 'SCOUNDREL' },
+    MAGE: { name: 'Mage', role: 'Artillery', color: '#00008b', desc: 'Fast projectiles. Lvl 3 summons Fireball Zones.', range: 400, cooldown: 35, damage: 12, imgKey: 'MAGE' },
+    CLERIC: { name: 'Cleric', role: 'Support', color: '#b8860b', desc: 'AoE Knockback. Lvl 3 heals squad every 10s.', range: 80, cooldown: 80, damage: 12, imgKey: 'CLERIC' },
+    WITCH: { name: 'Witch', role: 'Debuffer', color: '#4b0082', desc: 'Permanent Poison DoT. Lvl 3 Fears enemies.', range: 250, cooldown: 70, damage: 3, imgKey: 'WITCH' },
+    FOLK_HERO: { name: 'Folk Hero', role: 'Control', color: '#006400', desc: 'Directional shot. Lvl 3 increases XP collection.', range: 300, cooldown: 50, damage: 14, imgKey: 'FOLK_HERO' }
+};
+
+const ENEMY_DEFS = {
+    RAT: { name: 'Rat', hp: 15, speed: 0.8, damage: 3, xp: 5, imgKey: 'RAT', color: '#654321', scale: 2.0 },
+    BAT: { name: 'Bat', hp: 10, speed: 2.0, damage: 4, xp: 8, imgKey: 'BAT', color: '#333333', scale: 2.0 },
+    OGRE: { name: 'Ogre', hp: 120, speed: 0.6, damage: 15, xp: 30, imgKey: 'OGRE', color: '#2e8b57', scale: 3.5 },
+    CRAB: { name: 'Crab', hp: 50, speed: 2.5, damage: 12, xp: 20, imgKey: 'CRAB', color: '#cd5c5c', scale: 2.5 }
+};
+
+const UPGRADES = [
+    { category: "Camp Followers", id: "brothel", name: "Brothel", desc: "Max Luck +2", cost: 50, imgKey: 'BROTHEL', x: 15 },
+    { category: "Camp Followers", id: "kitchen", name: "Kitchen", desc: "Max HP +20", cost: 50 },
+    { category: "Camp Followers", id: "housing", name: "Housing", desc: "HP Regen +0.5/sec", cost: 100, imgKey: 'HOUSE', x: 25 },
+    { category: "Command", id: "command", name: "Command Tent", desc: "Attack Cooldowns -5%", cost: 300, imgKey: 'TENT', x: 55 },
+    { category: "Command", id: "guildhall", name: "Guild Hall", desc: "Start at Level 2", cost: 500 },
+    { category: "Magical", id: "alchemy", name: "Alchemy Lab", desc: "Witch Damage +25%", cost: 150, imgKey: 'ALCHEMY', x: 85 },
+    { category: "Magical", id: "magetower", name: "Mage Tower", desc: "Mage Damage +25%", cost: 150, imgKey: 'MAGE_TOWER', x: 95 },
+    { category: "Medical", id: "hospital", name: "Field Hospital", desc: "Heal 20 HP on Level Up", cost: 100 },
+    { category: "Medical", id: "herbalist", name: "Herbalist", desc: "Pickup Range +20%", cost: 75 },
+    { category: "Economy", id: "merchant", name: "Merchant Stalls", desc: "Gold Drop Rate +5%", cost: 200 },
+    { category: "Economy", id: "cells", name: "Prisoner Cells", desc: "XP Gain +10%", cost: 100 },
+    { category: "Class Specific", id: "ranger", name: "Ranger's Hut", desc: "Folk Hero Damage +25%", cost: 150, imgKey: 'RANGER', x: 75 },
+    { category: "Class Specific", id: "chapel", name: "Chapel", desc: "Cleric Damage +25%", cost: 150, imgKey: 'CHAPEL', x: 35 },
+    { category: "Class Specific", id: "church", name: "Church", desc: "Max HP +50", cost: 250, imgKey: 'CHURCH', x: 45 },
+    { category: "Class Specific", id: "pens", name: "Slave Pens", desc: "Scoundrel Damage +25%", cost: 150, imgKey: 'PENS', x: 5 },
+    { category: "Storage", id: "armory", name: "Armory", desc: "Soldier Damage +25%", cost: 150 },
+    { category: "Storage", id: "stables", name: "Stables", desc: "Move Speed +10%", cost: 100, imgKey: 'STABLE', x: 65 },
+    { category: "Training", id: "grounds", name: "Training Grounds", desc: "XP Gain +20%", cost: 200 },
+    { category: "Workshops", id: "blacksmith", name: "Blacksmith Forge", desc: "Global Damage +10%", cost: 300 },
+    { category: "Workshops", id: "carpentry", name: "Carpentry Shop", desc: "Projectile Speed +20%", cost: 100 },
+    { category: "Workshops", id: "engineering", name: "Engineering", desc: "Effect Duration +20%", cost: 150 },
+    { category: "Workshops", id: "leather", name: "Leatherworking", desc: "Damage Reduction +1", cost: 200 },
+];
+
+// ==========================================
+// 2. STATE & ENGINE VARIABLES
+// ==========================================
+
+const SAVE_KEY = 'dust_cloaks_v3';
+let META = { gold: 0, upgrades: {}, roster: [] };
+let canvas, ctx;
+let ASSETS = {};
+
+// Game State
+let GAME = {
+    state: 'START', width: 0, height: 0, frames: 0, time: 0, score: 0,
+    level: 1, xp: 0, xpReq: CONFIG.XP_BASE_REQ,
+    formation: 'WEDGE', luck: 0, maxLuck: 20, luckBurnCount: 0,
+    hp: 100, maxHp: 100, canUseShieldWall: false
+};
+let creationData = { race: null, classKey: null, name: "" };
+let currentRunStats = { kills: 0, gold: 0 };
+let keys = { w:false, a:false, s:false, d:false, space:false, q:false };
+
+// Entities Lists
+let player;
+let squad = [];
+let enemies = [];
+let pickups = [];
+let projectiles = [];
+let floatingTexts = [];
+
+// ==========================================
+// 3. PERSISTENCE & UTILS
+// ==========================================
+
+function loadGame() {
+    const data = localStorage.getItem(SAVE_KEY);
+    if (data) {
+        try {
+            const parsed = JSON.parse(data);
+            META.gold = parsed.gold || 0;
+            META.upgrades = parsed.upgrades || {};
+            META.roster = parsed.roster || [];
+        } catch(e) { console.error("Save Corrupt"); }
+    }
+    updateGoldUI();
+    renderCampVisuals(); // Show visuals on load
+}
+
+function saveGame() {
+    localStorage.setItem(SAVE_KEY, JSON.stringify(META));
+    updateGoldUI();
+}
+
+function updateGoldUI() {
+    const displays = ['gold-display', 'camp-gold', 'gold-hud'];
+    displays.forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.innerText = (id === 'gold-hud' ? '' : 'Gold: ') + META.gold;
+    });
+}
+
+function getRandomName(raceKey) {
+    const list = NAMES[raceKey] || NAMES.HUMAN;
+    return list[Math.floor(Math.random() * list.length)];
+}
+
+function addFloatingText(x, y, text, color) {
+    floatingTexts.push({ x, y, text, color, life: 30 });
+}
+
+function checkCollision(c1, c2) {
+    const dx = c1.x - c2.x;
+    const dy = c1.y - c2.y;
+    return Math.hypot(dx, dy) < c1.radius + c2.radius;
+}
+
+function getNearestEnemy(x, y, range) {
+    let nearest = null;
+    let minDst = range;
+    for (const e of enemies) {
+        const dst = Math.hypot(e.x - x, e.y - y);
+        if (dst < minDst) { minDst = dst; nearest = e; }
+    }
+    return nearest;
+}
+
 function loadAssets() {
     const sources = {
-        SOLDIER: 'tile_0087.png',
-        MAGE: 'tile_0084.png',
-        CLERIC: 'tile_0098.png',
-        SCOUNDREL: 'tile_0100.png',
-        WITCH: 'tile_0111.png',
-        FOLK_HERO: 'tile_0112.png',
+        SOLDIER: 'tile_0087.png', MAGE: 'tile_0084.png', CLERIC: 'tile_0098.png',
+        SCOUNDREL: 'tile_0100.png', WITCH: 'tile_0111.png', FOLK_HERO: 'tile_0112.png',
         BACKGROUND: 'battlfield_tileset.png',
-        
-        // Enemies
-        RAT: 'tile_0123.png',
-        BAT: 'tile_0120.png',
-        OGRE: 'tile_0109.png',
-        CRAB: 'tile_0110.png'
+        RAT: 'tile_0123.png', BAT: 'tile_0120.png', OGRE: 'tile_0109.png', CRAB: 'tile_0110.png',
+        // Camp Buildings
+        TENT: 'tent.png', STABLE: 'stable.png', HOUSE: 'house.png',
+        BROTHEL: 'houseChimney.png', ALCHEMY: 'runis.png', MAGE_TOWER: 'towerTall.png',
+        CHAPEL: 'church.png', CHURCH: 'churchLarge.png', PENS: 'dock.png', RANGER: 'houseSmall.png'
     };
     for(let key in sources) {
         const img = new Image();
@@ -994,102 +681,14 @@ function loadAssets() {
         ASSETS[key] = img;
     }
 }
-loadAssets();
 
-// Input Handling
-var keys = { w:false, a:false, s:false, d:false, space:false, q:false };
-
-window.addEventListener('resize', () => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    GAME.width = canvas.width;
-    GAME.height = canvas.height;
-});
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-window.addEventListener('keydown', e => {
-    if(e.key === ' ' || e.key === 'Spacebar') {
-        if(GAME.state === 'PLAY' && !keys.space) toggleFormation();
-        keys.space = true;
-    }
-    if(e.key.toLowerCase() === 'q') {
-        if(GAME.state === 'PLAY' && !keys.q) burnLuck();
-        keys.q = true;
-    }
-    if(['w','a','s','d','ArrowUp','ArrowLeft','ArrowDown','ArrowRight'].includes(e.key)) {
-        keys[e.key.toLowerCase().replace('arrowup','w').replace('arrowleft','a').replace('arrowdown','s').replace('arrowright','d')] = true;
-    }
-});
-
-window.addEventListener('keyup', e => {
-    if(e.key === ' ' || e.key === 'Spacebar') keys.space = false;
-    if(e.key.toLowerCase() === 'q') keys.q = false;
-    if(['w','a','s','d','ArrowUp','ArrowLeft','ArrowDown','ArrowRight'].includes(e.key)) {
-        keys[e.key.toLowerCase().replace('arrowup','w').replace('arrowleft','a').replace('arrowdown','s').replace('arrowright','d')] = false;
-    }
-});
-
-// --- CLASSES & DEFINITIONS ---
-
-var CLASS_DEFS = {
-    SOLDIER: { 
-        name: 'Soldier', role: 'Vanguard', color: '#404040', /* Dark grey reads better */
-        desc: 'Melee sweep. Lvl 3 unlocks Shield Wall formation.', 
-        range: 60, cooldown: 60, damage: 18, imgKey: 'SOLDIER'
-    },
-    SCOUNDREL: { 
-        name: 'Scoundrel', role: 'DPS', color: '#1a1a1a', 
-        desc: 'Single Target Stab. Lvl 3 drops slowing traps.', 
-        range: 40, cooldown: 40, damage: 35, imgKey: 'SCOUNDREL' 
-    },
-    MAGE: { 
-        name: 'Mage', role: 'Artillery', color: '#00008b', 
-        desc: 'Fast projectiles. Lvl 3 summons Fireball Zones.', 
-        range: 400, cooldown: 35, damage: 12, imgKey: 'MAGE'
-    },
-    CLERIC: { 
-        name: 'Cleric', role: 'Support', color: '#b8860b', 
-        desc: 'AoE Knockback. Lvl 3 heals squad every 10s.', 
-        range: 80, cooldown: 80, damage: 12, imgKey: 'CLERIC'
-    },
-    WITCH: { 
-        name: 'Witch', role: 'Debuffer', color: '#4b0082', 
-        desc: 'Permanent Poison DoT. Lvl 3 Fears enemies.', 
-        range: 250, cooldown: 70, damage: 3, imgKey: 'WITCH' 
-    },
-    FOLK_HERO: { 
-        name: 'Folk Hero', role: 'Control', color: '#006400', 
-        desc: 'Directional shot. Lvl 3 increases XP collection.', 
-        range: 300, cooldown: 50, damage: 14, imgKey: 'FOLK_HERO'
-    }
-};
-
-var ENEMY_DEFS = {
-    RAT: {
-        name: 'Rat', hp: 15, speed: 0.8, damage: 3, xp: 5, 
-        imgKey: 'RAT', color: '#654321', scale: 2.0
-    },
-    BAT: {
-        name: 'Bat', hp: 10, speed: 2.0, damage: 4, xp: 8, 
-        imgKey: 'BAT', color: '#333333', scale: 2.0
-    },
-    OGRE: {
-        name: 'Ogre', hp: 120, speed: 0.6, damage: 15, xp: 30, 
-        imgKey: 'OGRE', color: '#2e8b57', scale: 3.5
-    },
-    CRAB: {
-        name: 'Crab', hp: 50, speed: 2.5, damage: 12, xp: 20, 
-        imgKey: 'CRAB', color: '#cd5c5c', scale: 2.5
-    }
-};
+// ==========================================
+// 4. GAME ENTITIES (CLASSES)
+// ==========================================
 
 class Entity {
     constructor(x, y, radius, color) {
-        this.x = x;
-        this.y = y;
-        this.radius = radius;
-        this.color = color;
+        this.x = x; this.y = y; this.radius = radius; this.color = color;
         this.markedForDeletion = false;
     }
     draw() {
@@ -1107,7 +706,7 @@ class SquadMate extends Entity {
         this.type = type;
         this.race = raceKey;
         this.name = name;
-        this.stats = { ...CLASS_DEFS[type] }; // Clone stats
+        this.stats = { ...CLASS_DEFS[type] };
         this.cooldownTimer = 0;
         this.specialTimer = 0; 
         this.index = index; 
@@ -1126,11 +725,8 @@ class SquadMate extends Entity {
     }
 
     applyUpgrades() {
-        // Global Dmg
         if (META.upgrades['blacksmith']) this.stats.damage = Math.ceil(this.stats.damage * 1.1);
         if (META.upgrades['command']) this.stats.cooldown = Math.ceil(this.stats.cooldown * 0.95);
-        
-        // Class Specific
         let dmgMult = 1.0;
         if (this.type === 'WITCH' && META.upgrades['alchemy']) dmgMult = 1.25;
         if (this.type === 'MAGE' && META.upgrades['magetower']) dmgMult = 1.25;
@@ -1138,7 +734,6 @@ class SquadMate extends Entity {
         if (this.type === 'CLERIC' && META.upgrades['chapel']) dmgMult = 1.25;
         if (this.type === 'SCOUNDREL' && META.upgrades['pens']) dmgMult = 1.25;
         if (this.type === 'SOLDIER' && META.upgrades['armory']) dmgMult = 1.25;
-        
         this.stats.damage = Math.ceil(this.stats.damage * dmgMult);
     }
 
@@ -1159,7 +754,6 @@ class SquadMate extends Entity {
             this.stats.damage += 5;
             this.stats.cooldown = Math.max(10, Math.floor(this.stats.cooldown * 0.9));
         }
-        
         checkSquadSynergies();
         addFloatingText(player.x, player.y, `LVL UP!`, "#4169e1");
     }
@@ -1178,8 +772,7 @@ class SquadMate extends Entity {
         } 
         
         if (this.index === 0) {
-            this.x = leaderX;
-            this.y = leaderY;
+            this.x = leaderX; this.y = leaderY;
         } else if (this.index === 6) {
             const trailDist = 80;
             targetX = leaderX - Math.cos(leaderAngle) * trailDist;
@@ -1188,7 +781,6 @@ class SquadMate extends Entity {
             this.y += (targetY - this.y) * (CONFIG.SQUAD_FOLLOW_SPEED * 0.8);
         } else {
             const localIndex = this.index >= 7 ? this.index - 6 : this.index; 
-            
             if (formation === 'WEDGE') {
                 const side = localIndex % 2 === 0 ? 1 : -1;
                 const row = Math.ceil(localIndex / 2);
@@ -1209,44 +801,36 @@ class SquadMate extends Entity {
             this.y += (targetY - this.y) * CONFIG.SQUAD_FOLLOW_SPEED;
         }
 
-        if (this.level >= 3) {
-            if (this.type === 'CLERIC') {
-                this.specialTimer++;
-                if (this.specialTimer >= 600) {
-                    GAME.hp = Math.min(GAME.hp + 15, GAME.maxHp);
-                    addFloatingText(this.x, this.y - 20, "+SQUAD HEAL", "#gold");
-                    this.specialTimer = 0;
-                    ctx.save();
-                    ctx.beginPath();
-                    ctx.arc(this.x, this.y, 100, 0, Math.PI*2);
-                    ctx.strokeStyle = "gold";
-                    ctx.lineWidth = 3;
-                    ctx.stroke();
-                    ctx.restore();
-                }
-            } else if (this.type === 'MAGE') {
-                this.specialTimer++;
-                if (this.specialTimer >= 240) { 
-                     const fx = this.x + (Math.random() * 300 - 150);
-                     const fy = this.y + (Math.random() * 300 - 150);
-                     projectiles.push(new FireballZone(fx, fy));
-                     this.specialTimer = 0;
-                }
-            }
-        }
-
+        if (this.level >= 3) this.handleSpecials();
         if (this.cooldownTimer > 0) this.cooldownTimer--;
         else this.performAttack(leaderAngle);
     }
-    
+
+    handleSpecials() {
+        if (this.type === 'CLERIC') {
+            this.specialTimer++;
+            if (this.specialTimer >= 600) {
+                GAME.hp = Math.min(GAME.hp + 15, GAME.maxHp);
+                addFloatingText(this.x, this.y - 20, "+SQUAD HEAL", "#gold");
+                this.specialTimer = 0;
+            }
+        } else if (this.type === 'MAGE') {
+            this.specialTimer++;
+            if (this.specialTimer >= 240) { 
+                const fx = this.x + (Math.random() * 300 - 150);
+                const fy = this.y + (Math.random() * 300 - 150);
+                projectiles.push(new FireballZone(fx, fy));
+                this.specialTimer = 0;
+            }
+        }
+    }
+
     draw() {
         if (this.index === 0) return; 
-        
         const img = ASSETS[this.stats.imgKey];
         if (img && img.complete && img.naturalWidth !== 0) {
             const size = this.radius * 3.0; 
             ctx.drawImage(img, this.x - size/2, this.y - size/2, size, size);
-            
             if (this.index === 6) {
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius * 1.5, 0, Math.PI * 2);
@@ -1261,36 +845,25 @@ class SquadMate extends Entity {
 
     performAttack(angle) {
         const enemy = getNearestEnemy(this.x, this.y, this.stats.range);
-        
         if (this.type === 'SOLDIER' && enemy) {
             projectiles.push(new MeleeSwipe(this.x, this.y, enemy.x, enemy.y, this.stats.damage));
             this.cooldownTimer = this.stats.cooldown;
-        } 
-        else if (this.type === 'MAGE' && enemy) {
+        } else if (this.type === 'MAGE' && enemy) {
             projectiles.push(new MagicMissile(this.x, this.y, enemy, this.stats.damage));
             this.cooldownTimer = this.stats.cooldown;
-        }
-        else if (this.type === 'SCOUNDREL') {
-             if (enemy) {
+        } else if (this.type === 'SCOUNDREL') {
+            if (enemy) {
                 projectiles.push(new DaggerMelee(this.x, this.y, enemy.x, enemy.y, this.stats.damage));
                 this.cooldownTimer = this.stats.cooldown;
-             }
-             if (this.level >= 3 && Math.random() > 0.7) { 
-                 projectiles.push(new Trap(this.x, this.y, this.stats.damage));
-             }
-        }
-        else if (this.type === 'CLERIC') {
-            if (getNearestEnemy(this.x, this.y, this.stats.range)) { 
-                projectiles.push(new Shockwave(this.x, this.y, this.stats.range, this.stats.damage));
-                this.cooldownTimer = this.stats.cooldown;
             }
-        }
-        else if (this.type === 'WITCH' && enemy) {
-            const causesFear = this.level >= 3;
-            projectiles.push(new PoisonBolt(this.x, this.y, enemy, this.stats.damage, causesFear));
+            if (this.level >= 3 && Math.random() > 0.7) projectiles.push(new Trap(this.x, this.y, this.stats.damage));
+        } else if (this.type === 'CLERIC' && getNearestEnemy(this.x, this.y, this.stats.range)) {
+            projectiles.push(new Shockwave(this.x, this.y, this.stats.range, this.stats.damage));
             this.cooldownTimer = this.stats.cooldown;
-        }
-        else if (this.type === 'FOLK_HERO') {
+        } else if (this.type === 'WITCH' && enemy) {
+            projectiles.push(new PoisonBolt(this.x, this.y, enemy, this.stats.damage, this.level >= 3));
+            this.cooldownTimer = this.stats.cooldown;
+        } else if (this.type === 'FOLK_HERO') {
             projectiles.push(new StraightShot(this.x, this.y, angle, this.stats.damage));
             this.cooldownTimer = this.stats.cooldown;
         }
@@ -1299,7 +872,6 @@ class SquadMate extends Entity {
 
 class Enemy extends Entity {
     constructor() {
-        // Spawn Logic
         const time = GAME.time;
         let typeKey = 'RAT';
         if (time < 30) typeKey = 'RAT';
@@ -1307,11 +879,8 @@ class Enemy extends Entity {
         else if (time < 90) typeKey = Math.random() > 0.2 ? 'BAT' : 'RAT';
         else {
             const rand = Math.random();
-            if (rand < 0.1) typeKey = 'RAT';
-            else if (rand < 0.55) typeKey = 'OGRE';
-            else typeKey = 'CRAB';
+            if (rand < 0.1) typeKey = 'RAT'; else if (rand < 0.55) typeKey = 'OGRE'; else typeKey = 'CRAB';
         }
-
         const stats = ENEMY_DEFS[typeKey];
         const side = Math.floor(Math.random() * 4);
         let x, y;
@@ -1328,33 +897,17 @@ class Enemy extends Entity {
         this.damage = stats.damage;
         this.xp = stats.xp;
         if (typeKey === 'OGRE') this.radius = 20;
-
-        // Status Effects
-        this.poisoned = false;
-        this.poisonDmg = 0;
-        this.fearTimer = 0;
-        this.slowTimer = 0;
+        this.poisoned = false; this.poisonDmg = 0; this.fearTimer = 0; this.slowTimer = 0;
     }
 
     update() {
-        // Handle Status Effects
-        if (this.poisoned && GAME.frames % 60 === 0) {
-            takeEnemyDamage(this, this.poisonDmg, false);
-        }
-
+        if (this.poisoned && GAME.frames % 60 === 0) takeEnemyDamage(this, this.poisonDmg, false);
         if (this.slowTimer > 0) this.slowTimer--;
         if (this.fearTimer > 0) this.fearTimer--;
 
-        // Movement Logic
         let dx = player.x - this.x;
         let dy = player.y - this.y;
-        
-        if (this.fearTimer > 0) {
-            // Circle/Run away: Move perpendicular
-             const temp = dx;
-             dx = -dy;
-             dy = temp;
-        }
+        if (this.fearTimer > 0) { const temp = dx; dx = -dy; dy = temp; }
 
         const dist = Math.hypot(dx, dy);
         let currentSpeed = this.maxSpeed;
@@ -1376,8 +929,8 @@ class Enemy extends Entity {
         if (img && img.complete && img.naturalWidth !== 0) {
             const size = this.radius * this.typeStats.scale; 
             ctx.save();
-            if (this.poisoned) ctx.filter = 'sepia(1) hue-rotate(50deg)'; // Green tint
-            if (this.fearTimer > 0) ctx.filter = 'invert(1)'; // Visual indicator for fear
+            if (this.poisoned) ctx.filter = 'sepia(1) hue-rotate(50deg)';
+            if (this.fearTimer > 0) ctx.filter = 'invert(1)';
             ctx.drawImage(img, this.x - size/2, this.y - size/2, size, size);
             ctx.restore();
         } else {
@@ -1387,18 +940,11 @@ class Enemy extends Entity {
 }
 
 class XPOrb extends Entity {
-    constructor(x, y, val) {
-        super(x, y, 4, '#4169e1');
-        this.value = val;
-    }
+    constructor(x, y, val) { super(x, y, 4, '#4169e1'); this.value = val; }
     update() {
-        // Magnet Logic (Folk Hero Lvl 3 affects this)
         let pickupRange = CONFIG.BASE_PICKUP_RADIUS;
-        if (META.upgrades['herbalist']) pickupRange *= 1.2; // Herbalist Upgrade
-
-        // Check for Lvl 3 Folk Hero
-        const hasFolkHero = squad.some(m => m.type === 'FOLK_HERO' && m.level >= 3);
-        if (hasFolkHero) pickupRange *= 2.5;
+        if (META.upgrades['herbalist']) pickupRange *= 1.2;
+        if (squad.some(m => m.type === 'FOLK_HERO' && m.level >= 3)) pickupRange *= 2.5;
 
         const dist = Math.hypot(player.x - this.x, player.y - this.y);
         if (dist < pickupRange) { 
@@ -1411,20 +957,14 @@ class XPOrb extends Entity {
         }
     }
     draw() {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = this.color;
-        ctx.fill();
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 1;
-        ctx.stroke();
+        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color; ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
     }
 }
 
 class GoldOrb extends Entity {
-    constructor(x, y) {
-        super(x, y, 5, '#ffd700');
-    }
+    constructor(x, y) { super(x, y, 5, '#ffd700'); }
     update() {
         let pickupRange = CONFIG.BASE_PICKUP_RADIUS;
         const dist = Math.hypot(player.x - this.x, player.y - this.y);
@@ -1435,32 +975,27 @@ class GoldOrb extends Entity {
         if (dist < player.radius + 10) {
             currentRunStats.gold += 1;
             META.gold += 1;
-            saveGame(); // Save immediately or debounce
+            saveGame();
             addFloatingText(this.x, this.y, "+1g", "gold");
             this.markedForDeletion = true;
         }
     }
     draw() {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = "gold";
-        ctx.fill();
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 1;
-        ctx.stroke();
+        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = "gold"; ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
     }
 }
 
-// --- PROJECTILES ---
+// ==========================================
+// 5. PROJECTILES
+// ==========================================
 
 class Projectile extends Entity {
     constructor(x, y, r, color, damage, duration) {
         super(x, y, r, color);
         this.damage = damage;
-        this.duration = duration;
-        
-        // Upgrade: Engineering
-        if (META.upgrades['engineering']) this.duration = Math.floor(this.duration * 1.2);
+        this.duration = META.upgrades['engineering'] ? Math.floor(duration * 1.2) : duration;
     }
     update() {
         this.duration--;
@@ -1468,13 +1003,11 @@ class Projectile extends Entity {
     }
 }
 
-// MAGE: Targeted
 class MagicMissile extends Projectile {
     constructor(x, y, target, damage) {
         super(x, y, 5, '#87CEEB', damage, 60);
         this.target = target;
-        this.speed = 7;
-        if (META.upgrades['carpentry']) this.speed *= 1.2;
+        this.speed = META.upgrades['carpentry'] ? 8.4 : 7;
     }
     update() {
         super.update();
@@ -1484,253 +1017,305 @@ class MagicMissile extends Projectile {
             const dist = Math.hypot(dx, dy);
             this.x += (dx / dist) * this.speed;
             this.y += (dy / dist) * this.speed;
-            
-            if (dist < 10) {
-                takeEnemyDamage(this.target, this.damage);
-                this.markedForDeletion = true;
-            }
-        } else {
-            this.markedForDeletion = true;
-        }
+            if (dist < 10) { takeEnemyDamage(this.target, this.damage); this.markedForDeletion = true; }
+        } else { this.markedForDeletion = true; }
     }
 }
 
-// MAGE LVL 3: Area DoT
 class FireballZone extends Projectile {
-    constructor(x, y) {
-        super(x, y, 60, 'rgba(255, 69, 0, 0.4)', 5, 240); // 4 seconds
-    }
+    constructor(x, y) { super(x, y, 60, 'rgba(255, 69, 0, 0.4)', 5, 240); }
     update() {
         super.update();
-        if (this.duration % 20 === 0) { // Tick every 0.3s
-            enemies.forEach(e => {
-                if (Math.hypot(e.x - this.x, e.y - this.y) < this.radius) {
-                    takeEnemyDamage(e, this.damage, false);
-                }
-            });
+        if (this.duration % 20 === 0) {
+            enemies.forEach(e => { if (Math.hypot(e.x - this.x, e.y - this.y) < this.radius) takeEnemyDamage(e, this.damage, false); });
         }
     }
 }
 
-// SOLDIER: Melee Swipe
 class MeleeSwipe extends Projectile {
     constructor(x, y, tx, ty, damage) {
         super(x, y, 35, 'rgba(200,200,200,0.5)', damage, 8);
-        enemies.forEach(e => {
-            if (Math.hypot(e.x - x, e.y - y) < 45) {
-                takeEnemyDamage(e, damage, true);
-            }
-        });
+        enemies.forEach(e => { if (Math.hypot(e.x - x, e.y - y) < 45) takeEnemyDamage(e, damage, true); });
     }
 }
 
-// SCOUNDREL: Stab
 class DaggerMelee extends Projectile {
     constructor(x, y, tx, ty, damage) {
         super(x, y, 10, '#fff', damage, 5);
-        // Instant hit scan check
         const angle = Math.atan2(ty - y, tx - x);
         const hx = x + Math.cos(angle) * 20;
         const hy = y + Math.sin(angle) * 20;
-        enemies.forEach(e => {
-             if (Math.hypot(e.x - hx, e.y - hy) < 20) takeEnemyDamage(e, damage);
-        });
+        enemies.forEach(e => { if (Math.hypot(e.x - hx, e.y - hy) < 20) takeEnemyDamage(e, damage); });
     }
 }
 
-// SCOUNDREL LVL 3: Trap
 class Trap extends Projectile {
-    constructor(x, y, damage) {
-        super(x, y, 15, '#8B4513', damage, 600); // 10 seconds lifespan
-        this.active = true;
-    }
+    constructor(x, y, damage) { super(x, y, 15, '#8B4513', damage, 600); this.active = true; }
     update() {
         if (!this.active) { this.markedForDeletion = true; return; }
         this.duration--;
         if (this.duration <= 0) this.markedForDeletion = true;
-
         enemies.forEach(e => {
             if (Math.hypot(e.x - this.x, e.y - this.y) < this.radius + e.radius) {
                 takeEnemyDamage(e, this.damage);
-                e.slowTimer = 180; // Slow for 3s
-                this.active = false; // Destroy trap
-                // Visual boom
+                e.slowTimer = 180;
+                this.active = false;
                 addFloatingText(this.x, this.y, "SNAP!", "red");
             }
         });
     }
 }
 
-// CLERIC: Shockwave (Base)
 class Shockwave extends Projectile {
     constructor(x, y, range, damage) {
         super(x, y, range, 'rgba(255, 215, 0, 0.3)', damage, 15);
         enemies.forEach(e => {
-             const d = Math.hypot(e.x - x, e.y - y);
-             if (d < range) {
-                 takeEnemyDamage(e, damage, true); // Knockback
-                 // Extra push
+             if (Math.hypot(e.x - x, e.y - y) < range) {
+                 takeEnemyDamage(e, damage, true);
                  const angle = Math.atan2(e.y - y, e.x - x);
-                 e.x += Math.cos(angle) * 30;
-                 e.y += Math.sin(angle) * 30;
+                 e.x += Math.cos(angle) * 30; e.y += Math.sin(angle) * 30;
              }
         });
     }
 }
 
-// WITCH: Poison Bolt
 class PoisonBolt extends Projectile {
     constructor(x, y, target, damage, causesFear) {
         super(x, y, 6, '#800080', damage, 60);
-        this.target = target;
-        this.causesFear = causesFear;
-        this.speed = 6;
-        if (META.upgrades['carpentry']) this.speed *= 1.2;
+        this.target = target; this.causesFear = causesFear;
+        this.speed = META.upgrades['carpentry'] ? 7.2 : 6;
     }
     update() {
         super.update();
         if (this.target && !this.target.markedForDeletion) {
-             const dx = this.target.x - this.x;
-             const dy = this.target.y - this.y;
+             const dx = this.target.x - this.x; const dy = this.target.y - this.y;
              const dist = Math.hypot(dx, dy);
-             this.x += (dx/dist)*this.speed;
-             this.y += (dy/dist)*this.speed;
-             
+             this.x += (dx/dist)*this.speed; this.y += (dy/dist)*this.speed;
              if (dist < 10) {
                  takeEnemyDamage(this.target, this.damage);
-                 // Apply Permanent Poison
-                 this.target.poisoned = true;
-                 this.target.poisonDmg = 2; // Tick amount
-                 if (this.causesFear) this.target.fearTimer = 120; // 2 seconds fear
+                 this.target.poisoned = true; this.target.poisonDmg = 2;
+                 if (this.causesFear) this.target.fearTimer = 120;
                  this.markedForDeletion = true;
              }
-        } else {
-            this.markedForDeletion = true;
-        }
+        } else { this.markedForDeletion = true; }
     }
 }
 
-// FOLK HERO: Directional Shot
 class StraightShot extends Projectile {
     constructor(x, y, angle, damage) {
         super(x, y, 5, '#228B22', damage, 60);
-        this.vx = Math.cos(angle) * 10;
-        this.vy = Math.sin(angle) * 10;
-        if (META.upgrades['carpentry']) {
-            this.vx *= 1.2;
-            this.vy *= 1.2;
-        }
+        let speed = META.upgrades['carpentry'] ? 12 : 10;
+        this.vx = Math.cos(angle) * speed; this.vy = Math.sin(angle) * speed;
     }
     update() {
         super.update();
-        this.x += this.vx;
-        this.y += this.vy;
+        this.x += this.vx; this.y += this.vy;
         enemies.forEach(e => {
-            if (checkCollision(this, e)) {
-                takeEnemyDamage(e, this.damage);
-                this.markedForDeletion = true;
-            }
+            if (checkCollision(this, e)) { takeEnemyDamage(e, this.damage); this.markedForDeletion = true; }
         });
     }
 }
 
-// --- CORE FUNCTIONS ---
+// ==========================================
+// 6. UI & MENU SYSTEMS
+// ==========================================
 
-function checkSquadSynergies() {
-    // Check Soldier Lvl 3 for Formation
-    GAME.canUseShieldWall = squad.some(m => m.type === 'SOLDIER' && m.level >= 3);
-    
-    // Update UI indicator
-    const indicator = document.getElementById('tactic-name');
-    if (!GAME.canUseShieldWall && GAME.formation === 'SHIELD') {
-        // Force revert if we lost the soldier somehow (unlikely but good safety)
-        toggleFormation(); 
-    }
-    
-    // Re-render tutorial text
-    const tut = document.getElementById('tutorial');
-    tut.innerHTML = `
-        WASD: Move<br>
-        SPACE: Toggle Formation (${GAME.canUseShieldWall ? 'READY' : 'LOCKED - Need Lvl 3 Soldier'})<br>
-        Q: Burn Luck (Ultimate)
-    `;
+function startCreation() {
+    document.getElementById('start-screen').classList.add('hidden');
+    document.getElementById('char-creation-screen').classList.remove('hidden');
+    creationData = { race: null, classKey: null, name: "" };
+    showCreationStep('race');
+    renderRaceSelection();
 }
 
-// Ensure assets are loaded before gen
-setTimeout(() => {
-    loadGame();
-    // Pre-load logic not needed here but kept for structure
-}, 100); 
+function showCreationStep(step) {
+    document.querySelectorAll('.creation-step').forEach(el => el.classList.remove('active'));
+    document.getElementById(`step-${step}`).classList.add('active');
+    const titles = { 'race': "Select Race", 'class': "Select Speciality", 'name': "Enter Name" };
+    document.getElementById('creation-title').innerText = titles[step];
+}
+
+function renderRaceSelection() {
+    const grid = document.getElementById('race-selection-grid');
+    grid.innerHTML = '';
+    for (const key in RACES) {
+        const race = RACES[key];
+        const card = document.createElement('div');
+        card.className = 'upgrade-card';
+        card.innerHTML = `<div class="card-title">${race.name}</div><div class="card-desc">${race.desc}</div><div class="card-desc" style="color:#8b0000; margin-top:5px; font-weight:bold;">${race.statsText}</div>`;
+        card.onclick = () => { creationData.race = key; showCreationStep('class'); renderClassSelection(); };
+        grid.appendChild(card);
+    }
+}
+
+function renderClassSelection() {
+    const grid = document.getElementById('char-selection-grid');
+    grid.innerHTML = '';
+    for (const key in CLASS_DEFS) {
+        const def = CLASS_DEFS[key];
+        const card = document.createElement('div');
+        card.className = 'upgrade-card';
+        card.innerHTML = `<img src="${ASSETS[def.imgKey]?.src}" class="card-icon"><div class="card-title" style="color:${def.color}">${def.name}</div><div class="card-desc">${def.desc}</div>`;
+        card.onclick = () => { creationData.classKey = key; showCreationStep('name'); randomizeName(); };
+        grid.appendChild(card);
+    }
+}
+
+function randomizeName() {
+    document.getElementById('char-name-input').value = getRandomName(creationData.race);
+}
+
+function finalizeCreation() {
+    const nameInput = document.getElementById('char-name-input').value;
+    creationData.name = nameInput || getRandomName(creationData.race);
+    document.getElementById('char-creation-screen').classList.add('hidden');
+    startGame(creationData);
+}
+
+function closeCreation() {
+    document.getElementById('char-creation-screen').classList.add('hidden');
+    document.getElementById('start-screen').classList.remove('hidden');
+}
+
+function openRoster() {
+    document.getElementById('start-screen').classList.add('hidden');
+    document.getElementById('roster-screen').classList.remove('hidden');
+    const grid = document.getElementById('roster-grid');
+    grid.innerHTML = '';
+    if (META.roster.length === 0) { grid.innerHTML = "<p>No active mercenaries available.</p>"; return; }
+    META.roster.forEach((char, index) => {
+        const def = CLASS_DEFS[char.type];
+        const race = RACES[char.race];
+        const card = document.createElement('div');
+        card.className = 'upgrade-card';
+        card.innerHTML = `<img src="${ASSETS[def.imgKey]?.src}" class="card-icon"><div class="card-title" style="color:${def.color}">${char.name}</div><div class="card-role">${race.name} ${def.name}</div><div class="card-desc">Kills: ${char.kills||0}<br>Earned: ${char.gp||0}g</div>`;
+        card.onclick = () => { META.roster.splice(index, 1); saveGame(); document.getElementById('roster-screen').classList.add('hidden'); startGame(char); };
+        grid.appendChild(card);
+    });
+}
+function closeRoster() { document.getElementById('roster-screen').classList.add('hidden'); document.getElementById('start-screen').classList.remove('hidden'); }
+
+function renderCamp() {
+    const grid = document.getElementById('camp-grid');
+    grid.innerHTML = '';
+    let currentCat = '';
+    UPGRADES.forEach(u => {
+        if (u.category !== currentCat) {
+            const header = document.createElement('div');
+            header.className = 'camp-section'; header.innerText = u.category;
+            grid.appendChild(header); currentCat = u.category;
+        }
+        const isBought = META.upgrades[u.id];
+        const btn = document.createElement('div');
+        btn.className = `upgrade-btn ${isBought ? 'purchased' : ''}`;
+        
+        // Add Icon if exists
+        const iconHtml = u.imgKey && ASSETS[u.imgKey] ? `<img src="${ASSETS[u.imgKey].src}" class="upgrade-btn-icon">` : '';
+        
+        btn.innerHTML = `
+            ${iconHtml}
+            <div style="flex-grow:1;">
+                <span class="upgrade-name">${u.name}</span>
+                <span class="upgrade-cost">${isBought ? 'OWNED' : u.cost + 'g'}</span>
+            </div>
+            <div class="upgrade-desc">${u.desc}</div>
+        `;
+        if (!isBought) btn.onclick = () => buyUpgrade(u.id, u.cost);
+        grid.appendChild(btn);
+    });
+}
+
+function buyUpgrade(id, cost) {
+    if (META.gold >= cost) { 
+        META.gold -= cost; 
+        META.upgrades[id] = true; 
+        saveGame(); 
+        renderCamp(); 
+        renderCampVisuals(); // Update visuals immediately
+    }
+}
+
+function renderCampVisuals() {
+    const container = document.getElementById('camp-visuals');
+    if (!container) return;
+    container.innerHTML = '';
+    
+    UPGRADES.forEach(u => {
+        if (META.upgrades[u.id] && u.imgKey && ASSETS[u.imgKey]) {
+            const img = document.createElement('img');
+            img.src = ASSETS[u.imgKey].src;
+            img.className = 'camp-building';
+            img.style.left = u.x + '%';
+            container.appendChild(img);
+        }
+    });
+}
+
+function openCamp() { document.getElementById('start-screen').classList.add('hidden'); document.getElementById('camp-screen').classList.remove('hidden'); renderCamp(); }
+function closeCamp() { document.getElementById('camp-screen').classList.add('hidden'); document.getElementById('start-screen').classList.remove('hidden'); }
+
+function openManual() {
+    const container = document.getElementById('manual-content'); container.innerHTML = '';
+    const raceHeader = document.createElement('div'); raceHeader.className = 'manual-section-header'; raceHeader.innerText = "Backgrounds (Races)"; container.appendChild(raceHeader);
+    for (const key in RACES) {
+        const r = RACES[key];
+        container.innerHTML += `<div class="manual-card"><div class="manual-card-header"><div class="manual-title">${r.name}</div></div><div class="manual-desc" style="margin-bottom:10px;">${r.desc}</div><div class="manual-stats"><div class="manual-stat-row" style="color: #8b0000; text-align:center;">${r.statsText}</div></div></div>`;
+    }
+    const classHeader = document.createElement('div'); classHeader.className = 'manual-section-header'; classHeader.innerText = "Specialties (Classes)"; classHeader.style.marginTop = "30px"; container.appendChild(classHeader);
+    for (const key in CLASS_DEFS) {
+        const d = CLASS_DEFS[key];
+        const as = (60 / d.cooldown).toFixed(1);
+        container.innerHTML += `<div class="manual-card"><div class="manual-card-header"><img src="${ASSETS[d.imgKey]?.src}" class="manual-icon"><div><div class="manual-title">${d.name}</div><div class="manual-role">${d.role}</div></div></div><div class="manual-stats"><div class="manual-stat-row"><span>Damage:</span> <span style="color:#8b0000">${d.damage}</span></div><div class="manual-stat-row"><span>Range:</span> <span style="color:#00008b">${d.range}</span></div><div class="manual-stat-row"><span>Attack Speed:</span> <span style="color:#006400">${as}/sec</span></div></div><div class="manual-desc">${d.desc}</div></div>`;
+    }
+    document.getElementById('start-screen').classList.add('hidden');
+    document.getElementById('manual-screen').classList.remove('hidden');
+}
+function closeManual() { document.getElementById('manual-screen').classList.add('hidden'); document.getElementById('start-screen').classList.remove('hidden'); }
+
+// ==========================================
+// 7. GAME LOOP & LOGIC
+// ==========================================
 
 function initGame(charData) {
     player = {
-        x: GAME.width / 2,
-        y: GAME.height / 2,
-        radius: 12,
-        color: '#D4AF37', 
-        angle: 0,
+        x: GAME.width / 2, y: GAME.height / 2, radius: 12, color: '#D4AF37', angle: 0,
         imgKey: CLASS_DEFS[charData.classKey || charData.type].imgKey
     };
-    
-    squad = [];
-    enemies = [];
-    pickups = [];
-    projectiles = [];
-    floatingTexts = [];
-    
-    // Init stats for this run
+    squad = []; enemies = []; pickups = []; projectiles = []; floatingTexts = [];
     currentRunStats = { kills: 0, gold: 0 };
-    
-    // Add Leader (Use charData stats)
     addSquadMate(charData.classKey || charData.type, charData.race || 'HUMAN', charData.name);
 }
 
 function startGame(charData) {
     document.getElementById('start-screen').classList.add('hidden');
-    // Reveal HUD
     document.getElementById('ui-layer').classList.remove('hidden');
+    GAME.state = 'PLAY'; GAME.hp = GAME.maxHp; GAME.score = 0; GAME.time = 0;
+    GAME.level = 1; GAME.xp = 0; GAME.xpReq = CONFIG.XP_BASE_REQ;
+    GAME.luck = 5; GAME.maxLuck = 20; GAME.luckBurnCount = 0; GAME.formation = 'WEDGE';
     
-    GAME.state = 'PLAY';
-    GAME.hp = GAME.maxHp;
-    GAME.score = 0;
-    GAME.time = 0;
-    GAME.level = 1;
-    GAME.xp = 0;
-    GAME.xpReq = CONFIG.XP_BASE_REQ;
-    GAME.luck = 5;
-    GAME.maxLuck = 20;
-    GAME.luckBurnCount = 0;
-    GAME.formation = 'WEDGE';
-    
-    // Apply Global Start Upgrades
     if (META.upgrades['brothel']) GAME.maxLuck += 2;
     if (META.upgrades['kitchen']) { GAME.maxHp += 20; GAME.hp = GAME.maxHp; }
     if (META.upgrades['church']) { GAME.maxHp += 50; GAME.hp = GAME.maxHp; }
     
-    // Initialize Player Object First!
     initGame(charData);
-
-    // Apply Leader Race Modifiers (Global)
     const race = RACES[charData.race || 'HUMAN'];
     if (race) {
         if (race.hp) { GAME.maxHp += race.hp; GAME.hp = GAME.maxHp; }
         if (race.luck) { GAME.maxLuck += race.luck; GAME.luck = Math.min(GAME.luck, GAME.maxLuck); }
-        if (race.dmgFlat) { /* Applied via addSquadMate -> applyRaceStats */ }
-        // Movement speed is applied in update loop based on race config
         player.raceSpeedMult = race.moveSpeed || 1.0;
-    } else {
-        player.raceSpeedMult = 1.0;
-    }
-    
+    } else { player.raceSpeedMult = 1.0; }
     animate();
 }
 
+function checkSquadSynergies() {
+    GAME.canUseShieldWall = squad.some(m => m.type === 'SOLDIER' && m.level >= 3);
+    const indicator = document.getElementById('tactic-name');
+    if (!GAME.canUseShieldWall && GAME.formation === 'SHIELD') toggleFormation();
+    document.getElementById('tutorial').innerHTML = `WASD: Move<br>SPACE: Toggle Formation (${GAME.canUseShieldWall ? 'READY' : 'LOCKED - Need Lvl 3 Soldier'})<br>Q: Burn Luck (Ultimate)`;
+}
+
 function toggleFormation() {
-    if (!GAME.canUseShieldWall) {
-        addFloatingText(player.x, player.y - 40, "NEED LVL 3 SOLDIER", "gray");
-        return;
-    }
-    
+    if (!GAME.canUseShieldWall) { addFloatingText(player.x, player.y - 40, "NEED LVL 3 SOLDIER", "gray"); return; }
     GAME.formation = GAME.formation === 'WEDGE' ? 'SHIELD' : 'WEDGE';
     const indicator = document.getElementById('tactic-name');
     indicator.innerText = GAME.formation;
@@ -1740,92 +1325,40 @@ function toggleFormation() {
 
 function burnLuck() {
     if (GAME.luck >= GAME.maxLuck * 0.5) { 
-        enemies.forEach(e => {
-            takeEnemyDamage(e, 9999);
-        });
-        ctx.fillStyle = "white";
-        ctx.fillRect(0,0,GAME.width, GAME.height);
-        GAME.luck = 0;
-        GAME.maxLuck = Math.max(5, GAME.maxLuck - 5); 
-        GAME.luckBurnCount++;
+        enemies.forEach(e => takeEnemyDamage(e, 9999));
+        ctx.fillStyle = "white"; ctx.fillRect(0,0,GAME.width, GAME.height);
+        GAME.luck = 0; GAME.maxLuck = Math.max(5, GAME.maxLuck - 5); GAME.luckBurnCount++;
         addFloatingText(player.x, player.y - 50, "LUCK BURNED!", "red");
-    } else {
-        addFloatingText(player.x, player.y - 30, "NOT ENOUGH LUCK", "gray");
-    }
+    } else { addFloatingText(player.x, player.y - 30, "NOT ENOUGH LUCK", "gray"); }
 }
 
 function addSquadMate(type, race = null, name = null) {
     if (squad.length >= CONFIG.MAX_TOTAL_SQUAD_SIZE) return;
-    
-    // Check if we are recruiting a second leader logic
-    if (squad.length === 6) {
-        // This is the 2nd Leader (Index 6)
-        if (META.gold >= CONFIG.SECOND_LEADER_COST) {
-            META.gold -= CONFIG.SECOND_LEADER_COST;
-            saveGame();
-            addFloatingText(player.x, player.y, "-20 Gold", "gold");
-        }
+    if (squad.length === 6 && META.gold >= CONFIG.SECOND_LEADER_COST) {
+        META.gold -= CONFIG.SECOND_LEADER_COST; saveGame();
+        addFloatingText(player.x, player.y, "-20 Gold", "gold");
     }
-    
-    // Randomize if not provided
-    if (!race) {
-        const raceKeys = Object.keys(RACES);
-        race = raceKeys[Math.floor(Math.random() * raceKeys.length)];
-    }
-    if (!name) {
-        name = getRandomName(race);
-    }
-    
+    if (!race) race = Object.keys(RACES)[Math.floor(Math.random() * 6)];
+    if (!name) name = getRandomName(race);
     squad.push(new SquadMate(type, squad.length, race, name)); 
-    checkSquadSynergies();
-    updateUI();
-}
-
-function getNearestEnemy(x, y, range) {
-    let nearest = null;
-    let minDst = range;
-    for (const e of enemies) {
-        const dst = Math.hypot(e.x - x, e.y - y);
-        if (dst < minDst) {
-            minDst = dst;
-            nearest = e;
-        }
-    }
-    return nearest;
-}
-
-function checkCollision(c1, c2) {
-    const dx = c1.x - c2.x;
-    const dy = c1.y - c2.y;
-    const dist = Math.hypot(dx, dy);
-    return dist < c1.radius + c2.radius;
+    checkSquadSynergies(); updateUI();
 }
 
 function takeEnemyDamage(enemy, dmg, knockback = false) {
     enemy.hp -= dmg;
-    // Debounce text slightly to prevent flooding
     if (Math.random() > 0.5) addFloatingText(enemy.x, enemy.y, dmg, "#fff");
-    
     if (knockback) {
         const angle = Math.atan2(enemy.y - player.y, enemy.x - player.x);
-        enemy.x += Math.cos(angle) * 20;
-        enemy.y += Math.sin(angle) * 20;
+        enemy.x += Math.cos(angle) * 20; enemy.y += Math.sin(angle) * 20;
     }
-
     if (enemy.hp <= 0 && !enemy.markedForDeletion) {
         enemy.markedForDeletion = true;
         pickups.push(new XPOrb(enemy.x, enemy.y, enemy.xp));
-        
-        // Gold Chance
-        let dropChance = 0.1; // 1 in 10
+        let dropChance = 0.1; 
         if (META.upgrades['merchant']) dropChance += 0.05;
-        if (Math.random() < dropChance) {
-            pickups.push(new GoldOrb(enemy.x + 5, enemy.y + 5));
-        }
-        
+        if (Math.random() < dropChance) pickups.push(new GoldOrb(enemy.x + 5, enemy.y + 5));
         GAME.luck = Math.min(GAME.luck + 1, GAME.maxLuck);
-        GAME.score += 10;
-        currentRunStats.kills++;
+        GAME.score += 10; currentRunStats.kills++;
     }
 }
 
@@ -1833,7 +1366,6 @@ function takePlayerDamage(amount) {
     let dmg = amount;
     if (GAME.formation === 'SHIELD') dmg = Math.ceil(dmg * 0.5); 
     if (META.upgrades['leather']) dmg = Math.max(1, dmg - 1);
-    
     GAME.hp -= dmg;
     addFloatingText(player.x, player.y, `-${dmg}`, "red");
     if (GAME.hp <= 0) gameOver();
@@ -1843,320 +1375,129 @@ function gainXP(amount) {
     let finalAmt = amount;
     if (META.upgrades['cells']) finalAmt = Math.ceil(amount * 1.1);
     if (META.upgrades['grounds']) finalAmt = Math.ceil(amount * 1.2);
-    
     GAME.xp += finalAmt;
-    if (GAME.xp >= GAME.xpReq) {
-        levelUp();
-    }
+    if (GAME.xp >= GAME.xpReq) levelUp();
 }
 
 function levelUp() {
-    GAME.state = 'LEVELUP';
-    GAME.level++;
-    GAME.xp = 0;
+    GAME.state = 'LEVELUP'; GAME.level++; GAME.xp = 0;
     GAME.xpReq = Math.floor(GAME.xpReq * CONFIG.XP_SCALING);
+    if (META.upgrades['hospital']) GAME.hp = Math.min(GAME.hp + 20, GAME.maxHp);
     
-    if (META.upgrades['hospital']) {
-        GAME.hp = Math.min(GAME.hp + 20, GAME.maxHp);
-    }
+    const grid = document.getElementById('upgrade-grid'); grid.innerHTML = '';
     
-    const grid = document.getElementById('upgrade-grid');
-    grid.innerHTML = '';
+    // Create Columns
+    const leftCol = document.createElement('div');
+    leftCol.className = 'upgrade-column';
+    const h1 = document.createElement('div'); h1.className = 'column-header'; h1.innerText = "Promote Squad";
+    leftCol.appendChild(h1);
     
-    // SECTION 1: UPGRADE EXISTING
-    const existingHeader = document.createElement('div');
-    existingHeader.className = 'section-header';
-    existingHeader.innerText = "PROMOTE SQUAD";
-    grid.appendChild(existingHeader);
+    const rightCol = document.createElement('div');
+    rightCol.className = 'upgrade-column';
+    const h2 = document.createElement('div'); h2.className = 'column-header'; h2.innerText = "Recruit New";
+    rightCol.appendChild(h2);
 
+    // Existing Squad -> Left Column
     squad.forEach((mate) => {
         const def = CLASS_DEFS[mate.type];
-        const card = document.createElement('div');
-        card.className = 'upgrade-card';
-        card.style.borderColor = '#4169e1'; 
-        
-        // Show next level benefit
-        let bonusText = "Stats &uarr;";
-        if (mate.level === 2) { // Going to 3
-            if (mate.type === 'SOLDIER') bonusText = "Unlock: Shield Wall";
-            if (mate.type === 'CLERIC') bonusText = "Unlock: Auto Heal";
-            if (mate.type === 'MAGE') bonusText = "Unlock: Fireball";
-            if (mate.type === 'WITCH') bonusText = "Unlock: Fear";
-            if (mate.type === 'SCOUNDREL') bonusText = "Unlock: Traps";
-            if (mate.type === 'FOLK_HERO') bonusText = "Unlock: Magnet";
+        const card = document.createElement('div'); card.className = 'upgrade-card'; card.style.borderColor = '#4169e1';
+        let bonus = "Stats \u2191";
+        if(mate.level===2) {
+             const m = {"SOLDIER":"Shield Wall","CLERIC":"Auto Heal","MAGE":"Fireball","WITCH":"Fear","SCOUNDREL":"Traps","FOLK_HERO":"Magnet"};
+             bonus = "Unlock: " + m[mate.type];
         }
-
-        const imgSrc = ASSETS[def.imgKey] ? ASSETS[def.imgKey].src : '';
-
-        card.innerHTML = `
-            <img src="${imgSrc}" class="card-icon">
-            <div class="card-title">UPGRADE</div>
-            <div class="card-role" style="color:${def.color}">${def.name} Lvl ${mate.level} &rarr; ${mate.level+1}</div>
-            <div class="card-desc" style="color:#aaf">${bonusText}</div>
-        `;
-        card.onclick = () => {
-            mate.upgrade();
-            closeLevelUp();
-        };
-        grid.appendChild(card);
+        card.innerHTML = `<img src="${ASSETS[def.imgKey]?.src}" class="card-icon"><div class="card-title">UPGRADE</div><div class="card-role" style="color:${def.color}">${def.name} Lvl ${mate.level} \u2192 ${mate.level+1}</div><div class="card-desc" style="color:#aaf">${bonus}</div>`;
+        card.onclick = () => { mate.upgrade(); closeLevelUp(); };
+        leftCol.appendChild(card);
     });
 
-    // SECTION 2: RECRUIT NEW
-    const recruitHeader = document.createElement('div');
-    recruitHeader.className = 'section-header';
-    recruitHeader.innerText = "RECRUIT NEW";
-    recruitHeader.style.marginTop = "20px";
-    grid.appendChild(recruitHeader);
-
-    // Case: Recruit 2nd Captain
-    if (squad.length === 6) {
-        const classKeys = Object.keys(CLASS_DEFS);
-        const shuffled = classKeys.sort(() => 0.5 - Math.random());
-        const choices = shuffled.slice(0, 3);
-        
+    // New Recruits -> Right Column
+    if (squad.length === 6) { // 2nd Leader Logic
+        const choices = Object.keys(CLASS_DEFS).sort(() => 0.5 - Math.random()).slice(0, 3);
         choices.forEach(key => {
             const def = CLASS_DEFS[key];
-            const raceKey = Object.keys(RACES)[Math.floor(Math.random() * 6)];
-            const race = RACES[raceKey];
-            
-            const card = document.createElement('div');
-            card.className = 'upgrade-card';
+            const rKey = Object.keys(RACES)[Math.floor(Math.random()*6)];
             const canAfford = META.gold >= CONFIG.SECOND_LEADER_COST;
-            
-            card.style.borderColor = canAfford ? '#d4af37' : '#444'; 
-            if (!canAfford) card.classList.add('disabled');
-            
-            const imgSrc = ASSETS[def.imgKey] ? ASSETS[def.imgKey].src : '';
-
-            card.innerHTML = `
-                <img src="${imgSrc}" class="card-icon">
-                <div class="card-title">RECRUIT CAPTAIN</div>
-                <div class="card-role" style="color:${def.color}">${race.name} ${def.name}</div>
-                <div class="card-desc" style="color: gold">Cost: ${CONFIG.SECOND_LEADER_COST}g</div>
-            `;
-            
-            if (canAfford) {
-                card.onclick = () => {
-                    addSquadMate(key, raceKey);
-                    closeLevelUp();
-                };
-            }
-            grid.appendChild(card);
+            const card = document.createElement('div'); card.className = `upgrade-card ${!canAfford?'disabled':''}`; card.style.borderColor = canAfford?'#d4af37':'#444';
+            card.innerHTML = `<img src="${ASSETS[def.imgKey]?.src}" class="card-icon"><div class="card-title">CAPTAIN</div><div class="card-role">${RACES[rKey].name} ${def.name}</div><div class="card-desc" style="color: gold">Cost: ${CONFIG.SECOND_LEADER_COST}g</div>`;
+            if (canAfford) card.onclick = () => { addSquadMate(key, rKey); closeLevelUp(); };
+            rightCol.appendChild(card);
         });
-        
-        // Also add Rations option if they can't afford
-        if (META.gold < CONFIG.SECOND_LEADER_COST) {
-             const card = document.createElement('div');
-            card.className = 'upgrade-card';
-            card.style.borderColor = '#00ff00';
-            card.innerHTML = `
-                <div class="card-title">RATIONS</div>
-                <div class="card-desc">Heal 30% HP</div>
-            `;
-            card.onclick = () => {
-                GAME.hp = Math.min(GAME.maxHp, GAME.hp + (GAME.maxHp * 0.3));
-                closeLevelUp();
-            };
-            grid.appendChild(card);
-        }
-
     } else if (squad.length < CONFIG.MAX_TOTAL_SQUAD_SIZE) {
-        // Standard Recruit
-        const classKeys = Object.keys(CLASS_DEFS);
-        const shuffled = classKeys.sort(() => 0.5 - Math.random());
-        const choices = shuffled.slice(0, 3);
-        
+        const choices = Object.keys(CLASS_DEFS).sort(() => 0.5 - Math.random()).slice(0, 3);
         choices.forEach(key => {
             const def = CLASS_DEFS[key];
-            // Random Race for Recruit
-            const raceKey = Object.keys(RACES)[Math.floor(Math.random() * 6)];
-            const race = RACES[raceKey];
-            const name = getRandomName(raceKey);
-
-            const card = document.createElement('div');
-            card.className = 'upgrade-card';
-            card.style.borderColor = '#d4af37'; 
-            const imgSrc = ASSETS[def.imgKey] ? ASSETS[def.imgKey].src : '';
-
-            card.innerHTML = `
-                <img src="${imgSrc}" class="card-icon">
-                <div class="card-title">RECRUIT</div>
-                <div class="card-role" style="color:${def.color}">${race.name} ${def.name}</div>
-                <div class="card-desc">${name}</div>
-            `;
-            card.onclick = () => {
-                addSquadMate(key, raceKey, name);
-                closeLevelUp();
-            };
-            grid.appendChild(card);
+            const rKey = Object.keys(RACES)[Math.floor(Math.random()*6)];
+            const card = document.createElement('div'); card.className = 'upgrade-card'; card.style.borderColor = '#d4af37';
+            card.innerHTML = `<img src="${ASSETS[def.imgKey]?.src}" class="card-icon"><div class="card-title">RECRUIT</div><div class="card-role">${RACES[rKey].name} ${def.name}</div>`;
+            card.onclick = () => { addSquadMate(key, rKey); closeLevelUp(); };
+            rightCol.appendChild(card);
         });
-    } else {
-        // Full Roster (12)
-         const card = document.createElement('div');
-        card.className = 'upgrade-card';
-        card.style.borderColor = '#00ff00';
-        card.innerHTML = `
-            <div class="card-title">RATIONS</div>
-            <div class="card-desc">Heal 30% HP</div>
-        `;
-        card.onclick = () => {
-            GAME.hp = Math.min(GAME.maxHp, GAME.hp + (GAME.maxHp * 0.3));
-            closeLevelUp();
-        };
-        grid.appendChild(card);
     }
+    
+    // Rations Fallback (Always available option on the right)
+    const ration = document.createElement('div'); ration.className = 'upgrade-card'; ration.style.borderColor = '#00ff00';
+    ration.innerHTML = `<div class="card-title">RATIONS</div><div class="card-desc">Heal 30% HP</div>`;
+    ration.onclick = () => { GAME.hp = Math.min(GAME.maxHp, GAME.hp + (GAME.maxHp*0.3)); closeLevelUp(); };
+    rightCol.appendChild(ration);
+    
+    grid.appendChild(leftCol);
+    grid.appendChild(rightCol);
     
     document.getElementById('levelup-screen').classList.remove('hidden');
 }
 
-function closeLevelUp() {
-    document.getElementById('levelup-screen').classList.add('hidden');
-    GAME.state = 'PLAY';
-}
+function closeLevelUp() { document.getElementById('levelup-screen').classList.add('hidden'); GAME.state = 'PLAY'; }
 
 function gameOver() {
-    GAME.state = 'GAMEOVER';
-    saveGame(); 
+    GAME.state = 'GAMEOVER'; saveGame();
     document.getElementById('death-stats').innerText = `Survived: ${document.getElementById('timer').innerText} | Level: ${GAME.level} | Gold: ${META.gold}`;
-    
-    // Check if can afford resurrection
     const rezBtn = document.getElementById('resurrect-btn');
-    if (META.gold >= 10) {
-        rezBtn.classList.remove('btn-disabled');
-        rezBtn.innerHTML = "RESURRECT LEADER (10g)";
-    } else {
-        rezBtn.classList.add('btn-disabled');
-        rezBtn.innerHTML = "RESURRECT LEADER (Too Poor)";
-    }
-    
+    if (META.gold >= 10) { rezBtn.classList.remove('btn-disabled'); rezBtn.innerHTML = "RESURRECT LEADER (10g)"; }
+    else { rezBtn.classList.add('btn-disabled'); rezBtn.innerHTML = "RESURRECT LEADER (Too Poor)"; }
     document.getElementById('gameover-screen').classList.remove('hidden');
 }
 
-function addFloatingText(x, y, text, color) {
-    floatingTexts.push({
-        x, y, text, color, life: 30
-    });
+function resurrectLeader() {
+    if (META.gold >= 10 && player) {
+        META.gold -= 10;
+        const leader = squad[0];
+        META.roster.push({ type: leader.type, race: leader.race, name: leader.name, kills: currentRunStats.kills, gp: currentRunStats.gold });
+        saveGame(); location.reload();
+    }
 }
-
-// --- MAIN LOOP ---
 
 function update() {
     if (GAME.state !== 'PLAY') return;
-
     GAME.frames++;
-    if (GAME.frames % 60 === 0) {
-        GAME.time++;
-        // Passive Regen from Housing
-        if (META.upgrades['housing']) {
-            if (GAME.hp < GAME.maxHp) GAME.hp = Math.min(GAME.maxHp, GAME.hp + 0.5);
-        }
-    }
+    if (GAME.frames % 60 === 0) { GAME.time++; if (META.upgrades['housing'] && GAME.hp < GAME.maxHp) GAME.hp = Math.min(GAME.maxHp, GAME.hp + 0.5); }
+    if (GAME.frames % CONFIG.ENEMY_SPAWN_RATE === 0) enemies.push(new Enemy());
 
-    if (GAME.frames % CONFIG.ENEMY_SPAWN_RATE === 0) {
-        enemies.push(new Enemy());
-    }
-
-    let moveSpeed = GAME.formation === 'WEDGE' ? CONFIG.PLAYER_SPEED_WEDGE : CONFIG.PLAYER_SPEED_SHIELD;
-    if (META.upgrades['stables']) moveSpeed *= 1.1;
-    // Apply Player Race Modifier
-    if (player && player.raceSpeedMult) moveSpeed *= player.raceSpeedMult;
-    
+    let moveSpeed = (GAME.formation === 'WEDGE' ? CONFIG.PLAYER_SPEED_WEDGE : CONFIG.PLAYER_SPEED_SHIELD) * (META.upgrades['stables'] ? 1.1 : 1.0) * (player.raceSpeedMult || 1.0);
     let dx = 0, dy = 0;
-    if (keys.w) dy -= 1;
-    if (keys.s) dy += 1;
-    if (keys.a) dx -= 1;
-    if (keys.d) dx += 1;
-    
+    if (keys.w) dy -= 1; if (keys.s) dy += 1; if (keys.a) dx -= 1; if (keys.d) dx += 1;
     if (dx !== 0 || dy !== 0) {
         const len = Math.hypot(dx, dy);
-        dx = (dx/len) * moveSpeed;
-        dy = (dy/len) * moveSpeed;
-        
-        player.x += dx;
-        player.y += dy;
-        player.angle = Math.atan2(dy, dx);
+        dx = (dx/len) * moveSpeed; dy = (dy/len) * moveSpeed;
+        player.x += dx; player.y += dy; player.angle = Math.atan2(dy, dx);
     }
-    
     player.x = Math.max(10, Math.min(GAME.width-10, player.x));
     player.y = Math.max(10, Math.min(GAME.height-10, player.y));
 
     squad.forEach(mate => mate.update(player.x, player.y, player.angle, GAME.formation));
-    
-    enemies.forEach(e => e.update());
-    enemies = enemies.filter(e => !e.markedForDeletion);
-    
-    projectiles.forEach(p => p.update());
-    projectiles = projectiles.filter(p => !p.markedForDeletion);
-    
-    pickups.forEach(p => p.update());
-    pickups = pickups.filter(p => !p.markedForDeletion);
-    
-    floatingTexts.forEach(t => {
-        t.y -= 0.5;
-        t.life--;
-    });
-    floatingTexts = floatingTexts.filter(t => t.life > 0);
+    enemies.forEach(e => e.update()); enemies = enemies.filter(e => !e.markedForDeletion);
+    projectiles.forEach(p => p.update()); projectiles = projectiles.filter(p => !p.markedForDeletion);
+    pickups.forEach(p => p.update()); pickups = pickups.filter(p => !p.markedForDeletion);
+    floatingTexts.forEach(t => { t.y -= 0.5; t.life--; }); floatingTexts = floatingTexts.filter(t => t.life > 0);
 
-    if (GAME.time >= 20 * 60) { 
-        GAME.state = 'WIN';
-        saveGame();
-        document.getElementById('win-screen').classList.remove('hidden');
-    }
-    
+    if (GAME.time >= 20 * 60) { GAME.state = 'WIN'; saveGame(); document.getElementById('win-screen').classList.remove('hidden'); }
     updateUI();
 }
 
-function draw() {
-    ctx.clearRect(0,0, canvas.width, canvas.height);
-    
-    // Draw Tiled Background for Gameplay
-    const bgImg = ASSETS['BACKGROUND'];
-    if (bgImg && bgImg.complete && bgImg.naturalWidth !== 0) {
-        const ptrn = ctx.createPattern(bgImg, 'repeat'); 
-        ctx.fillStyle = ptrn;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
-
-    pickups.forEach(p => p.draw());
-
-    // Draw Player Ring
-    const leaderImg = ASSETS[player.imgKey]; 
-    if (leaderImg && leaderImg.complete && leaderImg.naturalWidth !== 0) {
-        const size = player.radius * 3.0;
-        ctx.drawImage(leaderImg, player.x - size/2, player.y - size/2, size, size);
-        ctx.beginPath();
-        ctx.arc(player.x, player.y, player.radius * 1.5, 0, Math.PI * 2);
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = "#D4AF37";
-        ctx.stroke();
-    } else {
-        ctx.beginPath();
-        ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
-        ctx.fillStyle = player.color;
-        ctx.fill();
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = "#fff";
-        ctx.stroke();
-    }
-    
-    squad.forEach(mate => mate.draw());
-    enemies.forEach(e => e.draw());
-    projectiles.forEach(p => p.draw());
-
-    floatingTexts.forEach(t => {
-        ctx.fillStyle = t.color;
-        ctx.font = "bold 16px Courier New";
-        ctx.fillText(t.text, t.x, t.y);
-    });
-}
-
 function updateUI() {
-    const hpPct = (GAME.hp / GAME.maxHp) * 100;
-    document.getElementById('hp-bar').style.width = `${Math.max(0, hpPct)}%`;
-    const xpPct = (GAME.xp / GAME.xpReq) * 100;
-    document.getElementById('xp-bar').style.width = `${Math.min(100, xpPct)}%`;
-    const luckPct = (GAME.luck / GAME.maxLuck) * 100;
-    document.getElementById('luck-bar').style.width = `${Math.min(100, luckPct)}%`;
+    document.getElementById('hp-bar').style.width = `${Math.max(0, (GAME.hp/GAME.maxHp)*100)}%`;
+    document.getElementById('xp-bar').style.width = `${Math.min(100, (GAME.xp/GAME.xpReq)*100)}%`;
+    document.getElementById('luck-bar').style.width = `${Math.min(100, (GAME.luck/GAME.maxLuck)*100)}%`;
     document.getElementById('luck-text').innerText = `${GAME.luck} / ${GAME.maxLuck}`;
     const mins = Math.floor(GAME.time / 60).toString().padStart(2, '0');
     const secs = (GAME.time % 60).toString().padStart(2, '0');
@@ -2166,14 +1507,67 @@ function updateUI() {
     document.getElementById('gold-hud').innerText = META.gold;
 }
 
-function animate() {
-    update();
-    draw();
-    if (GAME.state === 'PLAY' || GAME.state === 'LEVELUP') {
-        requestAnimationFrame(animate);
+function draw() {
+    ctx.clearRect(0,0, canvas.width, canvas.height);
+    const bgImg = ASSETS['BACKGROUND'];
+    if (bgImg && bgImg.complete) { ctx.fillStyle = ctx.createPattern(bgImg, 'repeat'); ctx.fillRect(0, 0, canvas.width, canvas.height); }
+    pickups.forEach(p => p.draw());
+    
+    // Draw Leader
+    const leaderImg = ASSETS[player.imgKey];
+    if (leaderImg && leaderImg.complete) {
+        const size = player.radius * 3.0;
+        ctx.drawImage(leaderImg, player.x - size/2, player.y - size/2, size, size);
+        ctx.beginPath(); ctx.arc(player.x, player.y, player.radius * 1.5, 0, Math.PI * 2);
+        ctx.lineWidth = 2; ctx.strokeStyle = "#D4AF37"; ctx.stroke();
     }
+    squad.forEach(mate => mate.draw());
+    enemies.forEach(e => e.draw());
+    projectiles.forEach(p => p.draw());
+    floatingTexts.forEach(t => { ctx.fillStyle = t.color; ctx.font = "bold 16px Courier New"; ctx.fillText(t.text, t.x, t.y); });
 }
 
+function animate() {
+    update(); draw();
+    if (GAME.state === 'PLAY' || GAME.state === 'LEVELUP') requestAnimationFrame(animate);
+}
+
+// ==========================================
+// 8. INITIALIZATION
+// ==========================================
+
+window.onload = function() {
+    canvas = document.getElementById('gameCanvas');
+    ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    GAME.width = canvas.width;
+    GAME.height = canvas.height;
+    
+    loadAssets();
+    loadGame();
+    
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        GAME.width = canvas.width; GAME.height = canvas.height;
+    });
+
+    window.addEventListener('keydown', e => {
+        if(e.key === ' ' || e.key === 'Spacebar') { if(GAME.state === 'PLAY' && !keys.space) toggleFormation(); keys.space = true; }
+        if(e.key.toLowerCase() === 'q') { if(GAME.state === 'PLAY' && !keys.q) burnLuck(); keys.q = true; }
+        if(['w','a','s','d','ArrowUp','ArrowLeft','ArrowDown','ArrowRight'].includes(e.key)) {
+            keys[e.key.toLowerCase().replace('arrowup','w').replace('arrowleft','a').replace('arrowdown','s').replace('arrowright','d')] = true;
+        }
+    });
+
+    window.addEventListener('keyup', e => {
+        if(e.key === ' ' || e.key === 'Spacebar') keys.space = false;
+        if(e.key.toLowerCase() === 'q') keys.q = false;
+        if(['w','a','s','d','ArrowUp','ArrowLeft','ArrowDown','ArrowRight'].includes(e.key)) {
+            keys[e.key.toLowerCase().replace('arrowup','w').replace('arrowleft','a').replace('arrowdown','s').replace('arrowright','d')] = false;
+        }
+    });
+};
 </script>
 </body>
 </html>
