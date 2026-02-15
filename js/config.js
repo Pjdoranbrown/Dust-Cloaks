@@ -1,8 +1,6 @@
-const CONFIG = {/* your config values */};
-const RACES = {/* your race definitions */};
-const NAMES = {/* your name definitions */};
-const CLASS_DEFS = {/* your class definitions */};
-const ENEMY_DEFS = {/* your enemy definitions */};
-const UPGRADES = {/* your upgrade definitions */};
-
-export { CONFIG, RACES, NAMES, CLASS_DEFS, ENEMY_DEFS, UPGRADES };
+const CONFIG = { /* CONFIG definitions */ };
+const RACES = { /* RACES definitions */ };
+const NAMES = { /* NAMES definitions */ };
+const CLASS_DEFS = { /* CLASS_DEFS definitions */ };
+const ENEMY_DEFS = { /* ENEMY_DEFS definitions */ };
+const UPGRADES = { /* UPGRADES definitions */ };
