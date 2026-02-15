@@ -1,74 +1,64 @@
 // =============================================================================
-// GAMESTATE.JS - Game state variables and save/load functionality
+// GAMESTATE.JS - Game state and persistence (EXACT from original)
 // =============================================================================
 
-// Main game state
+import { CONFIG } from './config.js';
+
 export const GAME = {
-    state: 'MENU',
-    width: 1280,
-    height: 720,
+    state: 'START',
+    width: window.innerWidth,
+    height: window.innerHeight,
+    frames: 0,
+    time: 0,
+    score: 0,
+    level: 1,
+    xp: 0,
+    xpReq: CONFIG.XP_BASE_REQ,
+    formation: 'WEDGE', 
+    luck: 0,
+    maxLuck: 20, 
+    luckBurnCount: 0,
     hp: 100,
     maxHp: 100,
-    xp: 0,
-    xpReq: 10,
-    level: 1,
-    time: 0,
-    frames: 0,
-    formation: 'WEDGE',
-    luck: 0,
-    maxLuck: 100
+    canUseShieldWall: false
 };
 
-// Meta-progression (persists between runs)
 export const META = {
     gold: 0,
-    upgrades: {},
-    unlockedClasses: { TANK: true, ARCHER: true },
-    hasPlayedBefore: false
+    upgrades: {}, 
+    roster: []
 };
 
-// Keyboard input state
-export const keys = {
-    w: false,
-    a: false,
-    s: false,
-    d: false
+export const keys = { 
+    w:false, 
+    a:false, 
+    s:false, 
+    d:false, 
+    space:false, 
+    q:false 
 };
 
-// Save game data to localStorage
-export function saveGame() {
-    const saveData = {
-        gold: META.gold,
-        upgrades: META.upgrades,
-        unlockedClasses: META.unlockedClasses,
-        hasPlayedBefore: true
-    };
-    localStorage.setItem('dustCloaksSave', JSON.stringify(saveData));
-}
+const SAVE_KEY = 'dust_cloaks_v3';
 
-// Load game data from localStorage
 export function loadGame() {
-    const saved = localStorage.getItem('dustCloaksSave');
-    if (saved) {
-        const data = JSON.parse(saved);
-        META.gold = data.gold || 0;
-        META.upgrades = data.upgrades || {};
-        META.unlockedClasses = data.unlockedClasses || { TANK: true, ARCHER: true };
-        META.hasPlayedBefore = data.hasPlayedBefore || false;
+    const data = localStorage.getItem(SAVE_KEY);
+    if (data) {
+        try {
+            const parsed = JSON.parse(data);
+            META.gold = parsed.gold || 0;
+            META.upgrades = parsed.upgrades || {};
+            META.roster = parsed.roster || [];
+        } catch(e) { 
+            console.error("Save Corrupt"); 
+        }
     }
 }
 
-// Reset game state for new run
-export function resetGameState(leaderClass, leaderRace) {
-    GAME.state = 'PLAY';
-    GAME.hp = 100;
-    GAME.maxHp = 100;
-    GAME.xp = 0;
-    GAME.xpReq = 10;
-    GAME.level = 1;
-    GAME.time = 0;
-    GAME.frames = 0;
-    GAME.formation = 'WEDGE';
-    GAME.luck = 0;
-    GAME.maxLuck = 100;
+export function saveGame() {
+    const data = {
+        gold: META.gold,
+        upgrades: META.upgrades,
+        roster: META.roster
+    };
+    localStorage.setItem(SAVE_KEY, JSON.stringify(data));
 }

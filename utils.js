@@ -1,26 +1,17 @@
 // =============================================================================
-// UTILS.JS - Utility and helper functions
+// UTILS.JS - Utility functions (EXACT from original)
 // =============================================================================
 
-import { NAME_POOLS } from './config.js';
+import { NAMES } from './config.js';
 
-// Get a random name based on race
 export function getRandomName(raceKey) {
-    const pool = NAME_POOLS[raceKey] || NAME_POOLS.HUMAN;
-    return pool[Math.floor(Math.random() * pool.length)];
+    const list = NAMES[raceKey] || NAMES.HUMAN;
+    return list[Math.floor(Math.random() * list.length)];
 }
 
-// Calculate distance between two points
-export function distance(x1, y1, x2, y2) {
-    return Math.hypot(x2 - x1, y2 - y1);
-}
-
-// Check circle collision
-export function circleCollision(x1, y1, r1, x2, y2, r2) {
-    return distance(x1, y1, x2, y2) < (r1 + r2);
-}
-
-// Clamp a value between min and max
-export function clamp(value, min, max) {
-    return Math.max(min, Math.min(max, value));
+export function checkCollision(c1, c2) {
+    const dx = c1.x - c2.x;
+    const dy = c1.y - c2.y;
+    const dist = Math.hypot(dx, dy);
+    return dist < (c1.radius + c2.radius);
 }

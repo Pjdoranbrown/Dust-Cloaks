@@ -7,116 +7,130 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
     <canvas id="gameCanvas"></canvas>
 
     <!-- UI Overlay (Hidden initially) -->
-    <div id="ui-layer" style="display: none;">
+    <div id="ui-layer" class="hidden">
         <div id="xp-bar-container"><div id="xp-bar"></div></div>
-        
         <div id="top-hud" class="hud-panel">
             <div style="display:flex; flex-direction:column; align-items:center;">
                 <span style="font-size:10px; color:#ddd;">CONDITION</span>
                 <div id="hp-container"><div id="hp-bar"></div></div>
             </div>
             <div style="display:flex; flex-direction:column; align-items:center;">
-                <span style="font-size:10px; color:#ddd;">LUCK</span>
+                <span style="font-size:10px; color:#ddd;">LUCK (PRESS Q)</span>
                 <div id="luck-container">
                     <div id="luck-bar"></div>
-                    <div id="luck-text">0 / 100</div>
+                    <div id="luck-text">0 / 10</div>
                 </div>
             </div>
-            <div style="font-size:24px;" id="timer">00:00</div>
-            <div style="font-size:18px;">Lvl <span id="level-display">1</span></div>
-            <div style="font-size:18px;">Squad: <span id="squad-count">0/12</span></div>
-            <div style="font-size:18px; color:#ffd700;">Gold: <span id="gold-hud">0</span></div>
+            <div>
+                <span style="font-size:10px; color:#ddd;">TIME</span><br>
+                <span id="timer" style="font-size:20px;">00:00</span>
+            </div>
+            <div>
+                <span style="font-size:10px; color:#ddd;">SQUAD</span><br>
+                <span id="squad-count" style="font-size:20px;">1/6</span>
+            </div>
+            <div>
+                <span style="font-size:10px; color:#ddd;">LEVEL</span><br>
+                <span id="level-display" style="font-size:20px;">1</span>
+            </div>
+            <div>
+                <span style="font-size:10px; color:#ddd;">GOLD</span><br>
+                <span id="gold-hud" style="font-size:20px; color: gold;">0</span>
+            </div>
         </div>
-        
-        <div id="formation-indicator">Formation: WEDGE</div>
+        <div id="formation-indicator" class="hud-panel">
+            TACTIC: <span id="tactic-name" style="color:#d4af37">WEDGE</span> <span style="font-size:12px; color:#aaa;">[SPACE]</span>
+        </div>
+        <div id="tutorial">
+            WASD: Move<br>
+            SPACE: Toggle Formation (Requires Lvl 3 Soldier)<br>
+            Q: Burn Luck (Ultimate)
+        </div>
     </div>
 
-    <!-- START MENU -->
+    <!-- Start Screen -->
     <div id="start-screen" class="screen menu-screen">
         <h1>Dust Cloaks</h1>
-        <button class="btn" id="play-btn">PLAY</button>
-        <button class="btn" id="camp-btn">CAMP</button>
-        <button class="btn" id="roster-btn">ROSTER</button>
-        <button class="btn" id="manual-btn">MANUAL</button>
-    </div>
-
-    <!-- CHARACTER CREATION -->
-    <div id="char-creation-screen" class="screen menu-screen hidden">
-        <h1>Create Your Leader</h1>
-        <h2>Choose Class</h2>
-        <div id="class-grid" style="display:flex; gap:15px; flex-wrap:wrap; justify-content:center; max-width:900px;"></div>
-        <h2 style="margin-top:30px;">Choose Race</h2>
-        <div id="race-grid" style="display:flex; gap:15px; flex-wrap:wrap; justify-content:center; max-width:900px;"></div>
-        <div style="margin-top:30px;">
-            <button class="btn" id="create-char-btn">START ADVENTURE</button>
-            <button class="btn btn-small" id="cancel-create-btn">BACK</button>
+        <div id="gold-display">Gold: 0</div>
+        <div style="margin-top: 30px; display: flex; gap: 20px;">
+            <button class="btn" onclick="window.gameUI.startCreation()">RECRUIT SQUAD LEADER</button>
+        </div>
+        <div style="margin-top: 15px;">
+            <button class="btn btn-small" onclick="window.gameUI.openRoster()">ROSTER</button>
+            <button class="btn btn-small" onclick="window.gameUI.openCamp()">CAMP UPGRADES</button>
+            <button class="btn btn-small" onclick="window.gameUI.openManual()">PLAYER'S MANUAL</button>
         </div>
     </div>
+    
+    <!-- Character Creation Screen -->
+    <div id="char-creation-screen" class="screen menu-screen hidden">
+        <h1 id="creation-title">Select Race</h1>
+        <div id="creation-steps">
+            <div id="step-race" class="creation-step active">
+                <div id="race-selection-grid"></div>
+            </div>
+            <div id="step-class" class="creation-step">
+                <div id="char-selection-grid"></div>
+            </div>
+            <div id="step-name" class="creation-step">
+                <p style="font-size:24px; font-weight:bold;">Identity Confirmation</p>
+                <div id="name-input-container">
+                    <input type="text" id="char-name-input" placeholder="Enter Name">
+                    <button class="btn btn-small" onclick="window.gameUI.randomizeName()">Randomize</button>
+                </div>
+                <button class="btn" onclick="window.gameUI.finalizeCreation()">SIGN CONTRACT</button>
+            </div>
+        </div>
+        <button class="btn btn-small" style="margin-top: 20px;" onclick="window.gameUI.closeCreation()">CANCEL</button>
+    </div>
 
-    <!-- CAMP SCREEN -->
+    <!-- Roster Screen -->
+    <div id="roster-screen" class="screen menu-screen hidden">
+        <h1>Active Roster</h1>
+        <button class="btn btn-small" onclick="window.gameUI.closeRoster()">BACK</button>
+        <div id="roster-grid"></div>
+    </div>
+    
+    <!-- Camp Screen -->
     <div id="camp-screen" class="screen menu-screen hidden">
         <h1>Camp Upgrades</h1>
+        <div id="camp-gold" style="color:#8b0000; font-size:24px; margin-bottom:10px; font-weight:bold;">Gold: 0</div>
+        <button class="btn btn-small" onclick="window.gameUI.closeCamp()">BACK TO CONTRACTS</button>
         <div id="camp-grid"></div>
-        <button class="btn" id="camp-back-btn" style="margin-top:30px;">BACK</button>
     </div>
 
-    <!-- ROSTER SCREEN -->
-    <div id="roster-screen" class="screen menu-screen hidden">
-        <h1>Your Roster</h1>
-        <div id="roster-grid"></div>
-        <button class="btn" id="roster-back-btn" style="margin-top:30px;">BACK</button>
-    </div>
-
-    <!-- MANUAL SCREEN -->
+    <!-- Manual Screen -->
     <div id="manual-screen" class="screen menu-screen hidden">
-        <h1>Manual</h1>
+        <h1>Player's Manual</h1>
+        <button class="btn btn-small" onclick="window.gameUI.closeManual()">BACK TO MENU</button>
         <div id="manual-content"></div>
-        <button class="btn" id="manual-back-btn" style="margin-top:30px;">BACK</button>
     </div>
 
-    <!-- LEVEL UP SCREEN -->
+    <!-- Level Up Screen (In-Game Overlay) -->
     <div id="levelup-screen" class="screen overlay-screen hidden">
-        <h1>LEVEL UP!</h1>
-        <div id="levelup-grid" style="display:flex; gap:20px; flex-wrap:wrap; justify-content:center; max-width:900px;"></div>
+        <h1 style="font-size: 32px;">RECRUITMENT</h1>
+        <p style="color:#aaa;">Upgrade Squad or Recruit New</p>
+        <div id="upgrade-grid"></div>
     </div>
 
-    <!-- GAME OVER SCREEN -->
+    <!-- Game Over Screen (In-Game Overlay) -->
     <div id="gameover-screen" class="screen overlay-screen hidden">
-        <h1>YOU DIED</h1>
-        <p id="death-stats" style="font-size:20px; margin:20px 0;"></p>
-        <button class="btn" id="resurrect-btn">RESURRECT (10g)</button>
-        <button class="btn btn-small" id="gameover-menu-btn">MAIN MENU</button>
+        <h1 style="color: #b22222;">SQUAD BROKEN</h1>
+        <p id="death-stats" style="color:#aaa;">You survived for 00:00</p>
+        <button id="resurrect-btn" class="btn" style="border-color: #4169e1; color: #4169e1;" onclick="window.gameUI.resurrectLeader()">RESURRECT LEADER (10g)</button>
+        <button class="btn" onclick="location.reload()">RETURN TO GUILD</button>
     </div>
 
-    <!-- WIN SCREEN -->
+    <!-- Win Screen (In-Game Overlay) -->
     <div id="win-screen" class="screen overlay-screen hidden">
-        <h1>VICTORY!</h1>
-        <p style="font-size:24px;">You survived 20 minutes!</p>
-        <button class="btn" id="win-menu-btn">MAIN MENU</button>
+        <h1 style="color: #4169e1;">CONTRACT COMPLETE</h1>
+        <p style="color:#aaa;">The area is secure.</p>
+        <button class="btn" onclick="location.reload()">COLLECT PAYMENT</button>
     </div>
 
-    <!-- Main Application Script -->
-    <script type="module">
-        import { loadAssets } from './assets.js';
-        import { loadGame } from './gameState.js';
-        import { initGame } from './game.js';
-        import { initUI } from './ui.js';
-
-        // Load save data first
-        loadGame();
-        
-        // Initialize UI immediately (don't wait for assets)
-        initUI();
-
-        // Load assets, then initialize game
-        loadAssets(() => {
-            initGame();
-        });
-    </script>
-
+    <script type="module" src="game.js"></script>
 </body>
 </html>
