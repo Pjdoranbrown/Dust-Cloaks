@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dust Cloaks: Survivor</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #1a1815; /* Gritty dark brown */
+            font-family: 'Courier New', Courier, monospace;
+            color: #dcdcdc;
+            user-select: none;
+        }
+        #background-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background-image: url('parchmentFoldedCrinkled.jpg');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.6; /* More visible as requested */
+        }
+        #gameCanvas {
+            display: block;
+            image-rendering: pixelated; /* Crucial for pixel art crispness */
+        }
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        .hud-panel {
+            position: absolute;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #5d4e3e;
+            pointer-events: none;
+        }
+        #top-hud {
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        #luck-container {
+            position: relative;
+            width: 200px;
+            height: 20px;
+            background: #333;
+            border: 2px solid #888;
+        }
+        #luck-bar {
+            height: 100%;
+            width: 0%;
+            background: #d4af37; /* Gold */
+            transition: width 0.1s;
+        }
+        #luck-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 12px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 1px 1px 0 #000;
+        }
+        #hp-container {
+            width: 200px;
+            height: 20px;
+            background: #333;
+            border: 2px solid #8a2be2; /* Condition/Morale color */
+        }
+        #hp-bar {
+            height: 100%;
+            width: 100%;
+            background: #b22222;
+            transition: width 0.1s;
+        }
+        #xp-bar-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: #000;
+        }
+        #xp-bar {
+            height: 100%;
+            background: #4169e1;
+            width: 0%;
+        }
+        #formation-indicator {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            font-size: 18px;
+        }
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            pointer-events: auto;
+            z-index: 10;
+        }
+        .hidden {
+            display: none !important;
+        }
+        h1 { font-size: 48px; color: #d4af37; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 4px; text-align: center; }
+        p { font-size: 18px; color: #aaa; max-width: 800px; text-align: center; line-height: 1.5; margin-bottom: 20px; }
+        .btn {
+            background: #5d4e3e;
+            border: 2px solid #d4af37;
+            color: #d4af37;
+            padding: 15px 30px;
+            font-size: 20px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-family: inherit;
+            transition: background 0.2s;
+        }
+        .btn:hover { background: #3e332a; }
+        
+        /* Card Grid for Level Up */
+        #upgrade-grid {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 900px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .upgrade-card {
+            background: #2a2520;
+            border: 2px solid #666;
+            width: 180px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.2s, border-color 0.2s;
+            position: relative;
+        }
+        .upgrade-card:hover {
+            transform: translateY(-5px);
+            border-color: #d4af37;
+            background: #3a332a;
+        }
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 10px;
+            image-rendering: pixelated;
+        }
+        .card-title { font-size: 16px; color: #fff; margin-bottom: 8px; font-weight: bold; text-align: center; }
+        .card-role { font-size: 12px; color: #aaa; margin-bottom: 8px; font-style: italic; text-align: center; }
+        .card-desc { font-size: 11px; color: #ccc; text-align: center; line-height: 1.4; }
+        
+        .section-header {
+            width: 100%;
+            text-align: center;
+            font-size: 14px;
+            color: #888;
+            margin-top: 10px;
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+
+        .damage-text {
+            position: absolute;
+            font-weight: bold;
+            pointer-events: none;
+            animation: floatUp 0.8s forwards;
+            text-shadow: 1px 1px 0 #000;
+        }
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-30px); }
+        }
+
+        #tutorial {
+            position: absolute;
+            top: 60px;
+            left: 20px;
+            color: #888;
+            font-size: 14px;
+        }
+        
+        #class-selection {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+            max-width: 1000px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="background-layer"></div>
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- UI Overlay -->
+    <div id="ui-layer">
+        <div id="xp-bar-container"><div id="xp-bar"></div></div>
+        
+        <div id="top-hud" class="hud-panel">
+            <div style="display:flex; flex-direction:column; align-items:center;">
+                <span style="font-size:10px; color:#aaa;">CONDITION</span>
+                <div id="hp-container"><div id="hp-bar"></div></div>
+            </div>
+            <div style="display:flex; flex-direction:column; align-items:center;">
+                <span style="font-size:10px; color:#aaa;">LUCK (PRESS Q)</span>
+                <div id="luck-container">
+                    <div id="luck-bar"></div>
+                    <div id="luck-text">0 / 10</div>
+                </div>
+            </div>
+            <div>
+                <span style="font-size:10px; color:#aaa;">TIME</span><br>
+                <span id="timer" style="font-size:20px;">00:00</span>
+            </div>
+            <div>
+                <span style="font-size:10px; color:#aaa;">SQUAD</span><br>
+                <span id="squad-count" style="font-size:20px;">1/6</span>
+            </div>
+            <div>
+                <span style="font-size:10px; color:#aaa;">LEVEL</span><br>
+                <span id="level-display" style="font-size:20px;">1</span>
+            </div>
+        </div>
+
+        <div id="formation-indicator" class="hud-panel">
+            TACTIC: <span id="tactic-name" style="color:#d4af37">WEDGE</span> <span style="font-size:12px; color:#888;">[SPACE]</span>
+        </div>
+
+        <div id="tutorial">
+            WASD: Move<br>
+            SPACE: Toggle Formation (Requires Lvl 3 Soldier)<br>
+            Q: Burn Luck (Ultimate)
+        </div>
+    </div>
+
+    <!-- Start Screen -->
+    <div id="start-screen" class="screen">
+        <h1>Dust Cloaks</h1>
+        <p>Choose your Squad Leader to begin the contract.</p>
+        <div id="class-selection">
+            <!-- Buttons generated by JS -->
+        </div>
+    </div>
+
+    <!-- Level Up Screen -->
+    <div id="levelup-screen" class="screen hidden">
+        <h1 style="font-size: 32px;">RECRUITMENT</h1>
+        <p>Upgrade Squad or Recruit New</p>
+        <div id="upgrade-grid">
+            <!-- Cards generated via JS -->
+        </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="gameover-screen" class="screen hidden">
+        <h1 style="color: #b22222;">SQUAD BROKEN</h1>
+        <p id="death-stats">You survived for 00:00</p>
+        <button class="btn" onclick="location.reload()">RETURN TO GUILD</button>
+    </div>
+
+    <!-- Win Screen -->
+    <div id="win-screen" class="screen hidden">
+        <h1 style="color: #4169e1;">CONTRACT COMPLETE</h1>
+        <p>The area is secure.</p>
+        <button class="btn" onclick="location.reload()">COLLECT PAYMENT</button>
+    </div>
+
+<script>
+/**
+ * DUST CLOAKS: SURVIVOR PROTOTYPE
+ * Core Systems: Squad Boids, Classes, Luck Mechanic
+ */
+
+// --- CONFIG & STATE ---
+const CONFIG = {
+    PLAYER_SPEED_WEDGE: 3.5,
+    PLAYER_SPEED_SHIELD: 2.0,
+    SQUAD_FOLLOW_SPEED: 0.1, 
+    ENEMY_SPAWN_RATE: 25, // Increased spawn rate (was 60)
+    XP_BASE_REQ: 10,
+    XP_SCALING: 1.5,
+    MAX_SQUAD_SIZE: 6,
+    BASE_PICKUP_RADIUS: 100
+};
+
+const GAME = {
+    state: 'START',
+    width: window.innerWidth,
+    height: window.innerHeight,
+    frames: 0,
+    time: 0,
+    score: 0,
+    level: 1,
+    xp: 0,
+    xpReq: CONFIG.XP_BASE_REQ,
+    formation: 'WEDGE', // WEDGE or SHIELD
+    luck: 0,
+    maxLuck: 20, 
+    luckBurnCount: 0,
+    hp: 100,
+    maxHp: 100,
+    canUseShieldWall: false
+};
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+// --- ASSET MANAGEMENT ---
+const ASSETS = {};
+function loadAssets() {
+    const sources = {
+        SOLDIER: 'tile_0087.png',
+        MAGE: 'tile_0084.png',
+        CLERIC: 'tile_0098.png',
+        SCOUNDREL: 'tile_0100.png',
+        WITCH: 'tile_0111.png',
+        FOLK_HERO: 'tile_0112.png',
+        BACKGROUND: 'parchmentFoldedCrinkled.jpg',
+        
+        // Enemies
+        RAT: 'tile_0123.png',
+        BAT: 'tile_0120.png',
+        OGRE: 'tile_0109.png',
+        CRAB: 'tile_0110.png'
+    };
+    for(let key in sources) {
+        const img = new Image();
+        img.src = sources[key];
+        ASSETS[key] = img;
+    }
+}
+loadAssets();
+
+// Input Handling
+const keys = { w:false, a:false, s:false, d:false, space:false, q:false };
+
+window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    GAME.width = canvas.width;
+    GAME.height = canvas.height;
+});
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+window.addEventListener('keydown', e => {
+    if(e.key === ' ' || e.key === 'Spacebar') {
+        if(GAME.state === 'PLAY' && !keys.space) toggleFormation();
+        keys.space = true;
+    }
+    if(e.key.toLowerCase() === 'q') {
+        if(GAME.state === 'PLAY' && !keys.q) burnLuck();
+        keys.q = true;
+    }
+    if(['w','a','s','d','ArrowUp','ArrowLeft','ArrowDown','ArrowRight'].includes(e.key)) {
+        keys[e.key.toLowerCase().replace('arrowup','w').replace('arrowleft','a').replace('arrowdown','s').replace('arrowright','d')] = true;
+    }
+});
+
+window.addEventListener('keyup', e => {
+    if(e.key === ' ' || e.key === 'Spacebar') keys.space = false;
+    if(e.key.toLowerCase() === 'q') keys.q = false;
+    if(['w','a','s','d','ArrowUp','ArrowLeft','ArrowDown','ArrowRight'].includes(e.key)) {
+        keys[e.key.toLowerCase().replace('arrowup','w').replace('arrowleft','a').replace('arrowdown','s').replace('arrowright','d')] = false;
+    }
+});
+
+// --- CLASSES & DEFINITIONS ---
+
+const CLASS_DEFS = {
+    SOLDIER: { 
+        name: 'Soldier', role: 'Vanguard', color: '#A0A0A0', 
+        desc: 'Melee sweep. Lvl 3 unlocks Shield Wall formation.', 
+        range: 60, cooldown: 60, damage: 15, imgKey: 'SOLDIER'
+    },
+    SCOUNDREL: { 
+        name: 'Scoundrel', role: 'DPS', color: '#404040', 
+        desc: 'Single Target Stab. Lvl 3 drops slowing traps.', 
+        range: 40, cooldown: 45, damage: 30, imgKey: 'SCOUNDREL' 
+    },
+    MAGE: { 
+        name: 'Mage', role: 'Artillery', color: '#4169E1', 
+        desc: 'Fast projectiles. Lvl 3 summons Fireball Zones.', 
+        range: 400, cooldown: 40, damage: 10, imgKey: 'MAGE'
+    },
+    CLERIC: { 
+        name: 'Cleric', role: 'Support', color: '#DAA520', 
+        desc: 'AoE Knockback. Lvl 3 heals squad every 10s.', 
+        range: 80, cooldown: 90, damage: 8, imgKey: 'CLERIC'
+    },
+    WITCH: { 
+        name: 'Witch', role: 'Debuffer', color: '#800080', 
+        desc: 'Permanent Poison DoT. Lvl 3 Fears enemies.', 
+        range: 250, cooldown: 80, damage: 2, imgKey: 'WITCH' 
+    },
+    FOLK_HERO: { 
+        name: 'Folk Hero', role: 'Control', color: '#228B22', 
+        desc: 'Directional shot. Lvl 3 increases XP collection.', 
+        range: 300, cooldown: 50, damage: 12, imgKey: 'FOLK_HERO'
+    }
+};
+
+const ENEMY_DEFS = {
+    RAT: {
+        name: 'Rat', hp: 15, speed: 0.8, damage: 3, xp: 5, 
+        imgKey: 'RAT', color: '#654321', scale: 2.0
+    },
+    BAT: {
+        name: 'Bat', hp: 10, speed: 2.0, damage: 4, xp: 8, 
+        imgKey: 'BAT', color: '#333333', scale: 2.0
+    },
+    OGRE: {
+        name: 'Ogre', hp: 120, speed: 0.6, damage: 15, xp: 30, 
+        imgKey: 'OGRE', color: '#2e8b57', scale: 3.5
+    },
+    CRAB: {
+        name: 'Crab', hp: 50, speed: 2.5, damage: 12, xp: 20, 
+        imgKey: 'CRAB', color: '#cd5c5c', scale: 2.5
+    }
+};
+
+class Entity {
+    constructor(x, y, radius, color) {
+        this.x = x;
+        this.y = y;
+        this.radius = radius;
+        this.color = color;
+        this.markedForDeletion = false;
+    }
+    draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+        ctx.closePath();
+    }
+}
+
+class SquadMate extends Entity {
+    constructor(type, index) {
+        super(0, 0, 10, CLASS_DEFS[type].color);
+        this.type = type;
+        this.stats = { ...CLASS_DEFS[type] }; // Clone stats
+        this.cooldownTimer = 0;
+        this.specialTimer = 0; // For secondary effects like healing
+        this.index = index; 
+        this.level = 1;
+    }
+
+    upgrade() {
+        this.level++;
+        // Stat scaling based on class
+        if (this.type === 'CLERIC') {
+            this.stats.damage = Math.floor(this.stats.damage * 1.5);
+            this.stats.range += 15; // Bigger AoE
+        } else if (this.type === 'FOLK_HERO') {
+            this.stats.damage += 5;
+            this.stats.cooldown = Math.max(10, Math.floor(this.stats.cooldown * 0.8)); // Faster
+        } else if (this.type === 'MAGE') {
+            this.stats.damage += 5;
+        } else if (this.type === 'SCOUNDREL') {
+            this.stats.damage += 10;
+            this.stats.cooldown = Math.max(10, Math.floor(this.stats.cooldown * 0.9));
+        } else if (this.type === 'SOLDIER') {
+            this.stats.damage += 5;
+            this.stats.cooldown = Math.max(10, Math.floor(this.stats.cooldown * 0.9));
+        }
+        
+        // Refresh flags
+        checkSquadSynergies();
+        addFloatingText(player.x, player.y, `LVL UP!`, "#4169e1");
+    }
+
+    update(leaderX, leaderY, leaderAngle, formation) {
+        // Formation Logic
+        let targetX, targetY;
+        const spacing = 25;
+        
+        if (this.index === 0) {
+            this.x = leaderX;
+            this.y = leaderY;
+        } else {
+            if (formation === 'WEDGE') {
+                const side = this.index % 2 === 0 ? 1 : -1;
+                const row = Math.ceil(this.index / 2);
+                const offsetX = -row * spacing * 1.5; 
+                const offsetY = side * row * spacing; 
+                const rotX = offsetX * Math.cos(leaderAngle) - offsetY * Math.sin(leaderAngle);
+                const rotY = offsetX * Math.sin(leaderAngle) + offsetY * Math.cos(leaderAngle);
+                targetX = leaderX + rotX;
+                targetY = leaderY + rotY;
+            } else { // SHIELD WALL
+                const totalMates = squad.length - 1; 
+                const angleStep = (Math.PI * 2) / Math.max(1, squad.length - 1);
+                const angle = (this.index - 1) * angleStep;
+                targetX = leaderX + Math.cos(angle) * spacing;
+                targetY = leaderY + Math.sin(angle) * spacing;
+            }
+            this.x += (targetX - this.x) * CONFIG.SQUAD_FOLLOW_SPEED;
+            this.y += (targetY - this.y) * CONFIG.SQUAD_FOLLOW_SPEED;
+        }
+
+        // Lvl 3 Passive Logic (Periodic)
+        if (this.level >= 3) {
+            if (this.type === 'CLERIC') {
+                this.specialTimer++;
+                if (this.specialTimer >= 600) { // 10 seconds (60fps)
+                    GAME.hp = Math.min(GAME.hp + 15, GAME.maxHp);
+                    addFloatingText(this.x, this.y - 20, "+SQUAD HEAL", "#gold");
+                    this.specialTimer = 0;
+                    // Visual
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, 100, 0, Math.PI*2);
+                    ctx.strokeStyle = "gold";
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            } else if (this.type === 'MAGE') {
+                this.specialTimer++;
+                if (this.specialTimer >= 240) { // 4 seconds
+                     // Random Fireball nearby
+                     const fx = this.x + (Math.random() * 300 - 150);
+                     const fy = this.y + (Math.random() * 300 - 150);
+                     projectiles.push(new FireballZone(fx, fy));
+                     this.specialTimer = 0;
+                }
+            }
+        }
+
+        // Auto Attack Logic
+        if (this.cooldownTimer > 0) this.cooldownTimer--;
+        else this.performAttack(leaderAngle);
+    }
+    
+    draw() {
+        if (this.index === 0) return; // Drawn by player logic
+        const img = ASSETS[this.stats.imgKey];
+        if (img && img.complete && img.naturalWidth !== 0) {
+            const size = this.radius * 3.0; 
+            ctx.drawImage(img, this.x - size/2, this.y - size/2, size, size);
+        } else {
+            super.draw();
+        }
+    }
+
+    performAttack(angle) {
+        const enemy = getNearestEnemy(this.x, this.y, this.stats.range);
+        
+        if (this.type === 'SOLDIER' && enemy) {
+            projectiles.push(new MeleeSwipe(this.x, this.y, enemy.x, enemy.y, this.stats.damage));
+            this.cooldownTimer = this.stats.cooldown;
+        } 
+        else if (this.type === 'MAGE' && enemy) {
+            projectiles.push(new MagicMissile(this.x, this.y, enemy, this.stats.damage));
+            this.cooldownTimer = this.stats.cooldown;
+        }
+        else if (this.type === 'SCOUNDREL') {
+             // Melee Stab
+             if (enemy) {
+                projectiles.push(new DaggerMelee(this.x, this.y, enemy.x, enemy.y, this.stats.damage));
+                this.cooldownTimer = this.stats.cooldown;
+             }
+             // Lvl 3 Trap Logic
+             if (this.level >= 3 && Math.random() > 0.7) { // Chance to drop trap
+                 projectiles.push(new Trap(this.x, this.y, this.stats.damage));
+             }
+        }
+        else if (this.type === 'CLERIC') {
+            // AoE Knockback Shockwave
+            if (getNearestEnemy(this.x, this.y, this.stats.range)) { // Only if enemy nearby
+                projectiles.push(new Shockwave(this.x, this.y, this.stats.range, this.stats.damage));
+                this.cooldownTimer = this.stats.cooldown;
+            }
+        }
+        else if (this.type === 'WITCH' && enemy) {
+            const causesFear = this.level >= 3;
+            projectiles.push(new PoisonBolt(this.x, this.y, enemy, this.stats.damage, causesFear));
+            this.cooldownTimer = this.stats.cooldown;
+        }
+        else if (this.type === 'FOLK_HERO') {
+            // Directional Shot
+            projectiles.push(new StraightShot(this.x, this.y, angle, this.stats.damage));
+            this.cooldownTimer = this.stats.cooldown;
+        }
+    }
+}
+
+class Enemy extends Entity {
+    constructor() {
+        // Spawn Logic
+        const time = GAME.time;
+        let typeKey = 'RAT';
+        if (time < 30) typeKey = 'RAT';
+        else if (time < 60) typeKey = Math.random() > 0.5 ? 'BAT' : 'RAT';
+        else if (time < 90) typeKey = Math.random() > 0.2 ? 'BAT' : 'RAT';
+        else {
+            const rand = Math.random();
+            if (rand < 0.1) typeKey = 'RAT';
+            else if (rand < 0.55) typeKey = 'OGRE';
+            else typeKey = 'CRAB';
+        }
+
+        const stats = ENEMY_DEFS[typeKey];
+        const side = Math.floor(Math.random() * 4);
+        let x, y;
+        const pad = 50;
+        if (side === 0) { x = Math.random() * GAME.width; y = -pad; }
+        else if (side === 1) { x = GAME.width + pad; y = Math.random() * GAME.height; }
+        else if (side === 2) { x = Math.random() * GAME.width; y = GAME.height + pad; }
+        else { x = -pad; y = Math.random() * GAME.height; }
+
+        super(x, y, 12, stats.color);
+        this.typeStats = stats;
+        this.hp = stats.hp + (GAME.level * 3);
+        this.maxSpeed = stats.speed * (0.9 + Math.random() * 0.2);
+        this.damage = stats.damage;
+        this.xp = stats.xp;
+        if (typeKey === 'OGRE') this.radius = 20;
+
+        // Status Effects
+        this.poisoned = false;
+        this.poisonDmg = 0;
+        this.fearTimer = 0;
+        this.slowTimer = 0;
+    }
+
+    update() {
+        // Handle Status Effects
+        if (this.poisoned && GAME.frames % 60 === 0) {
+            takeEnemyDamage(this, this.poisonDmg, false);
+        }
+
+        if (this.slowTimer > 0) this.slowTimer--;
+        if (this.fearTimer > 0) this.fearTimer--;
+
+        // Movement Logic
+        let dx = player.x - this.x;
+        let dy = player.y - this.y;
+        
+        if (this.fearTimer > 0) {
+            // Circle/Run away: Move perpendicular
+             const temp = dx;
+             dx = -dy;
+             dy = temp;
+        }
+
+        const dist = Math.hypot(dx, dy);
+        let currentSpeed = this.maxSpeed;
+        if (this.slowTimer > 0) currentSpeed *= 0.5;
+
+        if (dist > 0) {
+            this.x += (dx / dist) * currentSpeed;
+            this.y += (dy / dist) * currentSpeed;
+        }
+
+        if (checkCollision(this, player)) {
+            takePlayerDamage(this.damage);
+            this.markedForDeletion = true; 
+        }
+    }
+
+    draw() {
+        const img = ASSETS[this.typeStats.imgKey];
+        if (img && img.complete && img.naturalWidth !== 0) {
+            const size = this.radius * this.typeStats.scale; 
+            ctx.save();
+            if (this.poisoned) ctx.filter = 'sepia(1) hue-rotate(50deg)'; // Green tint
+            if (this.fearTimer > 0) ctx.filter = 'invert(1)'; // Visual indicator for fear
+            ctx.drawImage(img, this.x - size/2, this.y - size/2, size, size);
+            ctx.restore();
+        } else {
+            super.draw();
+        }
+    }
+}
+
+class XPOrb extends Entity {
+    constructor(x, y, val) {
+        super(x, y, 4, '#4169e1');
+        this.value = val;
+    }
+    update() {
+        // Magnet Logic (Folk Hero Lvl 3 affects this)
+        let pickupRange = CONFIG.BASE_PICKUP_RADIUS;
+        // Check for Lvl 3 Folk Hero
+        const hasFolkHero = squad.some(m => m.type === 'FOLK_HERO' && m.level >= 3);
+        if (hasFolkHero) pickupRange *= 2.5;
+
+        const dist = Math.hypot(player.x - this.x, player.y - this.y);
+        if (dist < pickupRange) { 
+            this.x += (player.x - this.x) * 0.15;
+            this.y += (player.y - this.y) * 0.15;
+        }
+        if (dist < player.radius + 10) {
+            gainXP(this.value);
+            this.markedForDeletion = true;
+        }
+    }
+    draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+    }
+}
+
+// --- PROJECTILES ---
+
+class Projectile extends Entity {
+    constructor(x, y, r, color, damage, duration) {
+        super(x, y, r, color);
+        this.damage = damage;
+        this.duration = duration;
+    }
+    update() {
+        this.duration--;
+        if (this.duration <= 0) this.markedForDeletion = true;
+    }
+}
+
+// MAGE: Targeted
+class MagicMissile extends Projectile {
+    constructor(x, y, target, damage) {
+        super(x, y, 5, '#87CEEB', damage, 60);
+        this.target = target;
+        this.speed = 7;
+    }
+    update() {
+        super.update();
+        if (this.target && !this.target.markedForDeletion) {
+            const dx = this.target.x - this.x;
+            const dy = this.target.y - this.y;
+            const dist = Math.hypot(dx, dy);
+            this.x += (dx / dist) * this.speed;
+            this.y += (dy / dist) * this.speed;
+            
+            if (dist < 10) {
+                takeEnemyDamage(this.target, this.damage);
+                this.markedForDeletion = true;
+            }
+        } else {
+            this.markedForDeletion = true;
+        }
+    }
+}
+
+// MAGE LVL 3: Area DoT
+class FireballZone extends Projectile {
+    constructor(x, y) {
+        super(x, y, 60, 'rgba(255, 69, 0, 0.4)', 5, 240); // 4 seconds
+    }
+    update() {
+        super.update();
+        if (this.duration % 20 === 0) { // Tick every 0.3s
+            enemies.forEach(e => {
+                if (Math.hypot(e.x - this.x, e.y - this.y) < this.radius) {
+                    takeEnemyDamage(e, this.damage, false);
+                }
+            });
+        }
+    }
+}
+
+// SOLDIER: Melee Swipe
+class MeleeSwipe extends Projectile {
+    constructor(x, y, tx, ty, damage) {
+        super(x, y, 35, 'rgba(200,200,200,0.5)', damage, 8);
+        enemies.forEach(e => {
+            if (Math.hypot(e.x - x, e.y - y) < 45) {
+                takeEnemyDamage(e, damage, true);
+            }
+        });
+    }
+}
+
+// SCOUNDREL: Stab
+class DaggerMelee extends Projectile {
+    constructor(x, y, tx, ty, damage) {
+        super(x, y, 10, '#fff', damage, 5);
+        // Instant hit scan check
+        const angle = Math.atan2(ty - y, tx - x);
+        const hx = x + Math.cos(angle) * 20;
+        const hy = y + Math.sin(angle) * 20;
+        enemies.forEach(e => {
+             if (Math.hypot(e.x - hx, e.y - hy) < 20) takeEnemyDamage(e, damage);
+        });
+    }
+}
+
+// SCOUNDREL LVL 3: Trap
+class Trap extends Projectile {
+    constructor(x, y, damage) {
+        super(x, y, 15, '#8B4513', damage, 600); // 10 seconds lifespan
+        this.active = true;
+    }
+    update() {
+        if (!this.active) { this.markedForDeletion = true; return; }
+        this.duration--;
+        if (this.duration <= 0) this.markedForDeletion = true;
+
+        enemies.forEach(e => {
+            if (Math.hypot(e.x - this.x, e.y - this.y) < this.radius + e.radius) {
+                takeEnemyDamage(e, this.damage);
+                e.slowTimer = 180; // Slow for 3s
+                this.active = false; // Destroy trap
+                // Visual boom
+                addFloatingText(this.x, this.y, "SNAP!", "red");
+            }
+        });
+    }
+}
+
+// CLERIC: Shockwave (Base)
+class Shockwave extends Projectile {
+    constructor(x, y, range, damage) {
+        super(x, y, range, 'rgba(255, 215, 0, 0.3)', damage, 15);
+        enemies.forEach(e => {
+             const d = Math.hypot(e.x - x, e.y - y);
+             if (d < range) {
+                 takeEnemyDamage(e, damage, true); // Knockback
+                 // Extra push
+                 const angle = Math.atan2(e.y - y, e.x - x);
+                 e.x += Math.cos(angle) * 30;
+                 e.y += Math.sin(angle) * 30;
+             }
+        });
+    }
+}
+
+// WITCH: Poison Bolt
+class PoisonBolt extends Projectile {
+    constructor(x, y, target, damage, causesFear) {
+        super(x, y, 6, '#800080', damage, 60);
+        this.target = target;
+        this.causesFear = causesFear;
+        this.speed = 6;
+    }
+    update() {
+        super.update();
+        if (this.target && !this.target.markedForDeletion) {
+             const dx = this.target.x - this.x;
+             const dy = this.target.y - this.y;
+             const dist = Math.hypot(dx, dy);
+             this.x += (dx/dist)*this.speed;
+             this.y += (dy/dist)*this.speed;
+             
+             if (dist < 10) {
+                 takeEnemyDamage(this.target, this.damage);
+                 // Apply Permanent Poison
+                 this.target.poisoned = true;
+                 this.target.poisonDmg = 2; // Tick amount
+                 if (this.causesFear) this.target.fearTimer = 120; // 2 seconds fear
+                 this.markedForDeletion = true;
+             }
+        } else {
+            this.markedForDeletion = true;
+        }
+    }
+}
+
+// FOLK HERO: Directional Shot
+class StraightShot extends Projectile {
+    constructor(x, y, angle, damage) {
+        super(x, y, 5, '#228B22', damage, 60);
+        this.vx = Math.cos(angle) * 10;
+        this.vy = Math.sin(angle) * 10;
+    }
+    update() {
+        super.update();
+        this.x += this.vx;
+        this.y += this.vy;
+        enemies.forEach(e => {
+            if (checkCollision(this, e)) {
+                takeEnemyDamage(e, this.damage);
+                this.markedForDeletion = true;
+            }
+        });
+    }
+}
+
+// --- GLOBAL VARIABLES ---
+let player;
+let squad = [];
+let enemies = [];
+let pickups = [];
+let projectiles = [];
+let floatingTexts = [];
+
+// --- CORE FUNCTIONS ---
+
+function checkSquadSynergies() {
+    // Check Soldier Lvl 3 for Formation
+    GAME.canUseShieldWall = squad.some(m => m.type === 'SOLDIER' && m.level >= 3);
+    
+    // Update UI indicator
+    const indicator = document.getElementById('tactic-name');
+    if (!GAME.canUseShieldWall && GAME.formation === 'SHIELD') {
+        // Force revert if we lost the soldier somehow (unlikely but good safety)
+        toggleFormation(); 
+    }
+    
+    // Re-render tutorial text
+    const tut = document.getElementById('tutorial');
+    tut.innerHTML = `
+        WASD: Move<br>
+        SPACE: Toggle Formation (${GAME.canUseShieldWall ? 'READY' : 'LOCKED - Need Lvl 3 Soldier'})<br>
+        Q: Burn Luck (Ultimate)
+    `;
+}
+
+function generateStartScreen() {
+    const container = document.getElementById('class-selection');
+    container.innerHTML = '';
+    for (const key in CLASS_DEFS) {
+        const def = CLASS_DEFS[key];
+        const btn = document.createElement('div');
+        btn.className = 'upgrade-card';
+        // Add image to start screen button
+        const imgSrc = ASSETS[def.imgKey] ? ASSETS[def.imgKey].src : '';
+        
+        btn.innerHTML = `
+            <img src="${imgSrc}" class="card-icon">
+            <div class="card-title" style="color:${def.color}">${def.name}</div>
+            <div class="card-role">${def.role}</div>
+            <div class="card-desc">${def.desc}</div>
+        `;
+        btn.onclick = () => startGame(key);
+        container.appendChild(btn);
+    }
+}
+
+// Ensure assets are loaded before gen
+setTimeout(generateStartScreen, 100); 
+
+function initGame(startingClassKey) {
+    player = {
+        x: GAME.width / 2,
+        y: GAME.height / 2,
+        radius: 12,
+        color: '#D4AF37', 
+        angle: 0,
+        imgKey: CLASS_DEFS[startingClassKey].imgKey
+    };
+    
+    squad = [];
+    enemies = [];
+    pickups = [];
+    projectiles = [];
+    floatingTexts = [];
+    
+    addSquadMate(startingClassKey);
+}
+
+function startGame(startingClassKey) {
+    document.getElementById('start-screen').classList.add('hidden');
+    GAME.state = 'PLAY';
+    GAME.hp = GAME.maxHp;
+    GAME.score = 0;
+    GAME.time = 0;
+    GAME.level = 1;
+    GAME.xp = 0;
+    GAME.xpReq = CONFIG.XP_BASE_REQ;
+    GAME.luck = 5;
+    GAME.maxLuck = 20;
+    GAME.luckBurnCount = 0;
+    GAME.formation = 'WEDGE';
+    
+    initGame(startingClassKey);
+    animate();
+}
+
+function toggleFormation() {
+    if (!GAME.canUseShieldWall) {
+        addFloatingText(player.x, player.y - 40, "NEED LVL 3 SOLDIER", "gray");
+        return;
+    }
+    
+    GAME.formation = GAME.formation === 'WEDGE' ? 'SHIELD' : 'WEDGE';
+    const indicator = document.getElementById('tactic-name');
+    indicator.innerText = GAME.formation;
+    indicator.style.color = GAME.formation === 'WEDGE' ? '#d4af37' : '#4169e1';
+    addFloatingText(player.x, player.y - 30, GAME.formation, "#fff");
+}
+
+function burnLuck() {
+    if (GAME.luck >= GAME.maxLuck * 0.5) { 
+        enemies.forEach(e => {
+            takeEnemyDamage(e, 9999);
+        });
+        ctx.fillStyle = "white";
+        ctx.fillRect(0,0,GAME.width, GAME.height);
+        GAME.luck = 0;
+        GAME.maxLuck = Math.max(5, GAME.maxLuck - 5); 
+        GAME.luckBurnCount++;
+        addFloatingText(player.x, player.y - 50, "LUCK BURNED!", "red");
+    } else {
+        addFloatingText(player.x, player.y - 30, "NOT ENOUGH LUCK", "gray");
+    }
+}
+
+function addSquadMate(type) {
+    if (squad.length >= CONFIG.MAX_SQUAD_SIZE) return;
+    squad.push(new SquadMate(type, squad.length)); 
+    checkSquadSynergies();
+    updateUI();
+}
+
+function getNearestEnemy(x, y, range) {
+    let nearest = null;
+    let minDst = range;
+    for (const e of enemies) {
+        const dst = Math.hypot(e.x - x, e.y - y);
+        if (dst < minDst) {
+            minDst = dst;
+            nearest = e;
+        }
+    }
+    return nearest;
+}
+
+function checkCollision(c1, c2) {
+    const dx = c1.x - c2.x;
+    const dy = c1.y - c2.y;
+    const dist = Math.hypot(dx, dy);
+    return dist < c1.radius + c2.radius;
+}
+
+function takeEnemyDamage(enemy, dmg, knockback = false) {
+    enemy.hp -= dmg;
+    // Debounce text slightly to prevent flooding
+    if (Math.random() > 0.5) addFloatingText(enemy.x, enemy.y, dmg, "#fff");
+    
+    if (knockback) {
+        const angle = Math.atan2(enemy.y - player.y, enemy.x - player.x);
+        enemy.x += Math.cos(angle) * 20;
+        enemy.y += Math.sin(angle) * 20;
+    }
+
+    if (enemy.hp <= 0 && !enemy.markedForDeletion) {
+        enemy.markedForDeletion = true;
+        pickups.push(new XPOrb(enemy.x, enemy.y, enemy.xp));
+        GAME.luck = Math.min(GAME.luck + 1, GAME.maxLuck);
+        GAME.score += 10;
+    }
+}
+
+function takePlayerDamage(amount) {
+    let dmg = amount;
+    if (GAME.formation === 'SHIELD') dmg = Math.ceil(dmg * 0.5); 
+    GAME.hp -= dmg;
+    addFloatingText(player.x, player.y, `-${dmg}`, "red");
+    if (GAME.hp <= 0) gameOver();
+}
+
+function gainXP(amount) {
+    GAME.xp += amount;
+    if (GAME.xp >= GAME.xpReq) {
+        levelUp();
+    }
+}
+
+function levelUp() {
+    GAME.state = 'LEVELUP';
+    GAME.level++;
+    GAME.xp = 0;
+    GAME.xpReq = Math.floor(GAME.xpReq * CONFIG.XP_SCALING);
+    
+    const grid = document.getElementById('upgrade-grid');
+    grid.innerHTML = '';
+    
+    // SECTION 1: UPGRADE EXISTING
+    const existingHeader = document.createElement('div');
+    existingHeader.className = 'section-header';
+    existingHeader.innerText = "PROMOTE SQUAD";
+    grid.appendChild(existingHeader);
+
+    squad.forEach((mate) => {
+        const def = CLASS_DEFS[mate.type];
+        const card = document.createElement('div');
+        card.className = 'upgrade-card';
+        card.style.borderColor = '#4169e1'; 
+        
+        // Show next level benefit
+        let bonusText = "Stats &uarr;";
+        if (mate.level === 2) { // Going to 3
+            if (mate.type === 'SOLDIER') bonusText = "Unlock: Shield Wall";
+            if (mate.type === 'CLERIC') bonusText = "Unlock: Auto Heal";
+            if (mate.type === 'MAGE') bonusText = "Unlock: Fireball";
+            if (mate.type === 'WITCH') bonusText = "Unlock: Fear";
+            if (mate.type === 'SCOUNDREL') bonusText = "Unlock: Traps";
+            if (mate.type === 'FOLK_HERO') bonusText = "Unlock: Magnet";
+        }
+
+        const imgSrc = ASSETS[def.imgKey] ? ASSETS[def.imgKey].src : '';
+
+        card.innerHTML = `
+            <img src="${imgSrc}" class="card-icon">
+            <div class="card-title">UPGRADE</div>
+            <div class="card-role" style="color:${def.color}">${def.name} Lvl ${mate.level} &rarr; ${mate.level+1}</div>
+            <div class="card-desc" style="color:#aaf">${bonusText}</div>
+        `;
+        card.onclick = () => {
+            mate.upgrade();
+            closeLevelUp();
+        };
+        grid.appendChild(card);
+    });
+
+    // SECTION 2: RECRUIT NEW
+    const recruitHeader = document.createElement('div');
+    recruitHeader.className = 'section-header';
+    recruitHeader.innerText = "RECRUIT NEW";
+    recruitHeader.style.marginTop = "20px";
+    grid.appendChild(recruitHeader);
+
+    if (squad.length < CONFIG.MAX_SQUAD_SIZE) {
+        const classKeys = Object.keys(CLASS_DEFS);
+        const shuffled = classKeys.sort(() => 0.5 - Math.random());
+        const choices = shuffled.slice(0, 3);
+        
+        choices.forEach(key => {
+            const def = CLASS_DEFS[key];
+            const card = document.createElement('div');
+            card.className = 'upgrade-card';
+            card.style.borderColor = '#d4af37'; 
+            const imgSrc = ASSETS[def.imgKey] ? ASSETS[def.imgKey].src : '';
+
+            card.innerHTML = `
+                <img src="${imgSrc}" class="card-icon">
+                <div class="card-title">RECRUIT</div>
+                <div class="card-role" style="color:${def.color}">${def.name}</div>
+                <div class="card-desc">${def.desc}</div>
+            `;
+            card.onclick = () => {
+                addSquadMate(key);
+                closeLevelUp();
+            };
+            grid.appendChild(card);
+        });
+    } else {
+         const card = document.createElement('div');
+        card.className = 'upgrade-card';
+        card.style.borderColor = '#00ff00';
+        card.innerHTML = `
+            <div class="card-title">RATIONS</div>
+            <div class="card-desc">Heal 30% HP</div>
+        `;
+        card.onclick = () => {
+            GAME.hp = Math.min(GAME.maxHp, GAME.hp + (GAME.maxHp * 0.3));
+            closeLevelUp();
+        };
+        grid.appendChild(card);
+    }
+    
+    document.getElementById('levelup-screen').classList.remove('hidden');
+}
+
+function closeLevelUp() {
+    document.getElementById('levelup-screen').classList.add('hidden');
+    GAME.state = 'PLAY';
+}
+
+function gameOver() {
+    GAME.state = 'GAMEOVER';
+    document.getElementById('death-stats').innerText = `Survived: ${document.getElementById('timer').innerText} | Level: ${GAME.level}`;
+    document.getElementById('gameover-screen').classList.remove('hidden');
+}
+
+function addFloatingText(x, y, text, color) {
+    floatingTexts.push({
+        x, y, text, color, life: 30
+    });
+}
+
+// --- MAIN LOOP ---
+
+function update() {
+    if (GAME.state !== 'PLAY') return;
+
+    GAME.frames++;
+    if (GAME.frames % 60 === 0) GAME.time++;
+
+    if (GAME.frames % CONFIG.ENEMY_SPAWN_RATE === 0) {
+        enemies.push(new Enemy());
+    }
+
+    let moveSpeed = GAME.formation === 'WEDGE' ? CONFIG.PLAYER_SPEED_WEDGE : CONFIG.PLAYER_SPEED_SHIELD;
+    let dx = 0, dy = 0;
+    if (keys.w) dy -= 1;
+    if (keys.s) dy += 1;
+    if (keys.a) dx -= 1;
+    if (keys.d) dx += 1;
+    
+    if (dx !== 0 || dy !== 0) {
+        const len = Math.hypot(dx, dy);
+        dx = (dx/len) * moveSpeed;
+        dy = (dy/len) * moveSpeed;
+        
+        player.x += dx;
+        player.y += dy;
+        player.angle = Math.atan2(dy, dx);
+    }
+    
+    player.x = Math.max(10, Math.min(GAME.width-10, player.x));
+    player.y = Math.max(10, Math.min(GAME.height-10, player.y));
+
+    squad.forEach(mate => mate.update(player.x, player.y, player.angle, GAME.formation));
+    
+    enemies.forEach(e => e.update());
+    enemies = enemies.filter(e => !e.markedForDeletion);
+    
+    projectiles.forEach(p => p.update());
+    projectiles = projectiles.filter(p => !p.markedForDeletion);
+    
+    pickups.forEach(p => p.update());
+    pickups = pickups.filter(p => !p.markedForDeletion);
+    
+    floatingTexts.forEach(t => {
+        t.y -= 0.5;
+        t.life--;
+    });
+    floatingTexts = floatingTexts.filter(t => t.life > 0);
+
+    if (GAME.time >= 20 * 60) { 
+        GAME.state = 'WIN';
+        document.getElementById('win-screen').classList.remove('hidden');
+    }
+    
+    updateUI();
+}
+
+function draw() {
+    ctx.clearRect(0,0, canvas.width, canvas.height);
+
+    pickups.forEach(p => p.draw());
+
+    // Draw Player Ring
+    const leaderImg = ASSETS[player.imgKey]; 
+    if (leaderImg && leaderImg.complete && leaderImg.naturalWidth !== 0) {
+        const size = player.radius * 3.0;
+        ctx.drawImage(leaderImg, player.x - size/2, player.y - size/2, size, size);
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, player.radius * 1.5, 0, Math.PI * 2);
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "#D4AF37";
+        ctx.stroke();
+    } else {
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+        ctx.fillStyle = player.color;
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "#fff";
+        ctx.stroke();
+    }
+    
+    squad.forEach(mate => mate.draw());
+    enemies.forEach(e => e.draw());
+    projectiles.forEach(p => p.draw());
+
+    floatingTexts.forEach(t => {
+        ctx.fillStyle = t.color;
+        ctx.font = "bold 16px Courier New";
+        ctx.fillText(t.text, t.x, t.y);
+    });
+}
+
+function updateUI() {
+    const hpPct = (GAME.hp / GAME.maxHp) * 100;
+    document.getElementById('hp-bar').style.width = `${Math.max(0, hpPct)}%`;
+    const xpPct = (GAME.xp / GAME.xpReq) * 100;
+    document.getElementById('xp-bar').style.width = `${Math.min(100, xpPct)}%`;
+    const luckPct = (GAME.luck / GAME.maxLuck) * 100;
+    document.getElementById('luck-bar').style.width = `${Math.min(100, luckPct)}%`;
+    document.getElementById('luck-text').innerText = `${GAME.luck} / ${GAME.maxLuck}`;
+    const mins = Math.floor(GAME.time / 60).toString().padStart(2, '0');
+    const secs = (GAME.time % 60).toString().padStart(2, '0');
+    document.getElementById('timer').innerText = `${mins}:${secs}`;
+    document.getElementById('squad-count').innerText = `${squad.length}/${CONFIG.MAX_SQUAD_SIZE}`;
+    document.getElementById('level-display').innerText = GAME.level;
+}
+
+function animate() {
+    update();
+    draw();
+    if (GAME.state === 'PLAY' || GAME.state === 'LEVELUP') {
+        requestAnimationFrame(animate);
+    }
+}
+
+</script>
+</body>
+</html>
