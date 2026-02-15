@@ -557,23 +557,23 @@ const ENEMY_DEFS = {
 
 const UPGRADES = [
     { category: "Camp Followers", id: "brothel", name: "Brothel", desc: "Max Luck +2", cost: 50, imgKey: 'BROTHEL', x: 15 },
-    { category: "Camp Followers", id: "kitchen", name: "Kitchen", desc: "Max HP +20", cost: 50 },
+    { category: "Camp Followers", id: "kitchen", name: "Kitchen", desc: "Max HP +20", cost: 50, imgKey: 'FIRE', x: 20 },
     { category: "Camp Followers", id: "housing", name: "Housing", desc: "HP Regen +0.5/sec", cost: 100, imgKey: 'HOUSE', x: 25 },
     { category: "Command", id: "command", name: "Command Tent", desc: "Attack Cooldowns -5%", cost: 300, imgKey: 'TENT', x: 55 },
     { category: "Command", id: "guildhall", name: "Guild Hall", desc: "Start at Level 2", cost: 500 },
     { category: "Magical", id: "alchemy", name: "Alchemy Lab", desc: "Witch Damage +25%", cost: 150, imgKey: 'ALCHEMY', x: 85 },
     { category: "Magical", id: "magetower", name: "Mage Tower", desc: "Mage Damage +25%", cost: 150, imgKey: 'MAGE_TOWER', x: 95 },
     { category: "Medical", id: "hospital", name: "Field Hospital", desc: "Heal 20 HP on Level Up", cost: 100 },
-    { category: "Medical", id: "herbalist", name: "Herbalist", desc: "Pickup Range +20%", cost: 75 },
+    { category: "Medical", id: "herbalist", name: "Herbalist", desc: "Pickup Range +20%", cost: 75, imgKey: 'PINES', x: 90 },
     { category: "Economy", id: "merchant", name: "Merchant Stalls", desc: "Gold Drop Rate +5%", cost: 200 },
-    { category: "Economy", id: "cells", name: "Prisoner Cells", desc: "XP Gain +10%", cost: 100 },
+    { category: "Economy", id: "cells", name: "Prisoner Cells", desc: "XP Gain +10%", cost: 100, imgKey: 'WALL', x: 10 },
     { category: "Class Specific", id: "ranger", name: "Ranger's Hut", desc: "Folk Hero Damage +25%", cost: 150, imgKey: 'RANGER', x: 75 },
     { category: "Class Specific", id: "chapel", name: "Chapel", desc: "Cleric Damage +25%", cost: 150, imgKey: 'CHAPEL', x: 35 },
     { category: "Class Specific", id: "church", name: "Church", desc: "Max HP +50", cost: 250, imgKey: 'CHURCH', x: 45 },
     { category: "Class Specific", id: "pens", name: "Slave Pens", desc: "Scoundrel Damage +25%", cost: 150, imgKey: 'PENS', x: 5 },
-    { category: "Storage", id: "armory", name: "Armory", desc: "Soldier Damage +25%", cost: 150 },
+    { category: "Storage", id: "armory", name: "Armory", desc: "Soldier Damage +25%", cost: 150, imgKey: 'TOWER_WATCH', x: 60 },
     { category: "Storage", id: "stables", name: "Stables", desc: "Move Speed +10%", cost: 100, imgKey: 'STABLE', x: 65 },
-    { category: "Training", id: "grounds", name: "Training Grounds", desc: "XP Gain +20%", cost: 200 },
+    { category: "Training", id: "grounds", name: "Training Grounds", desc: "XP Gain +20%", cost: 200, imgKey: 'FENCE', x: 50 },
     { category: "Workshops", id: "blacksmith", name: "Blacksmith Forge", desc: "Global Damage +10%", cost: 300 },
     { category: "Workshops", id: "carpentry", name: "Carpentry Shop", desc: "Projectile Speed +20%", cost: 100 },
     { category: "Workshops", id: "engineering", name: "Engineering", desc: "Effect Duration +20%", cost: 150 },
@@ -673,7 +673,10 @@ function loadAssets() {
         // Camp Buildings
         TENT: 'tent.png', STABLE: 'stable.png', HOUSE: 'house.png',
         BROTHEL: 'houseChimney.png', ALCHEMY: 'runis.png', MAGE_TOWER: 'towerTall.png',
-        CHAPEL: 'church.png', CHURCH: 'churchLarge.png', PENS: 'dock.png', RANGER: 'houseSmall.png'
+        CHAPEL: 'church.png', CHURCH: 'churchLarge.png', PENS: 'dock.png', RANGER: 'houseSmall.png',
+        // New Buildings
+        TOWER_WATCH: 'towerWatch.png', FENCE: 'fence.png', WALL: 'wall.png', 
+        PINES: 'treePinesSmall.png', FIRE: 'campfire.png'
     };
     for(let key in sources) {
         const img = new Image();
