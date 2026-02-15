@@ -8,16 +8,16 @@
         body {
             margin: 0;
             overflow: hidden;
-            background-color: #1a1815; /* Gritty dark brown */
+            background-color: #1a1815;
             font-family: 'Courier New', Courier, monospace;
             color: #dcdcdc;
             user-select: none;
         }
-        /* No separate background layer needed for canvas, we draw it */
         #gameCanvas {
             display: block;
             image-rendering: pixelated;
         }
+        /* HUD Layer - Hidden by default */
         #ui-layer {
             position: absolute;
             top: 0;
@@ -68,7 +68,7 @@
             width: 200px;
             height: 20px;
             background: #333;
-            border: 2px solid #8a2be2; /* Condition/Morale color */
+            border: 2px solid #8a2be2;
         }
         #hp-bar {
             height: 100%;
@@ -95,13 +95,14 @@
             left: 20px;
             font-size: 18px;
         }
+        
+        /* GENERAL SCREEN STYLES */
         .screen {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.95);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -109,27 +110,39 @@
             pointer-events: auto;
             z-index: 10;
         }
-        /* Specific Override for Start Screen Background */
-        #start-screen {
-            background: url('battlfield_tileset.png') no-repeat center center fixed; 
+        
+        /* MENU SCREENS (Parchment Background) */
+        .menu-screen {
+            background: url('parchmentFoldedCrinkled.jpg') no-repeat center center fixed;
             background-size: cover;
+            color: #2a2520; /* Ink color for text */
         }
-        /* Improve text readability on background */
-        #start-screen h1, #start-screen p, #start-screen div {
-            text-shadow: 2px 2px 4px #000;
-            background-color: rgba(0,0,0,0.4); /* Slight backing for legibility */
-            padding: 5px 10px;
-            border-radius: 5px;
+        .menu-screen h1 {
+            color: #4a3b2a;
+            text-shadow: none;
+            font-weight: 900;
+            font-size: 56px;
+            text-decoration: underline;
+        }
+        .menu-screen p, .menu-screen div {
+            text-shadow: none;
+            color: #2a2520;
+        }
+        
+        /* OVERLAY SCREENS (Game Over, Level Up - Dark Background) */
+        .overlay-screen {
+            background: rgba(0,0,0,0.9);
+            color: #dcdcdc;
         }
 
         .hidden {
             display: none !important;
         }
-        h1 { font-size: 48px; color: #d4af37; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 4px; text-align: center; }
-        p { font-size: 18px; color: #aaa; max-width: 800px; text-align: center; line-height: 1.5; margin-bottom: 20px; }
+
+        /* BUTTONS */
         .btn {
-            background: #5d4e3e;
-            border: 2px solid #d4af37;
+            background: #4a3b2a;
+            border: 2px solid #2a2520;
             color: #d4af37;
             padding: 15px 30px;
             font-size: 20px;
@@ -137,12 +150,13 @@
             margin-top: 20px;
             font-family: inherit;
             transition: background 0.2s;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
         }
-        .btn:hover { background: #3e332a; }
+        .btn:hover { background: #2a2520; color: #fff; }
         .btn-small { padding: 10px 20px; font-size: 16px; margin: 10px; display: inline-block; }
         .btn-disabled { opacity: 0.5; pointer-events: none; border-color: #555; color: #555; }
         
-        /* Camp Screen Styles */
+        /* Camp/Roster/Manual/Creation Layouts */
         #camp-screen, #roster-screen, #char-creation-screen, #manual-screen {
             justify-content: flex-start;
             padding-top: 50px;
@@ -151,7 +165,7 @@
         #camp-grid, #roster-grid, #manual-content {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 15px;
             max-width: 1000px;
             justify-content: center;
             padding-bottom: 50px;
@@ -159,61 +173,101 @@
         .camp-section, .manual-section-header {
             width: 100%;
             text-align: center;
-            color: #d4af37;
-            border-bottom: 1px solid #555;
+            color: #4a3b2a;
+            border-bottom: 2px solid #4a3b2a;
             margin: 25px 0 15px 0;
             font-weight: bold;
             font-size: 24px;
             text-transform: uppercase;
             letter-spacing: 2px;
         }
-        .upgrade-btn {
+
+        /* UPGRADE & ROSTER CARDS (Adapted for Parchment) */
+        .upgrade-card {
+            background: rgba(255, 255, 255, 0.4);
+            border: 2px solid #4a3b2a;
+            width: 180px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+            position: relative;
+            color: #2a2520;
+        }
+        .overlay-screen .upgrade-card {
+            /* Keep dark style for level up screen */
             background: #2a2520;
             border: 2px solid #666;
+            color: #ddd;
+        }
+        .upgrade-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.7);
+            border-color: #000;
+        }
+        .overlay-screen .upgrade-card:hover {
+            background: #3a332a;
+            border-color: #d4af37;
+        }
+        .upgrade-card.disabled { opacity: 0.5; pointer-events: none; }
+        
+        .card-icon { width: 48px; height: 48px; margin-bottom: 10px; image-rendering: pixelated; }
+        .card-title { font-size: 16px; font-weight: bold; text-align: center; margin-bottom: 8px; }
+        .card-role { font-size: 12px; font-style: italic; text-align: center; margin-bottom: 8px; }
+        .card-desc { font-size: 11px; text-align: center; line-height: 1.4; }
+        
+        /* Camp Buttons Specifics */
+        .upgrade-btn {
+            background: rgba(255, 255, 255, 0.4);
+            border: 2px solid #4a3b2a;
             width: 200px;
             padding: 10px;
             cursor: pointer;
             position: relative;
             text-align: left;
             transition: all 0.2s;
+            color: #2a2520;
         }
-        .upgrade-btn:hover { border-color: #d4af37; background: #3a332a; }
-        .upgrade-btn.purchased { border-color: #4169e1; background: #1a2a1a; opacity: 0.8; }
-        .upgrade-name { font-weight: bold; color: #eee; font-size: 14px; }
-        .upgrade-cost { font-size: 12px; color: gold; float: right; }
+        .upgrade-btn:hover { background: rgba(255, 255, 255, 0.7); border-color: #000; }
+        .upgrade-btn.purchased { background: rgba(65, 105, 225, 0.2); border-color: #4169e1; }
+        .upgrade-name { font-weight: bold; font-size: 14px; }
+        .upgrade-cost { font-size: 12px; float: right; font-weight: bold; }
         .upgrade-desc {
             display: none;
             position: absolute;
             bottom: 100%;
             left: 0;
             width: 200px;
-            background: #111;
-            border: 1px solid #888;
+            background: #eee;
+            border: 1px solid #000;
             padding: 10px;
             z-index: 100;
             font-size: 12px;
-            color: #ccc;
+            color: #000;
             pointer-events: none;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
         }
         .upgrade-btn:hover .upgrade-desc { display: block; }
 
-        /* Manual Screen Styles */
+        /* Manual Cards */
         .manual-card {
-            background: #1a1a1a;
-            border: 2px solid #5d4e3e;
+            background: rgba(255, 255, 255, 0.4);
+            border: 2px solid #4a3b2a;
             width: 300px;
             padding: 15px;
             display: flex;
             flex-direction: column;
             align-items: flex-start;
-            color: #ddd;
+            color: #2a2520;
             margin-bottom: 10px;
         }
         .manual-card-header {
             display: flex;
             align-items: center;
             width: 100%;
-            border-bottom: 1px solid #444;
+            border-bottom: 1px solid #4a3b2a;
             padding-bottom: 10px;
             margin-bottom: 10px;
         }
@@ -222,95 +276,21 @@
             height: 64px;
             margin-right: 15px;
             image-rendering: pixelated;
-            border: 1px solid #444;
-            background: #222;
+            border: 1px solid #4a3b2a;
+            background: rgba(0,0,0,0.1);
         }
-        .manual-title {
-            font-size: 20px;
-            font-weight: bold;
-            color: #d4af37;
-        }
-        .manual-role {
-            font-size: 14px;
-            color: #aaa;
-            font-style: italic;
-        }
+        .manual-title { font-size: 20px; font-weight: bold; }
+        .manual-role { font-size: 14px; font-style: italic; }
         .manual-stats {
             font-size: 14px;
             width: 100%;
             margin-bottom: 10px;
-            background: #111;
+            background: rgba(0,0,0,0.05);
             padding: 5px;
             border-radius: 4px;
         }
-        .manual-stat-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 4px;
-        }
-        .manual-desc {
-            font-size: 13px;
-            line-height: 1.4;
-            color: #ccc;
-            font-style: italic;
-        }
-
-        /* Card Grid for Level Up */
-        #upgrade-grid, #char-selection-grid, #race-selection-grid {
-            display: flex;
-            gap: 15px;
-            margin-top: 20px;
-            flex-wrap: wrap;
-            justify-content: center;
-            max-width: 900px;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-        .upgrade-card {
-            background: #2a2520;
-            border: 2px solid #666;
-            width: 180px;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            cursor: pointer;
-            transition: transform 0.2s, border-color 0.2s;
-            position: relative;
-        }
-        .upgrade-card:hover {
-            transform: translateY(-5px);
-            border-color: #d4af37;
-            background: #3a332a;
-        }
-        .upgrade-card.disabled {
-            opacity: 0.5;
-            pointer-events: none;
-            border-color: #444;
-        }
-        .upgrade-card.selected {
-            border-color: #00ff00;
-            background: #1a3a1a;
-        }
-        .card-icon {
-            width: 48px;
-            height: 48px;
-            margin-bottom: 10px;
-            image-rendering: pixelated;
-        }
-        .card-title { font-size: 16px; color: #fff; margin-bottom: 8px; font-weight: bold; text-align: center; }
-        .card-role { font-size: 12px; color: #aaa; margin-bottom: 8px; font-style: italic; text-align: center; }
-        .card-desc { font-size: 11px; color: #ccc; text-align: center; line-height: 1.4; }
-        
-        .section-header {
-            width: 100%;
-            text-align: center;
-            font-size: 14px;
-            color: #888;
-            margin-top: 10px;
-            border-bottom: 1px solid #444;
-            padding-bottom: 5px;
-        }
+        .manual-stat-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .manual-desc { font-size: 13px; line-height: 1.4; font-style: italic; }
 
         .damage-text {
             position: absolute;
@@ -334,9 +314,9 @@
         
         #gold-display {
             font-size: 24px;
-            color: gold;
+            color: #4a3b2a;
             margin-top: 10px;
-            text-shadow: 1px 1px 2px black;
+            font-weight: bold;
         }
 
         #creation-steps {
@@ -356,9 +336,9 @@
         #char-name-input {
             padding: 10px;
             font-size: 20px;
-            background: #222;
-            color: white;
-            border: 2px solid #555;
+            background: rgba(255, 255, 255, 0.6);
+            color: #000;
+            border: 2px solid #4a3b2a;
             font-family: inherit;
         }
     </style>
@@ -413,7 +393,7 @@
     </div>
 
     <!-- Start Screen -->
-    <div id="start-screen" class="screen">
+    <div id="start-screen" class="screen menu-screen">
         <h1>Dust Cloaks</h1>
         <div id="gold-display">Gold: 0</div>
         
@@ -429,7 +409,7 @@
     </div>
     
     <!-- Character Creation Screen -->
-    <div id="char-creation-screen" class="screen hidden">
+    <div id="char-creation-screen" class="screen menu-screen hidden">
         <h1 id="creation-title">Select Race</h1>
         <div id="creation-steps">
             <!-- Step 1: Race -->
@@ -454,48 +434,48 @@
     </div>
 
     <!-- Roster Screen -->
-    <div id="roster-screen" class="screen hidden">
+    <div id="roster-screen" class="screen menu-screen hidden">
         <h1>Active Roster</h1>
         <button class="btn btn-small" onclick="closeRoster()">BACK</button>
         <div id="roster-grid"></div>
     </div>
     
     <!-- Camp Screen -->
-    <div id="camp-screen" class="screen hidden">
+    <div id="camp-screen" class="screen menu-screen hidden">
         <h1>Camp Upgrades</h1>
-        <div id="camp-gold" style="color:gold; font-size:20px; margin-bottom:10px;">Gold: 0</div>
+        <div id="camp-gold" style="color:#4a3b2a; font-size:20px; margin-bottom:10px; font-weight:bold;">Gold: 0</div>
         <button class="btn btn-small" onclick="closeCamp()">BACK TO CONTRACTS</button>
         <div id="camp-grid"></div>
     </div>
 
     <!-- Manual Screen -->
-    <div id="manual-screen" class="screen hidden">
+    <div id="manual-screen" class="screen menu-screen hidden">
         <h1>Player's Manual</h1>
         <button class="btn btn-small" onclick="closeManual()">BACK TO MENU</button>
         <div id="manual-content"></div>
     </div>
 
-    <!-- Level Up Screen -->
-    <div id="levelup-screen" class="screen hidden">
+    <!-- Level Up Screen (In-Game Overlay) -->
+    <div id="levelup-screen" class="screen overlay-screen hidden">
         <h1 style="font-size: 32px;">RECRUITMENT</h1>
-        <p>Upgrade Squad or Recruit New</p>
+        <p style="color:#aaa;">Upgrade Squad or Recruit New</p>
         <div id="upgrade-grid">
             <!-- Cards generated via JS -->
         </div>
     </div>
 
-    <!-- Game Over Screen -->
-    <div id="gameover-screen" class="screen hidden">
+    <!-- Game Over Screen (In-Game Overlay) -->
+    <div id="gameover-screen" class="screen overlay-screen hidden">
         <h1 style="color: #b22222;">SQUAD BROKEN</h1>
-        <p id="death-stats">You survived for 00:00</p>
+        <p id="death-stats" style="color:#aaa;">You survived for 00:00</p>
         <button id="resurrect-btn" class="btn" style="border-color: #4169e1; color: #4169e1;" onclick="resurrectLeader()">RESURRECT LEADER (10g)</button>
         <button class="btn" onclick="location.reload()">RETURN TO GUILD</button>
     </div>
 
-    <!-- Win Screen -->
-    <div id="win-screen" class="screen hidden">
+    <!-- Win Screen (In-Game Overlay) -->
+    <div id="win-screen" class="screen overlay-screen hidden">
         <h1 style="color: #4169e1;">CONTRACT COMPLETE</h1>
-        <p>The area is secure.</p>
+        <p style="color:#aaa;">The area is secure.</p>
         <button class="btn" onclick="location.reload()">COLLECT PAYMENT</button>
     </div>
 
@@ -535,7 +515,9 @@ function updateGoldUI() {
     const displays = ['gold-display', 'camp-gold', 'gold-hud'];
     displays.forEach(id => {
         const el = document.getElementById(id);
-        if(el) el.innerText = (id === 'gold-hud' ? '' : 'Gold: ') + META.gold;
+        if(el) {
+            el.innerText = (id === 'gold-hud' ? '' : 'Gold: ') + META.gold;
+        }
     });
 }
 
@@ -858,7 +840,7 @@ function renderManual() {
             </div>
             <div class="manual-desc" style="margin-bottom:10px;">${race.desc}</div>
             <div class="manual-stats">
-                <div class="manual-stat-row" style="color: gold; text-align:center;">${race.statsText}</div>
+                <div class="manual-stat-row" style="color: #d4af37; text-align:center;">${race.statsText}</div>
             </div>
         `;
         container.appendChild(card);
@@ -889,9 +871,9 @@ function renderManual() {
                 </div>
             </div>
             <div class="manual-stats">
-                <div class="manual-stat-row"><span>Damage:</span> <span style="color:#ff6666">${def.damage}</span></div>
-                <div class="manual-stat-row"><span>Range:</span> <span style="color:#66ccff">${def.range}</span></div>
-                <div class="manual-stat-row"><span>Attack Speed:</span> <span style="color:#66ff66">${attackSpeed}/sec</span></div>
+                <div class="manual-stat-row"><span>Damage:</span> <span style="color:#b22222">${def.damage}</span></div>
+                <div class="manual-stat-row"><span>Range:</span> <span style="color:#4169e1">${def.range}</span></div>
+                <div class="manual-stat-row"><span>Attack Speed:</span> <span style="color:#228b22">${attackSpeed}/sec</span></div>
             </div>
             <div class="manual-desc">${def.desc}</div>
         `;
@@ -2153,4 +2135,3 @@ function animate() {
 </script>
 </body>
 </html>
-
