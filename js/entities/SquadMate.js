@@ -1,4 +1,12 @@
 class SquadMate extends Entity {
+    // Animation configuration for SOLDIER sprite sheet
+    static ANIMATION_STATES = {
+        IDLE: { row: 0, frameCount: 4 },
+        RUN: { row: 1, frameCount: 4 },
+        DAMAGE: { row: 8, frameCount: 4 },
+        DEAD: { row: 9, frameCount: 4 }
+    };
+
     constructor(type, index, raceKey = 'HUMAN', name = 'Grunt') {
         super(0, 0, 10, CLASS_DEFS[type].color);
         this.type = type;
@@ -35,12 +43,6 @@ class SquadMate extends Entity {
         
         // Animation configuration
         const FRAME_DELAY = 10; // Advance frame every 10 game frames
-        const ANIMATION_STATES = {
-            IDLE: { row: 0, frameCount: 4 },
-            RUN: { row: 1, frameCount: 4 },
-            DAMAGE: { row: 8, frameCount: 4 },
-            DEAD: { row: 9, frameCount: 4 }
-        };
         
         // Advance animation timer
         this.animationTimer++;
@@ -48,7 +50,7 @@ class SquadMate extends Entity {
         if (this.animationTimer >= FRAME_DELAY) {
             this.animationTimer = 0;
             
-            const state = ANIMATION_STATES[this.currentAnimationState];
+            const state = SquadMate.ANIMATION_STATES[this.currentAnimationState];
             if (state) {
                 this.frameIndex++;
                 
@@ -229,17 +231,10 @@ class SquadMate extends Entity {
             
             // Use sprite sheet animation for SOLDIER type
             if (this.type === 'SOLDIER') {
-                const ANIMATION_STATES = {
-                    IDLE: { row: 0, frameCount: 4 },
-                    RUN: { row: 1, frameCount: 4 },
-                    DAMAGE: { row: 8, frameCount: 4 },
-                    DEAD: { row: 9, frameCount: 4 }
-                };
-                
-                const state = ANIMATION_STATES[this.currentAnimationState];
+                const state = SquadMate.ANIMATION_STATES[this.currentAnimationState];
                 if (state) {
                     // Calculate frame position in sprite sheet
-                    // Frames 1-4 are right-facing (columns 0-3), frames 5-8 are left-facing (columns 4-7)
+                    // Frames 0-3 are right-facing (columns 0-3), frames 4-7 are left-facing (columns 4-7)
                     const baseFrame = this.facingLeft ? 4 : 0;
                     const frameX = (baseFrame + this.frameIndex) * 16;
                     const frameY = state.row * 16;
