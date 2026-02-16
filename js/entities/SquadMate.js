@@ -1,10 +1,19 @@
 class SquadMate extends Entity {
     // Animation configuration for SOLDIER sprite sheet
-    static ANIMATION_STATES = {
+    static SOLDIER_ANIMATION_STATES = {
         IDLE: { row: 0, frameCount: 4 },
         RUN: { row: 1, frameCount: 4 },
         DAMAGE: { row: 8, frameCount: 4 },
         DEAD: { row: 9, frameCount: 4 }
+    };
+    
+    // Animation configuration for MAGE sprite sheet
+    static MAGE_ANIMATION_STATES = {
+        IDLE: { row: 0, frameCount: 4 },
+        RUN: { row: 1, frameCount: 4 },
+        CAST: { row: 2, frameCount: 4 },  // Row 2 used for cast; rows 3-8 reserved for future cast variants
+        DAMAGE: { row: 9, frameCount: 4 },
+        DEAD: { row: 10, frameCount: 4 }
     };
 
     constructor(type, index, raceKey = 'HUMAN', name = 'Grunt') {
@@ -38,8 +47,8 @@ class SquadMate extends Entity {
     }
 
     updateAnimation() {
-        // Only animate SOLDIER type
-        if (this.type !== 'SOLDIER') return;
+        // Only animate SOLDIER and MAGE types
+        if (this.type !== 'SOLDIER' && this.type !== 'MAGE') return;
         
         // Animation configuration
         const FRAME_DELAY = 10; // Advance frame every 10 game frames
@@ -50,7 +59,12 @@ class SquadMate extends Entity {
         if (this.animationTimer >= FRAME_DELAY) {
             this.animationTimer = 0;
             
-            const state = SquadMate.ANIMATION_STATES[this.currentAnimationState];
+            // Get the appropriate animation states for this class
+            const animationStates = this.type === 'SOLDIER' 
+                ? SquadMate.SOLDIER_ANIMATION_STATES 
+                : SquadMate.MAGE_ANIMATION_STATES;
+            
+            const state = animationStates[this.currentAnimationState];
             if (state) {
                 this.frameIndex++;
                 
@@ -60,8 +74,8 @@ class SquadMate extends Entity {
                     if (this.frameIndex >= state.frameCount) {
                         this.frameIndex = state.frameCount - 1;
                     }
-                } else if (this.currentAnimationState === 'DAMAGE') {
-                    // Damage animation plays once then returns to idle
+                } else if (this.currentAnimationState === 'DAMAGE' || this.currentAnimationState === 'CAST') {
+                    // Damage and Cast animations play once then return to idle
                     if (this.frameIndex >= state.frameCount) {
                         this.frameIndex = 0;
                         this.currentAnimationState = 'IDLE';
@@ -153,8 +167,8 @@ class SquadMate extends Entity {
             this.y += (targetY - this.y) * CONFIG.SQUAD_FOLLOW_SPEED;
         }
 
-        // Animation state determination for SOLDIER
-        if (this.type === 'SOLDIER') {
+        // Animation state determination for SOLDIER and MAGE
+        if (this.type === 'SOLDIER' || this.type === 'MAGE') {
             // Determine facing direction from leader angle or movement
             if (leaderAngle !== undefined) {
                 this.facingLeft = Math.cos(leaderAngle) < 0;
@@ -229,9 +243,14 @@ class SquadMate extends Entity {
         if (img && img.complete && img.naturalWidth !== 0) {
             const size = this.radius * 3.0; 
             
-            // Use sprite sheet animation for SOLDIER type
-            if (this.type === 'SOLDIER') {
-                const state = SquadMate.ANIMATION_STATES[this.currentAnimationState];
+            // Use sprite sheet animation for SOLDIER and MAGE types
+            if (this.type === 'SOLDIER' || this.type === 'MAGE') {
+                // Get the appropriate animation states for this class
+                const animationStates = this.type === 'SOLDIER' 
+                    ? SquadMate.SOLDIER_ANIMATION_STATES 
+                    : SquadMate.MAGE_ANIMATION_STATES;
+                
+                const state = animationStates[this.currentAnimationState];
                 if (state) {
                     // Calculate frame position in sprite sheet
                     // Frames 0-3 are right-facing (columns 0-3), frames 4-7 are left-facing (columns 4-7)
