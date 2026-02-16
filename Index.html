@@ -118,7 +118,7 @@
             z-index: 10;
         }
         .menu-screen {
-            background: url('parchmentFoldedCrinkled.png') no-repeat center center fixed;
+            background: url('assets/ui/parchmentFoldedCrinkled.png') no-repeat center center fixed;
             background-size: cover;
             color: #2a2520;
         }
@@ -666,17 +666,17 @@ function getNearestEnemy(x, y, range) {
 
 function loadAssets() {
     const sources = {
-        SOLDIER: 'tile_0087.png', MAGE: 'tile_0084.png', CLERIC: 'tile_0098.png',
-        SCOUNDREL: 'tile_0100.png', WITCH: 'tile_0111.png', FOLK_HERO: 'tile_0112.png',
-        BACKGROUND: 'battlfield_tileset.png',
-        RAT: 'tile_0123.png', BAT: 'tile_0120.png', OGRE: 'tile_0109.png', CRAB: 'tile_0110.png',
+        SOLDIER: 'assets/terrain/tiles/tile_0087.png', MAGE: 'assets/terrain/tiles/tile_0084.png', CLERIC: 'assets/terrain/tiles/tile_0098.png',
+        SCOUNDREL: 'assets/terrain/tiles/tile_0100.png', WITCH: 'assets/terrain/tiles/tile_0111.png', FOLK_HERO: 'assets/terrain/tiles/tile_0112.png',
+        BACKGROUND: 'assets/tileset/battlfield_tileset.png',
+        RAT: 'assets/terrain/tiles/tile_0123.png', BAT: 'assets/terrain/tiles/tile_0120.png', OGRE: 'assets/terrain/tiles/tile_0109.png', CRAB: 'assets/terrain/tiles/tile_0110.png',
         // Camp Buildings
-        TENT: 'tent.png', STABLE: 'stable.png', HOUSE: 'house.png',
-        BROTHEL: 'houseChimney.png', ALCHEMY: 'runis.png', MAGE_TOWER: 'towerTall.png',
-        CHAPEL: 'church.png', CHURCH: 'churchLarge.png', PENS: 'dock.png', RANGER: 'houseSmall.png',
+        TENT: 'assets/buildings/tent.png', STABLE: 'assets/buildings/stable.png', HOUSE: 'assets/buildings/house.png',
+        BROTHEL: 'assets/buildings/houseChimney.png', ALCHEMY: 'assets/ui/runis.png', MAGE_TOWER: 'assets/buildings/towerTall.png',
+        CHAPEL: 'assets/buildings/church.png', CHURCH: 'assets/buildings/churchLarge.png', PENS: 'assets/buildings/dock.png', RANGER: 'assets/buildings/houseSmall.png',
         // New Buildings
-        TOWER_WATCH: 'towerWatch.png', FENCE: 'fence.png', WALL: 'wall.png', 
-        PINES: 'treePinesSmall.png', FIRE: 'campfire.png'
+        TOWER_WATCH: 'assets/buildings/towerWatch.png', FENCE: 'assets/structures/fence.png', WALL: 'assets/structures/wall.png', 
+        PINES: 'assets/nature/treePinesSmall.png', FIRE: 'assets/effects/campfire.png'
     };
     for(let key in sources) {
         const img = new Image();
