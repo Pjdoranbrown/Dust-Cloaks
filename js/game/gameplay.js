@@ -97,7 +97,7 @@ function levelUp() {
              const m = {"SOLDIER":"Shield Wall","CLERIC":"Auto Heal","MAGE":"Fireball","WITCH":"Fear","SCOUNDREL":"Traps","FOLK_HERO":"Magnet"};
              bonus = "Unlock: " + m[mate.type];
         }
-        card.innerHTML = `<img src="${ASSETS[def.imgKey]?.src}" class="card-icon"><div class="card-title">UPGRADE</div><div class="card-role" style="color:${def.color}">${def.name} Lvl ${mate.level} \u2192 ${mate.level+1}</div><div class="card-desc" style="color:#aaf">${bonus}</div>`;
+        card.innerHTML = `<img src="${ASSETS[def.iconKey || def.imgKey]?.src}" class="card-icon"><div class="card-title">UPGRADE</div><div class="card-role" style="color:${def.color}">${def.name} Lvl ${mate.level} \u2192 ${mate.level+1}</div><div class="card-desc" style="color:#aaf">${bonus}</div>`;
         card.onclick = () => { mate.upgrade(); closeLevelUp(); };
         leftCol.appendChild(card);
     });
@@ -110,7 +110,7 @@ function levelUp() {
             const rKey = Object.keys(RACES)[Math.floor(Math.random()*6)];
             const canAfford = META.gold >= CONFIG.SECOND_LEADER_COST;
             const card = document.createElement('div'); card.className = `upgrade-card ${!canAfford?'disabled':''}`; card.style.borderColor = canAfford?'#d4af37':'#444';
-            card.innerHTML = `<img src="${ASSETS[def.imgKey]?.src}" class="card-icon"><div class="card-title">CAPTAIN</div><div class="card-role">${RACES[rKey].name} ${def.name}</div><div class="card-desc" style="color: gold">Cost: ${CONFIG.SECOND_LEADER_COST}g</div>`;
+            card.innerHTML = `<img src="${ASSETS[def.iconKey || def.imgKey]?.src}" class="card-icon"><div class="card-title">CAPTAIN</div><div class="card-role">${RACES[rKey].name} ${def.name}</div><div class="card-desc" style="color: gold">Cost: ${CONFIG.SECOND_LEADER_COST}g</div>`;
             if (canAfford) card.onclick = () => { addSquadMate(key, rKey); closeLevelUp(); };
             rightCol.appendChild(card);
         });
@@ -120,7 +120,7 @@ function levelUp() {
             const def = CLASS_DEFS[key];
             const rKey = Object.keys(RACES)[Math.floor(Math.random()*6)];
             const card = document.createElement('div'); card.className = 'upgrade-card'; card.style.borderColor = '#d4af37';
-            card.innerHTML = `<img src="${ASSETS[def.imgKey]?.src}" class="card-icon"><div class="card-title">RECRUIT</div><div class="card-role">${RACES[rKey].name} ${def.name}</div>`;
+            card.innerHTML = `<img src="${ASSETS[def.iconKey || def.imgKey]?.src}" class="card-icon"><div class="card-title">RECRUIT</div><div class="card-role">${RACES[rKey].name} ${def.name}</div>`;
             card.onclick = () => { addSquadMate(key, rKey); closeLevelUp(); };
             rightCol.appendChild(card);
         });

@@ -33,7 +33,7 @@ function renderClassSelection() {
         const def = CLASS_DEFS[key];
         const card = document.createElement('div');
         card.className = 'upgrade-card';
-        card.innerHTML = `<img src="${ASSETS[def.imgKey]?.src}" class="card-icon"><div class="card-title" style="color:${def.color}">${def.name}</div><div class="card-desc">${def.desc}</div>`;
+        card.innerHTML = `<img src="${ASSETS[def.iconKey || def.imgKey]?.src}" class="card-icon"><div class="card-title" style="color:${def.color}">${def.name}</div><div class="card-desc">${def.desc}</div>`;
         card.onclick = () => { creationData.classKey = key; showCreationStep('name'); randomizeName(); };
         grid.appendChild(card);
     }
