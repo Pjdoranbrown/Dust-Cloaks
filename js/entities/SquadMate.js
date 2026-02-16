@@ -1,4 +1,12 @@
 class SquadMate extends Entity {
+    // Animation configuration for SOLDIER sprite sheet
+    static ANIMATION_STATES = {
+        IDLE: { row: 0, frameCount: 4 },
+        RUN: { row: 1, frameCount: 4 },
+        DAMAGE: { row: 8, frameCount: 4 },
+        DEAD: { row: 9, frameCount: 4 }
+    };
+
     constructor(type, index, raceKey = 'HUMAN', name = 'Grunt') {
         super(0, 0, 10, CLASS_DEFS[type].color);
         this.type = type;
@@ -11,6 +19,13 @@ class SquadMate extends Entity {
         this.level = META.upgrades['guildhall'] ? 2 : 1; 
         this.applyUpgrades();
         this.applyRaceStats();
+        
+        // Animation state tracking
+        this.currentAnimationState = 'IDLE';
+        this.frameIndex = 0;
+        this.animationTimer = 0;
+        this.facingLeft = false;
+        this.lastHp = this.stats.maxHp || 100;
     }
 
     applyRaceStats() {
@@ -19,6 +34,45 @@ class SquadMate extends Entity {
             if (r.dmgMult) this.stats.damage = Math.ceil(this.stats.damage * r.dmgMult);
             if (r.dmgFlat) this.stats.damage += r.dmgFlat;
             if (r.cooldownMult) this.stats.cooldown = Math.ceil(this.stats.cooldown * r.cooldownMult);
+        }
+    }
+
+    updateAnimation() {
+        // Only animate SOLDIER type
+        if (this.type !== 'SOLDIER') return;
+        
+        // Animation configuration
+        const FRAME_DELAY = 10; // Advance frame every 10 game frames
+        
+        // Advance animation timer
+        this.animationTimer++;
+        
+        if (this.animationTimer >= FRAME_DELAY) {
+            this.animationTimer = 0;
+            
+            const state = SquadMate.ANIMATION_STATES[this.currentAnimationState];
+            if (state) {
+                this.frameIndex++;
+                
+                // Handle frame cycling
+                if (this.currentAnimationState === 'DEAD') {
+                    // Death animation holds on final frame
+                    if (this.frameIndex >= state.frameCount) {
+                        this.frameIndex = state.frameCount - 1;
+                    }
+                } else if (this.currentAnimationState === 'DAMAGE') {
+                    // Damage animation plays once then returns to idle
+                    if (this.frameIndex >= state.frameCount) {
+                        this.frameIndex = 0;
+                        this.currentAnimationState = 'IDLE';
+                    }
+                } else {
+                    // Idle and Run cycle continuously
+                    if (this.frameIndex >= state.frameCount) {
+                        this.frameIndex = 0;
+                    }
+                }
+            }
         }
     }
 
@@ -99,9 +153,55 @@ class SquadMate extends Entity {
             this.y += (targetY - this.y) * CONFIG.SQUAD_FOLLOW_SPEED;
         }
 
+        // Animation state determination for SOLDIER
+        if (this.type === 'SOLDIER') {
+            // Determine facing direction from leader angle or movement
+            if (leaderAngle !== undefined) {
+                this.facingLeft = Math.cos(leaderAngle) < 0;
+            }
+            
+            // Check for death state
+            if (this.hp !== undefined && this.hp <= 0) {
+                if (this.currentAnimationState !== 'DEAD') {
+                    this.currentAnimationState = 'DEAD';
+                    this.frameIndex = 0;
+                }
+            }
+            // Check for damage state
+            else if (this.hp !== undefined && this.lastHp !== undefined && this.hp < this.lastHp) {
+                if (this.currentAnimationState !== 'DAMAGE') {
+                    this.currentAnimationState = 'DAMAGE';
+                    this.frameIndex = 0;
+                }
+            }
+            // Check for run state (moving toward target)
+            else if (targetX !== undefined && targetY !== undefined) {
+                const distToTarget = Math.hypot(targetX - this.x, targetY - this.y);
+                if (distToTarget > 5) {
+                    this.currentAnimationState = 'RUN';
+                    // Update facing based on movement direction
+                    this.facingLeft = (targetX - this.x) < 0;
+                } else {
+                    this.currentAnimationState = 'IDLE';
+                }
+            }
+            // Default to idle
+            else {
+                this.currentAnimationState = 'IDLE';
+            }
+            
+            // Update lastHp for damage detection
+            if (this.hp !== undefined) {
+                this.lastHp = this.hp;
+            }
+        }
+
         if (this.level >= 3) this.handleSpecials();
         if (this.cooldownTimer > 0) this.cooldownTimer--;
         else this.performAttack(leaderAngle);
+        
+        // Update animation
+        this.updateAnimation();
     }
 
     handleSpecials() {
@@ -128,7 +228,32 @@ class SquadMate extends Entity {
         const img = ASSETS[this.stats.imgKey];
         if (img && img.complete && img.naturalWidth !== 0) {
             const size = this.radius * 3.0; 
-            ctx.drawImage(img, this.x - size/2, this.y - size/2, size, size);
+            
+            // Use sprite sheet animation for SOLDIER type
+            if (this.type === 'SOLDIER') {
+                const state = SquadMate.ANIMATION_STATES[this.currentAnimationState];
+                if (state) {
+                    // Calculate frame position in sprite sheet
+                    // Frames 0-3 are right-facing (columns 0-3), frames 4-7 are left-facing (columns 4-7)
+                    const baseFrame = this.facingLeft ? 4 : 0;
+                    const frameX = (baseFrame + this.frameIndex) * 16;
+                    const frameY = state.row * 16;
+                    
+                    // Draw the sprite frame
+                    ctx.drawImage(
+                        img,
+                        frameX, frameY, 16, 16,  // Source: frame position and size in sprite sheet
+                        this.x - size/2, this.y - size/2, size, size  // Destination: screen position and size
+                    );
+                } else {
+                    // Fallback to full image if state not found
+                    ctx.drawImage(img, this.x - size/2, this.y - size/2, size, size);
+                }
+            } else {
+                // Other classes use full image
+                ctx.drawImage(img, this.x - size/2, this.y - size/2, size, size);
+            }
+            
             if (this.index === 6) {
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius * 1.5, 0, Math.PI * 2);
