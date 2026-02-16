@@ -25,7 +25,7 @@ function getNearestEnemy(x, y, range) {
 
 function loadAssets() {
     const sources = {
-        SOLDIER: 'assets/specialties/soldier.png', MAGE: 'assets/terrain/tiles/tile_0084.png', CLERIC: 'assets/terrain/tiles/tile_0098.png',
+        SOLDIER: 'assets/specialties/soldier.png', MAGE: 'assets/specialties/mage.png', CLERIC: 'assets/terrain/tiles/tile_0098.png',
         SCOUNDREL: 'assets/terrain/tiles/tile_0100.png', WITCH: 'assets/terrain/tiles/tile_0111.png', FOLK_HERO: 'assets/terrain/tiles/tile_0112.png',
         BACKGROUND: 'assets/tileset/battlefield_tileset.png',
         RAT: 'assets/terrain/tiles/tile_0123.png', BAT: 'assets/terrain/tiles/tile_0120.png', OGRE: 'assets/terrain/tiles/tile_0109.png', CRAB: 'assets/terrain/tiles/tile_0110.png',
