@@ -136,67 +136,33 @@
     </div>
 
 
+<!-- Config & State -->
 <script src="js/config.js"></script>
 <script src="js/state.js"></script>
-<script>
 
-// ==========================================
-// 3. PERSISTENCE & UTILS
-// ==========================================
+<!-- Utils & Persistence -->
+<script src="js/utils.js"></script>
+<script src="js/utils/helpers.js"></script>
+<script src="js/persistence.js"></script>
 
+<!-- Entity Classes -->
+<script src="js/entities/Entity.js"></script>
+<script src="js/entities/SquadMate.js"></script>
+<script src="js/entities/Enemy.js"></script>
+<script src="js/entities/Projectile.js"></script>
+<script src="js/entities/Pickup.js"></script>
 
-// ==========================================
-// 4. GAME ENTITIES (CLASSES)
-// ==========================================
+<!-- UI Systems -->
+<script src="js/ui/menus.js"></script>
+<script src="js/ui/screens.js"></script>
+<script src="js/ui/hud.js"></script>
 
-// ==========================================
-// 4. GAME ENTITIES (CLASSES)
-// ==========================================
+<!-- Game Systems -->
+<script src="js/game/init.js"></script>
+<script src="js/game/gameLoop.js"></script>
+<script src="js/game/gameplay.js"></script>
 
-// ==========================================
-// 6. UI & MENU SYSTEMS
-// ==========================================
-
-// ==========================================
-// 7. GAME LOOP & LOGIC
-// ==========================================
-
-// ==========================================
-// 8. INITIALIZATION
-// ==========================================
-
-window.onload = function() {
-    canvas = document.getElementById('gameCanvas');
-    ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    GAME.width = canvas.width;
-    GAME.height = canvas.height;
-    
-    loadAssets();
-    loadGame();
-    
-    window.addEventListener('resize', () => {
-        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-        GAME.width = canvas.width; GAME.height = canvas.height;
-    });
-
-    window.addEventListener('keydown', e => {
-        if(e.key === ' ' || e.key === 'Spacebar') { if(GAME.state === 'PLAY' && !keys.space) toggleFormation(); keys.space = true; }
-        if(e.key.toLowerCase() === 'q') { if(GAME.state === 'PLAY' && !keys.q) burnLuck(); keys.q = true; }
-        if(['w','a','s','d','ArrowUp','ArrowLeft','ArrowDown','ArrowRight'].includes(e.key)) {
-            keys[e.key.toLowerCase().replace('arrowup','w').replace('arrowleft','a').replace('arrowdown','s').replace('arrowright','d')] = true;
-        }
-    });
-
-    window.addEventListener('keyup', e => {
-        if(e.key === ' ' || e.key === 'Spacebar') keys.space = false;
-        if(e.key.toLowerCase() === 'q') keys.q = false;
-        if(['w','a','s','d','ArrowUp','ArrowLeft','ArrowDown','ArrowRight'].includes(e.key)) {
-            keys[e.key.toLowerCase().replace('arrowup','w').replace('arrowleft','a').replace('arrowdown','s').replace('arrowright','d')] = false;
-        }
-    });
-};
-</script>
+<!-- Main Initialization -->
+<script src="js/main.js"></script>
 </body>
 </html>
