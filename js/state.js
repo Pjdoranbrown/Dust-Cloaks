@@ -1,51 +1,23 @@
-// state.js
+const SAVE_KEY = 'dust_cloaks_v3';
+let META = { gold: 0, upgrades: {}, roster: [] };
+let canvas, ctx;
+let ASSETS = {};
 
-const SAVE_KEY = 'game_save';
-
-const META = { 
-    version: '1.0', 
-    lastUpdated: '2026-02-15'
+// Game State
+let GAME = {
+    state: 'START', width: 0, height: 0, frames: 0, time: 0, score: 0,
+    level: 1, xp: 0, xpReq: CONFIG.XP_BASE_REQ,
+    formation: 'WEDGE', luck: 0, maxLuck: 20, luckBurnCount: 0,
+    hp: 100, maxHp: 100, canUseShieldWall: false
 };
+let creationData = { race: null, classKey: null, name: "" };
+let currentRunStats = { kills: 0, gold: 0 };
+let keys = { w:false, a:false, s:false, d:false, space:false, q:false };
 
-const GAME = { 
-    state: {},
-    save: function() {
-        localStorage.setItem(SAVE_KEY, JSON.stringify(this.state));
-    },
-    load: function() {
-        this.state = JSON.parse(localStorage.getItem(SAVE_KEY)) || {};
-    }
-};
-
-const creationData = {
-    level: 1,
-    experience: 0,
-};
-
-const currentRunStats = {
-    gold: 0,
-    runs: 0,
-};
-
-const keys = {
-    UP: 38,
-    DOWN: 40,
-    LEFT: 37,
-    RIGHT: 39,
-};
-
-function loadGame() {
-    GAME.load();
-    updateGoldUI();
-}
-
-function saveGame() {
-    GAME.save();
-}
-
-function updateGoldUI() {
-    document.getElementById('gold_ui').innerText = `Gold: ${currentRunStats.gold}`;
-}
-
-// Load game on startup
-loadGame();
+// Entities Lists
+let player;
+let squad = [];
+let enemies = [];
+let pickups = [];
+let projectiles = [];
+let floatingTexts = [];
