@@ -11,7 +11,7 @@ class SquadMate extends Entity {
     static MAGE_ANIMATION_STATES = {
         IDLE: { row: 0, frameCount: 4 },
         RUN: { row: 1, frameCount: 4 },
-        CAST: { row: 2, frameCount: 4 },  // Rows 2-8 are for various cast animations
+        CAST: { row: 2, frameCount: 4 },  // Row 2 used for cast; rows 3-8 reserved for future cast variants
         DAMAGE: { row: 9, frameCount: 4 },
         DEAD: { row: 10, frameCount: 4 }
     };
@@ -74,14 +74,8 @@ class SquadMate extends Entity {
                     if (this.frameIndex >= state.frameCount) {
                         this.frameIndex = state.frameCount - 1;
                     }
-                } else if (this.currentAnimationState === 'DAMAGE') {
-                    // Damage animation plays once then returns to idle
-                    if (this.frameIndex >= state.frameCount) {
-                        this.frameIndex = 0;
-                        this.currentAnimationState = 'IDLE';
-                    }
-                } else if (this.currentAnimationState === 'CAST') {
-                    // Cast animation plays once then returns to idle (for MAGE)
+                } else if (this.currentAnimationState === 'DAMAGE' || this.currentAnimationState === 'CAST') {
+                    // Damage and Cast animations play once then return to idle
                     if (this.frameIndex >= state.frameCount) {
                         this.frameIndex = 0;
                         this.currentAnimationState = 'IDLE';
