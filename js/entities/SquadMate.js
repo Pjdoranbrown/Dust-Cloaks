@@ -255,13 +255,13 @@ class SquadMate extends Entity {
                     // Calculate frame position in sprite sheet
                     // Frames 0-3 are right-facing (columns 0-3), frames 4-7 are left-facing (columns 4-7)
                     const baseFrame = this.facingLeft ? 4 : 0;
-                    const frameX = (baseFrame + this.frameIndex) * 16;
-                    const frameY = state.row * 16;
+                    const frameX = (baseFrame + this.frameIndex) * 32;
+                    const frameY = state.row * 32;
                     
                     // Draw the sprite frame
                     ctx.drawImage(
                         img,
-                        frameX, frameY, 16, 16,  // Source: frame position and size in sprite sheet
+                        frameX, frameY, 32, 32,  // Source: frame position and size in sprite sheet
                         this.x - size/2, this.y - size/2, size, size  // Destination: screen position and size
                     );
                 } else {
