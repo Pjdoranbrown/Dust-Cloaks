@@ -118,7 +118,7 @@
             z-index: 10;
         }
         .menu-screen {
-            background: url('assets/ui/parchmentFoldedCrinkled.png') no-repeat center center fixed;
+            background: url('parchmentFoldedCrinkled.png') no-repeat center center fixed;
             background-size: cover;
             color: #2a2520;
         }
@@ -612,32 +612,6 @@ let floatingTexts = [];
 // 3. PERSISTENCE & UTILS
 // ==========================================
 
-function loadGame() {
-    const data = localStorage.getItem(SAVE_KEY);
-    if (data) {
-        try {
-            const parsed = JSON.parse(data);
-            META.gold = parsed.gold || 0;
-            META.upgrades = parsed.upgrades || {};
-            META.roster = parsed.roster || [];
-        } catch(e) { console.error("Save Corrupt"); }
-    }
-    updateGoldUI();
-    renderCampVisuals(); // Show visuals on load
-}
-
-function saveGame() {
-    localStorage.setItem(SAVE_KEY, JSON.stringify(META));
-    updateGoldUI();
-}
-
-function updateGoldUI() {
-    const displays = ['gold-display', 'camp-gold', 'gold-hud'];
-    displays.forEach(id => {
-        const el = document.getElementById(id);
-        if(el) el.innerText = (id === 'gold-hud' ? '' : 'Gold: ') + META.gold;
-    });
-}
 
 function getRandomName(raceKey) {
     const list = NAMES[raceKey] || NAMES.HUMAN;
@@ -666,17 +640,17 @@ function getNearestEnemy(x, y, range) {
 
 function loadAssets() {
     const sources = {
-        SOLDIER: 'assets/terrain/tiles/tile_0087.png', MAGE: 'assets/terrain/tiles/tile_0084.png', CLERIC: 'assets/terrain/tiles/tile_0098.png',
-        SCOUNDREL: 'assets/terrain/tiles/tile_0100.png', WITCH: 'assets/terrain/tiles/tile_0111.png', FOLK_HERO: 'assets/terrain/tiles/tile_0112.png',
-        BACKGROUND: 'assets/tileset/battlefield_tileset.png',
-        RAT: 'assets/terrain/tiles/tile_0123.png', BAT: 'assets/terrain/tiles/tile_0120.png', OGRE: 'assets/terrain/tiles/tile_0109.png', CRAB: 'assets/terrain/tiles/tile_0110.png',
+        SOLDIER: 'tile_0087.png', MAGE: 'tile_0084.png', CLERIC: 'tile_0098.png',
+        SCOUNDREL: 'tile_0100.png', WITCH: 'tile_0111.png', FOLK_HERO: 'tile_0112.png',
+        BACKGROUND: 'battlfield_tileset.png',
+        RAT: 'tile_0123.png', BAT: 'tile_0120.png', OGRE: 'tile_0109.png', CRAB: 'tile_0110.png',
         // Camp Buildings
-        TENT: 'assets/buildings/tent.png', STABLE: 'assets/buildings/stable.png', HOUSE: 'assets/buildings/house.png',
-        BROTHEL: 'assets/buildings/houseChimney.png', ALCHEMY: 'assets/ui/runis.png', MAGE_TOWER: 'assets/buildings/towerTall.png',
-        CHAPEL: 'assets/buildings/church.png', CHURCH: 'assets/buildings/churchLarge.png', PENS: 'assets/buildings/dock.png', RANGER: 'assets/buildings/houseSmall.png',
+        TENT: 'tent.png', STABLE: 'stable.png', HOUSE: 'house.png',
+        BROTHEL: 'houseChimney.png', ALCHEMY: 'runis.png', MAGE_TOWER: 'towerTall.png',
+        CHAPEL: 'church.png', CHURCH: 'churchLarge.png', PENS: 'dock.png', RANGER: 'houseSmall.png',
         // New Buildings
-        TOWER_WATCH: 'assets/buildings/towerWatch.png', FENCE: 'assets/structures/fence.png', WALL: 'assets/structures/wall.png', 
-        PINES: 'assets/nature/treePinesSmall.png', FIRE: 'assets/effects/campfire.png'
+        TOWER_WATCH: 'towerWatch.png', FENCE: 'fence.png', WALL: 'wall.png', 
+        PINES: 'treePinesSmall.png', FIRE: 'campfire.png'
     };
     for(let key in sources) {
         const img = new Image();
@@ -1123,454 +1097,21 @@ class StraightShot extends Projectile {
 // 6. UI & MENU SYSTEMS
 // ==========================================
 
-function startCreation() {
-    document.getElementById('start-screen').classList.add('hidden');
-    document.getElementById('char-creation-screen').classList.remove('hidden');
-    creationData = { race: null, classKey: null, name: "" };
-    showCreationStep('race');
-    renderRaceSelection();
-}
-
-function showCreationStep(step) {
-    document.querySelectorAll('.creation-step').forEach(el => el.classList.remove('active'));
-    document.getElementById(`step-${step}`).classList.add('active');
-    const titles = { 'race': "Select Race", 'class': "Select Speciality", 'name': "Enter Name" };
-    document.getElementById('creation-title').innerText = titles[step];
-}
-
-function renderRaceSelection() {
-    const grid = document.getElementById('race-selection-grid');
-    grid.innerHTML = '';
-    for (const key in RACES) {
-        const race = RACES[key];
-        const card = document.createElement('div');
-        card.className = 'upgrade-card';
-        card.innerHTML = `<div class="card-title">${race.name}</div><div class="card-desc">${race.desc}</div><div class="card-desc" style="color:#8b0000; margin-top:5px; font-weight:bold;">${race.statsText}</div>`;
-        card.onclick = () => { creationData.race = key; showCreationStep('class'); renderClassSelection(); };
-        grid.appendChild(card);
-    }
-}
-
-function renderClassSelection() {
-    const grid = document.getElementById('char-selection-grid');
-    grid.innerHTML = '';
-    for (const key in CLASS_DEFS) {
-        const def = CLASS_DEFS[key];
-        const card = document.createElement('div');
-        card.className = 'upgrade-card';
-        card.innerHTML = `<img src="${ASSETS[def.imgKey]?.src}" class="card-icon"><div class="card-title" style="color:${def.color}">${def.name}</div><div class="card-desc">${def.desc}</div>`;
-        card.onclick = () => { creationData.classKey = key; showCreationStep('name'); randomizeName(); };
-        grid.appendChild(card);
-    }
-}
-
-function randomizeName() {
-    document.getElementById('char-name-input').value = getRandomName(creationData.race);
-}
-
-function finalizeCreation() {
-    const nameInput = document.getElementById('char-name-input').value;
-    creationData.name = nameInput || getRandomName(creationData.race);
-    document.getElementById('char-creation-screen').classList.add('hidden');
-    startGame(creationData);
-}
-
-function closeCreation() {
-    document.getElementById('char-creation-screen').classList.add('hidden');
-    document.getElementById('start-screen').classList.remove('hidden');
-}
-
-function openRoster() {
-    document.getElementById('start-screen').classList.add('hidden');
-    document.getElementById('roster-screen').classList.remove('hidden');
-    const grid = document.getElementById('roster-grid');
-    grid.innerHTML = '';
-    if (META.roster.length === 0) { grid.innerHTML = "<p>No active mercenaries available.</p>"; return; }
-    META.roster.forEach((char, index) => {
-        const def = CLASS_DEFS[char.type];
-        const race = RACES[char.race];
-        const card = document.createElement('div');
-        card.className = 'upgrade-card';
-        card.innerHTML = `<img src="${ASSETS[def.imgKey]?.src}" class="card-icon"><div class="card-title" style="color:${def.color}">${char.name}</div><div class="card-role">${race.name} ${def.name}</div><div class="card-desc">Kills: ${char.kills||0}<br>Earned: ${char.gp||0}g</div>`;
-        card.onclick = () => { META.roster.splice(index, 1); saveGame(); document.getElementById('roster-screen').classList.add('hidden'); startGame(char); };
-        grid.appendChild(card);
-    });
-}
-function closeRoster() { document.getElementById('roster-screen').classList.add('hidden'); document.getElementById('start-screen').classList.remove('hidden'); }
-
-function renderCamp() {
-    const grid = document.getElementById('camp-grid');
-    grid.innerHTML = '';
-    let currentCat = '';
-    UPGRADES.forEach(u => {
-        if (u.category !== currentCat) {
-            const header = document.createElement('div');
-            header.className = 'camp-section'; header.innerText = u.category;
-            grid.appendChild(header); currentCat = u.category;
-        }
-        const isBought = META.upgrades[u.id];
-        const btn = document.createElement('div');
-        btn.className = `upgrade-btn ${isBought ? 'purchased' : ''}`;
-        
-        // Add Icon if exists
-        const iconHtml = u.imgKey && ASSETS[u.imgKey] ? `<img src="${ASSETS[u.imgKey].src}" class="upgrade-btn-icon">` : '';
-        
-        btn.innerHTML = `
-            ${iconHtml}
-            <div style="flex-grow:1;">
-                <span class="upgrade-name">${u.name}</span>
-                <span class="upgrade-cost">${isBought ? 'OWNED' : u.cost + 'g'}</span>
-            </div>
-            <div class="upgrade-desc">${u.desc}</div>
-        `;
-        if (!isBought) btn.onclick = () => buyUpgrade(u.id, u.cost);
-        grid.appendChild(btn);
-    });
-}
-
-function buyUpgrade(id, cost) {
-    if (META.gold >= cost) { 
-        META.gold -= cost; 
-        META.upgrades[id] = true; 
-        saveGame(); 
-        renderCamp(); 
-        renderCampVisuals(); // Update visuals immediately
-    }
-}
-
-function renderCampVisuals() {
-    const container = document.getElementById('camp-visuals');
-    if (!container) return;
-    container.innerHTML = '';
-    
-    UPGRADES.forEach(u => {
-        if (META.upgrades[u.id] && u.imgKey && ASSETS[u.imgKey]) {
-            const img = document.createElement('img');
-            img.src = ASSETS[u.imgKey].src;
-            img.className = 'camp-building';
-            img.style.left = u.x + '%';
-            container.appendChild(img);
-        }
-    });
-}
-
-function openCamp() { document.getElementById('start-screen').classList.add('hidden'); document.getElementById('camp-screen').classList.remove('hidden'); renderCamp(); }
-function closeCamp() { document.getElementById('camp-screen').classList.add('hidden'); document.getElementById('start-screen').classList.remove('hidden'); }
-
-function openManual() {
-    const container = document.getElementById('manual-content'); container.innerHTML = '';
-    const raceHeader = document.createElement('div'); raceHeader.className = 'manual-section-header'; raceHeader.innerText = "Backgrounds (Races)"; container.appendChild(raceHeader);
-    for (const key in RACES) {
-        const r = RACES[key];
-        container.innerHTML += `<div class="manual-card"><div class="manual-card-header"><div class="manual-title">${r.name}</div></div><div class="manual-desc" style="margin-bottom:10px;">${r.desc}</div><div class="manual-stats"><div class="manual-stat-row" style="color: #8b0000; text-align:center;">${r.statsText}</div></div></div>`;
-    }
-    const classHeader = document.createElement('div'); classHeader.className = 'manual-section-header'; classHeader.innerText = "Specialties (Classes)"; classHeader.style.marginTop = "30px"; container.appendChild(classHeader);
-    for (const key in CLASS_DEFS) {
-        const d = CLASS_DEFS[key];
-        const as = (60 / d.cooldown).toFixed(1);
-        container.innerHTML += `<div class="manual-card"><div class="manual-card-header"><img src="${ASSETS[d.imgKey]?.src}" class="manual-icon"><div><div class="manual-title">${d.name}</div><div class="manual-role">${d.role}</div></div></div><div class="manual-stats"><div class="manual-stat-row"><span>Damage:</span> <span style="color:#8b0000">${d.damage}</span></div><div class="manual-stat-row"><span>Range:</span> <span style="color:#00008b">${d.range}</span></div><div class="manual-stat-row"><span>Attack Speed:</span> <span style="color:#006400">${as}/sec</span></div></div><div class="manual-desc">${d.desc}</div></div>`;
-    }
-    document.getElementById('start-screen').classList.add('hidden');
-    document.getElementById('manual-screen').classList.remove('hidden');
-}
-function closeManual() { document.getElementById('manual-screen').classList.add('hidden'); document.getElementById('start-screen').classList.remove('hidden'); }
-
 // ==========================================
 // 7. GAME LOOP & LOGIC
 // ==========================================
-
-function initGame(charData) {
-    player = {
-        x: GAME.width / 2, y: GAME.height / 2, radius: 12, color: '#D4AF37', angle: 0,
-        imgKey: CLASS_DEFS[charData.classKey || charData.type].imgKey
-    };
-    squad = []; enemies = []; pickups = []; projectiles = []; floatingTexts = [];
-    currentRunStats = { kills: 0, gold: 0 };
-    addSquadMate(charData.classKey || charData.type, charData.race || 'HUMAN', charData.name);
-}
-
-function startGame(charData) {
-    document.getElementById('start-screen').classList.add('hidden');
-    document.getElementById('ui-layer').classList.remove('hidden');
-    GAME.state = 'PLAY'; GAME.hp = GAME.maxHp; GAME.score = 0; GAME.time = 0;
-    GAME.level = 1; GAME.xp = 0; GAME.xpReq = CONFIG.XP_BASE_REQ;
-    GAME.luck = 5; GAME.maxLuck = 20; GAME.luckBurnCount = 0; GAME.formation = 'WEDGE';
-    
-    if (META.upgrades['brothel']) GAME.maxLuck += 2;
-    if (META.upgrades['kitchen']) { GAME.maxHp += 20; GAME.hp = GAME.maxHp; }
-    if (META.upgrades['church']) { GAME.maxHp += 50; GAME.hp = GAME.maxHp; }
-    
-    initGame(charData);
-    const race = RACES[charData.race || 'HUMAN'];
-    if (race) {
-        if (race.hp) { GAME.maxHp += race.hp; GAME.hp = GAME.maxHp; }
-        if (race.luck) { GAME.maxLuck += race.luck; GAME.luck = Math.min(GAME.luck, GAME.maxLuck); }
-        player.raceSpeedMult = race.moveSpeed || 1.0;
-    } else { player.raceSpeedMult = 1.0; }
-    animate();
-}
-
-function checkSquadSynergies() {
-    GAME.canUseShieldWall = squad.some(m => m.type === 'SOLDIER' && m.level >= 3);
-    const indicator = document.getElementById('tactic-name');
-    if (!GAME.canUseShieldWall && GAME.formation === 'SHIELD') toggleFormation();
-    document.getElementById('tutorial').innerHTML = `WASD: Move<br>SPACE: Toggle Formation (${GAME.canUseShieldWall ? 'READY' : 'LOCKED - Need Lvl 3 Soldier'})<br>Q: Burn Luck (Ultimate)`;
-}
-
-function toggleFormation() {
-    if (!GAME.canUseShieldWall) { addFloatingText(player.x, player.y - 40, "NEED LVL 3 SOLDIER", "gray"); return; }
-    GAME.formation = GAME.formation === 'WEDGE' ? 'SHIELD' : 'WEDGE';
-    const indicator = document.getElementById('tactic-name');
-    indicator.innerText = GAME.formation;
-    indicator.style.color = GAME.formation === 'WEDGE' ? '#d4af37' : '#4169e1';
-    addFloatingText(player.x, player.y - 30, GAME.formation, "#fff");
-}
-
-function burnLuck() {
-    if (GAME.luck >= GAME.maxLuck * 0.5) { 
-        enemies.forEach(e => takeEnemyDamage(e, 9999));
-        ctx.fillStyle = "white"; ctx.fillRect(0,0,GAME.width, GAME.height);
-        GAME.luck = 0; GAME.maxLuck = Math.max(5, GAME.maxLuck - 5); GAME.luckBurnCount++;
-        addFloatingText(player.x, player.y - 50, "LUCK BURNED!", "red");
-    } else { addFloatingText(player.x, player.y - 30, "NOT ENOUGH LUCK", "gray"); }
-}
-
-function addSquadMate(type, race = null, name = null) {
-    if (squad.length >= CONFIG.MAX_TOTAL_SQUAD_SIZE) return;
-    if (squad.length === 6 && META.gold >= CONFIG.SECOND_LEADER_COST) {
-        META.gold -= CONFIG.SECOND_LEADER_COST; saveGame();
-        addFloatingText(player.x, player.y, "-20 Gold", "gold");
-    }
-    if (!race) race = Object.keys(RACES)[Math.floor(Math.random() * 6)];
-    if (!name) name = getRandomName(race);
-    squad.push(new SquadMate(type, squad.length, race, name)); 
-    checkSquadSynergies(); updateUI();
-}
-
-function takeEnemyDamage(enemy, dmg, knockback = false) {
-    enemy.hp -= dmg;
-    if (Math.random() > 0.5) addFloatingText(enemy.x, enemy.y, dmg, "#fff");
-    if (knockback) {
-        const angle = Math.atan2(enemy.y - player.y, enemy.x - player.x);
-        enemy.x += Math.cos(angle) * 20; enemy.y += Math.sin(angle) * 20;
-    }
-    if (enemy.hp <= 0 && !enemy.markedForDeletion) {
-        enemy.markedForDeletion = true;
-        pickups.push(new XPOrb(enemy.x, enemy.y, enemy.xp));
-        let dropChance = 0.1; 
-        if (META.upgrades['merchant']) dropChance += 0.05;
-        if (Math.random() < dropChance) pickups.push(new GoldOrb(enemy.x + 5, enemy.y + 5));
-        GAME.luck = Math.min(GAME.luck + 1, GAME.maxLuck);
-        GAME.score += 10; currentRunStats.kills++;
-    }
-}
-
-function takePlayerDamage(amount) {
-    let dmg = amount;
-    if (GAME.formation === 'SHIELD') dmg = Math.ceil(dmg * 0.5); 
-    if (META.upgrades['leather']) dmg = Math.max(1, dmg - 1);
-    GAME.hp -= dmg;
-    addFloatingText(player.x, player.y, `-${dmg}`, "red");
-    if (GAME.hp <= 0) gameOver();
-}
-
-function gainXP(amount) {
-    let finalAmt = amount;
-    if (META.upgrades['cells']) finalAmt = Math.ceil(amount * 1.1);
-    if (META.upgrades['grounds']) finalAmt = Math.ceil(amount * 1.2);
-    GAME.xp += finalAmt;
-    if (GAME.xp >= GAME.xpReq) levelUp();
-}
-
-function levelUp() {
-    GAME.state = 'LEVELUP'; GAME.level++; GAME.xp = 0;
-    GAME.xpReq = Math.floor(GAME.xpReq * CONFIG.XP_SCALING);
-    if (META.upgrades['hospital']) GAME.hp = Math.min(GAME.hp + 20, GAME.maxHp);
-    
-    const grid = document.getElementById('upgrade-grid'); grid.innerHTML = '';
-    
-    // Create Columns
-    const leftCol = document.createElement('div');
-    leftCol.className = 'upgrade-column';
-    const h1 = document.createElement('div'); h1.className = 'column-header'; h1.innerText = "Promote Squad";
-    leftCol.appendChild(h1);
-    
-    const rightCol = document.createElement('div');
-    rightCol.className = 'upgrade-column';
-    const h2 = document.createElement('div'); h2.className = 'column-header'; h2.innerText = "Recruit New";
-    rightCol.appendChild(h2);
-
-    // Existing Squad -> Left Column
-    squad.forEach((mate) => {
-        const def = CLASS_DEFS[mate.type];
-        const card = document.createElement('div'); card.className = 'upgrade-card'; card.style.borderColor = '#4169e1';
-        let bonus = "Stats \u2191";
-        if(mate.level===2) {
-             const m = {"SOLDIER":"Shield Wall","CLERIC":"Auto Heal","MAGE":"Fireball","WITCH":"Fear","SCOUNDREL":"Traps","FOLK_HERO":"Magnet"};
-             bonus = "Unlock: " + m[mate.type];
-        }
-        card.innerHTML = `<img src="${ASSETS[def.imgKey]?.src}" class="card-icon"><div class="card-title">UPGRADE</div><div class="card-role" style="color:${def.color}">${def.name} Lvl ${mate.level} \u2192 ${mate.level+1}</div><div class="card-desc" style="color:#aaf">${bonus}</div>`;
-        card.onclick = () => { mate.upgrade(); closeLevelUp(); };
-        leftCol.appendChild(card);
-    });
-
-    // New Recruits -> Right Column
-    if (squad.length === 6) { // 2nd Leader Logic
-        const choices = Object.keys(CLASS_DEFS).sort(() => 0.5 - Math.random()).slice(0, 3);
-        choices.forEach(key => {
-            const def = CLASS_DEFS[key];
-            const rKey = Object.keys(RACES)[Math.floor(Math.random()*6)];
-            const canAfford = META.gold >= CONFIG.SECOND_LEADER_COST;
-            const card = document.createElement('div'); card.className = `upgrade-card ${!canAfford?'disabled':''}`; card.style.borderColor = canAfford?'#d4af37':'#444';
-            card.innerHTML = `<img src="${ASSETS[def.imgKey]?.src}" class="card-icon"><div class="card-title">CAPTAIN</div><div class="card-role">${RACES[rKey].name} ${def.name}</div><div class="card-desc" style="color: gold">Cost: ${CONFIG.SECOND_LEADER_COST}g</div>`;
-            if (canAfford) card.onclick = () => { addSquadMate(key, rKey); closeLevelUp(); };
-            rightCol.appendChild(card);
-        });
-    } else if (squad.length < CONFIG.MAX_TOTAL_SQUAD_SIZE) {
-        const choices = Object.keys(CLASS_DEFS).sort(() => 0.5 - Math.random()).slice(0, 3);
-        choices.forEach(key => {
-            const def = CLASS_DEFS[key];
-            const rKey = Object.keys(RACES)[Math.floor(Math.random()*6)];
-            const card = document.createElement('div'); card.className = 'upgrade-card'; card.style.borderColor = '#d4af37';
-            card.innerHTML = `<img src="${ASSETS[def.imgKey]?.src}" class="card-icon"><div class="card-title">RECRUIT</div><div class="card-role">${RACES[rKey].name} ${def.name}</div>`;
-            card.onclick = () => { addSquadMate(key, rKey); closeLevelUp(); };
-            rightCol.appendChild(card);
-        });
-    }
-    
-    // Rations Fallback (Always available option on the right)
-    const ration = document.createElement('div'); ration.className = 'upgrade-card'; ration.style.borderColor = '#00ff00';
-    ration.innerHTML = `<div class="card-title">RATIONS</div><div class="card-desc">Heal 30% HP</div>`;
-    ration.onclick = () => { GAME.hp = Math.min(GAME.maxHp, GAME.hp + (GAME.maxHp*0.3)); closeLevelUp(); };
-    rightCol.appendChild(ration);
-    
-    grid.appendChild(leftCol);
-    grid.appendChild(rightCol);
-    
-    document.getElementById('levelup-screen').classList.remove('hidden');
-}
-
-function closeLevelUp() { document.getElementById('levelup-screen').classList.add('hidden'); GAME.state = 'PLAY'; }
-
-function gameOver() {
-    GAME.state = 'GAMEOVER'; saveGame();
-    document.getElementById('death-stats').innerText = `Survived: ${document.getElementById('timer').innerText} | Level: ${GAME.level} | Gold: ${META.gold}`;
-    const rezBtn = document.getElementById('resurrect-btn');
-    if (META.gold >= 10) { rezBtn.classList.remove('btn-disabled'); rezBtn.innerHTML = "RESURRECT LEADER (10g)"; }
-    else { rezBtn.classList.add('btn-disabled'); rezBtn.innerHTML = "RESURRECT LEADER (Too Poor)"; }
-    document.getElementById('gameover-screen').classList.remove('hidden');
-}
-
-function resurrectLeader() {
-    if (META.gold >= 10 && player) {
-        META.gold -= 10;
-        const leader = squad[0];
-        META.roster.push({ type: leader.type, race: leader.race, name: leader.name, kills: currentRunStats.kills, gp: currentRunStats.gold });
-        saveGame(); location.reload();
-    }
-}
-
-function update() {
-    if (GAME.state !== 'PLAY') return;
-    GAME.frames++;
-    if (GAME.frames % 60 === 0) { GAME.time++; if (META.upgrades['housing'] && GAME.hp < GAME.maxHp) GAME.hp = Math.min(GAME.maxHp, GAME.hp + 0.5); }
-    if (GAME.frames % CONFIG.ENEMY_SPAWN_RATE === 0) enemies.push(new Enemy());
-
-    let moveSpeed = (GAME.formation === 'WEDGE' ? CONFIG.PLAYER_SPEED_WEDGE : CONFIG.PLAYER_SPEED_SHIELD) * (META.upgrades['stables'] ? 1.1 : 1.0) * (player.raceSpeedMult || 1.0);
-    let dx = 0, dy = 0;
-    if (keys.w) dy -= 1; if (keys.s) dy += 1; if (keys.a) dx -= 1; if (keys.d) dx += 1;
-    if (dx !== 0 || dy !== 0) {
-        const len = Math.hypot(dx, dy);
-        dx = (dx/len) * moveSpeed; dy = (dy/len) * moveSpeed;
-        player.x += dx; player.y += dy; player.angle = Math.atan2(dy, dx);
-    }
-    player.x = Math.max(10, Math.min(GAME.width-10, player.x));
-    player.y = Math.max(10, Math.min(GAME.height-10, player.y));
-
-    squad.forEach(mate => mate.update(player.x, player.y, player.angle, GAME.formation));
-    enemies.forEach(e => e.update()); enemies = enemies.filter(e => !e.markedForDeletion);
-    projectiles.forEach(p => p.update()); projectiles = projectiles.filter(p => !p.markedForDeletion);
-    pickups.forEach(p => p.update()); pickups = pickups.filter(p => !p.markedForDeletion);
-    floatingTexts.forEach(t => { t.y -= 0.5; t.life--; }); floatingTexts = floatingTexts.filter(t => t.life > 0);
-
-    if (GAME.time >= 20 * 60) { GAME.state = 'WIN'; saveGame(); document.getElementById('win-screen').classList.remove('hidden'); }
-    updateUI();
-}
-
-function updateUI() {
-    document.getElementById('hp-bar').style.width = `${Math.max(0, (GAME.hp/GAME.maxHp)*100)}%`;
-    document.getElementById('xp-bar').style.width = `${Math.min(100, (GAME.xp/GAME.xpReq)*100)}%`;
-    document.getElementById('luck-bar').style.width = `${Math.min(100, (GAME.luck/GAME.maxLuck)*100)}%`;
-    document.getElementById('luck-text').innerText = `${GAME.luck} / ${GAME.maxLuck}`;
-    const mins = Math.floor(GAME.time / 60).toString().padStart(2, '0');
-    const secs = (GAME.time % 60).toString().padStart(2, '0');
-    document.getElementById('timer').innerText = `${mins}:${secs}`;
-    document.getElementById('squad-count').innerText = `${squad.length}/${CONFIG.MAX_TOTAL_SQUAD_SIZE}`;
-    document.getElementById('level-display').innerText = GAME.level;
-    document.getElementById('gold-hud').innerText = META.gold;
-}
-
-function draw() {
-    ctx.clearRect(0,0, canvas.width, canvas.height);
-    const bgImg = ASSETS['BACKGROUND'];
-    if (bgImg && bgImg.complete) { ctx.fillStyle = ctx.createPattern(bgImg, 'repeat'); ctx.fillRect(0, 0, canvas.width, canvas.height); }
-    pickups.forEach(p => p.draw());
-    
-    // Draw Leader
-    const leaderImg = ASSETS[player.imgKey];
-    if (leaderImg && leaderImg.complete) {
-        const size = player.radius * 3.0;
-        ctx.drawImage(leaderImg, player.x - size/2, player.y - size/2, size, size);
-        ctx.beginPath(); ctx.arc(player.x, player.y, player.radius * 1.5, 0, Math.PI * 2);
-        ctx.lineWidth = 2; ctx.strokeStyle = "#D4AF37"; ctx.stroke();
-    }
-    squad.forEach(mate => mate.draw());
-    enemies.forEach(e => e.draw());
-    projectiles.forEach(p => p.draw());
-    floatingTexts.forEach(t => { ctx.fillStyle = t.color; ctx.font = "bold 16px Courier New"; ctx.fillText(t.text, t.x, t.y); });
-}
-
-function animate() {
-    update(); draw();
-    if (GAME.state === 'PLAY' || GAME.state === 'LEVELUP') requestAnimationFrame(animate);
-}
 
 // ==========================================
 // 8. INITIALIZATION
 // ==========================================
 
-window.onload = function() {
-    canvas = document.getElementById('gameCanvas');
-    ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    GAME.width = canvas.width;
-    GAME.height = canvas.height;
-    
-    loadAssets();
-    loadGame();
-    
-    window.addEventListener('resize', () => {
-        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-        GAME.width = canvas.width; GAME.height = canvas.height;
-    });
-
-    window.addEventListener('keydown', e => {
-        if(e.key === ' ' || e.key === 'Spacebar') { if(GAME.state === 'PLAY' && !keys.space) toggleFormation(); keys.space = true; }
-        if(e.key.toLowerCase() === 'q') { if(GAME.state === 'PLAY' && !keys.q) burnLuck(); keys.q = true; }
-        if(['w','a','s','d','ArrowUp','ArrowLeft','ArrowDown','ArrowRight'].includes(e.key)) {
-            keys[e.key.toLowerCase().replace('arrowup','w').replace('arrowleft','a').replace('arrowdown','s').replace('arrowright','d')] = true;
-        }
-    });
-
-    window.addEventListener('keyup', e => {
-        if(e.key === ' ' || e.key === 'Spacebar') keys.space = false;
-        if(e.key.toLowerCase() === 'q') keys.q = false;
-        if(['w','a','s','d','ArrowUp','ArrowLeft','ArrowDown','ArrowRight'].includes(e.key)) {
-            keys[e.key.toLowerCase().replace('arrowup','w').replace('arrowleft','a').replace('arrowdown','s').replace('arrowright','d')] = false;
-        }
-    });
-};
 </script>
+<script src="js/persistence.js"></script>
+<script src="js/ui/menus.js"></script>
+<script src="js/ui/screens.js"></script>
+<script src="js/ui/hud.js"></script>
+<script src="js/game/gameplay.js"></script>
+<script src="js/game/gameLoop.js"></script>
+<script src="js/game/init.js"></script>
 </body>
 </html>
