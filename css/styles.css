@@ -111,7 +111,7 @@ body {
     z-index: 10;
 }
 .menu-screen {
-    background: url('parchmentFoldedCrinkled.png') no-repeat center center fixed;
+    background: url('../assets/ui/parchmentFoldedCrinkled.png') no-repeat center center fixed;
     background-size: cover;
     color: #2a2520;
 }
