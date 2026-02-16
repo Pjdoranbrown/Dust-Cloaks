@@ -35,7 +35,37 @@ function draw() {
     const leaderImg = ASSETS[player.imgKey];
     if (leaderImg && leaderImg.complete) {
         const size = player.radius * 3.0;
-        ctx.drawImage(leaderImg, player.x - size/2, player.y - size/2, size, size);
+        
+        // For SOLDIER and MAGE, use sprite sheet frame extraction
+        if (squad[0] && (squad[0].type === 'SOLDIER' || squad[0].type === 'MAGE')) {
+            const mate = squad[0];
+            const animationStates = mate.type === 'SOLDIER' 
+                ? SquadMate.SOLDIER_ANIMATION_STATES 
+                : SquadMate.MAGE_ANIMATION_STATES;
+            
+            const state = animationStates[mate.currentAnimationState];
+            if (state) {
+                // Calculate frame position in sprite sheet
+                // Frames 0-3 are right-facing (columns 0-3), frames 4-7 are left-facing (columns 4-7)
+                const baseFrame = mate.facingLeft ? 4 : 0;
+                const frameX = (baseFrame + mate.frameIndex) * 32;
+                const frameY = state.row * 32;
+                
+                // Draw the sprite frame
+                ctx.drawImage(
+                    leaderImg,
+                    frameX, frameY, 32, 32,  // Source: frame position and size in sprite sheet
+                    player.x - size/2, player.y - size/2, size, size  // Destination: screen position and size
+                );
+            } else {
+                // Fallback to full image if state not found
+                ctx.drawImage(leaderImg, player.x - size/2, player.y - size/2, size, size);
+            }
+        } else {
+            // Other classes use full image
+            ctx.drawImage(leaderImg, player.x - size/2, player.y - size/2, size, size);
+        }
+        
         ctx.beginPath(); ctx.arc(player.x, player.y, player.radius * 1.5, 0, Math.PI * 2);
         ctx.lineWidth = 2; ctx.strokeStyle = "#D4AF37"; ctx.stroke();
     }
