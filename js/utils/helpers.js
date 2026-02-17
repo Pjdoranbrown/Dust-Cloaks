@@ -28,7 +28,7 @@ function loadAssets() {
         SOLDIER: 'assets/specialties/soldier.png', SOLDIER_ICON: 'assets/specialties/soldier_icon.png',
         MAGE: 'assets/specialties/mage.png', MAGE_ICON: 'assets/specialties/mage_icon.png',
         CLERIC: 'assets/terrain/tiles/tile_0098.png',
-        SCOUNDREL: 'assets/terrain/tiles/tile_0100.png', WITCH: 'assets/terrain/tiles/tile_0111.png', FOLK_HERO: 'assets/terrain/tiles/tile_0112.png',
+        SCOUNDREL: 'assets/terrain/tiles/tile_0100.png', WITCH: 'assets/specialties/witch.png', FOLK_HERO: 'assets/terrain/tiles/tile_0112.png',
         BACKGROUND: 'assets/tileset/battlefield_tileset.png',
         RAT: 'assets/terrain/tiles/tile_0123.png', BAT: 'assets/terrain/tiles/tile_0120.png', OGRE: 'assets/terrain/tiles/tile_0109.png', CRAB: 'assets/terrain/tiles/tile_0110.png',
         // Camp Buildings

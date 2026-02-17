@@ -36,25 +36,26 @@ function draw() {
     if (leaderImg && leaderImg.complete) {
         const size = player.radius * 3.0;
         
-        // For SOLDIER and MAGE, use sprite sheet frame extraction
-        if (squad[0] && (squad[0].type === 'SOLDIER' || squad[0].type === 'MAGE')) {
+        // For SOLDIER, MAGE, and WITCH, use sprite sheet frame extraction
+        if (squad[0] && (squad[0].type === 'SOLDIER' || squad[0].type === 'MAGE' || squad[0].type === 'WITCH')) {
             const mate = squad[0];
-            const animationStates = mate.type === 'SOLDIER' 
-                ? SquadMate.SOLDIER_ANIMATION_STATES 
-                : SquadMate.MAGE_ANIMATION_STATES;
+            const animationStates = mate.getAnimationStates();
             
-            const state = animationStates[mate.currentAnimationState];
+            const state = animationStates ? animationStates[mate.currentAnimationState] : null;
             if (state) {
+                // Frame size depends on the class
+                const frameSize = mate.type === 'WITCH' ? 24 : 32;
+                
                 // Calculate frame position in sprite sheet
                 // Frames 0-3 are right-facing (columns 0-3), frames 4-7 are left-facing (columns 4-7)
                 const baseFrame = mate.facingLeft ? 4 : 0;
-                const frameX = (baseFrame + mate.frameIndex) * 32;
-                const frameY = state.row * 32;
+                const frameX = (baseFrame + mate.frameIndex) * frameSize;
+                const frameY = state.row * frameSize;
                 
                 // Draw the sprite frame
                 ctx.drawImage(
                     leaderImg,
-                    frameX, frameY, 32, 32,  // Source: frame position and size in sprite sheet
+                    frameX, frameY, frameSize, frameSize,  // Source: frame position and size in sprite sheet
                     player.x - size/2, player.y - size/2, size, size  // Destination: screen position and size
                 );
             } else {

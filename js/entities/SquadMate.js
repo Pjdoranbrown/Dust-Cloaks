@@ -16,6 +16,14 @@ class SquadMate extends Entity {
         DEAD: { row: 10, frameCount: 4 }
     };
 
+    // Animation configuration for WITCH sprite sheet
+    static WITCH_ANIMATION_STATES = {
+        IDLE: { row: 0, frameCount: 4 },
+        RUN: { row: 1, frameCount: 4 },
+        DAMAGE: { row: 3, frameCount: 4 },
+        DEAD: { row: 4, frameCount: 4 }
+    };
+
     constructor(type, index, raceKey = 'HUMAN', name = 'Grunt') {
         super(0, 0, 10, CLASS_DEFS[type].color);
         this.type = type;
@@ -46,9 +54,16 @@ class SquadMate extends Entity {
         }
     }
 
+    getAnimationStates() {
+        if (this.type === 'SOLDIER') return SquadMate.SOLDIER_ANIMATION_STATES;
+        if (this.type === 'MAGE') return SquadMate.MAGE_ANIMATION_STATES;
+        if (this.type === 'WITCH') return SquadMate.WITCH_ANIMATION_STATES;
+        return null;
+    }
+
     updateAnimation() {
-        // Only animate SOLDIER and MAGE types
-        if (this.type !== 'SOLDIER' && this.type !== 'MAGE') return;
+        // Only animate SOLDIER, MAGE, and WITCH types
+        if (this.type !== 'SOLDIER' && this.type !== 'MAGE' && this.type !== 'WITCH') return;
         
         // Animation configuration
         const FRAME_DELAY = 10; // Advance frame every 10 game frames
@@ -60,9 +75,7 @@ class SquadMate extends Entity {
             this.animationTimer = 0;
             
             // Get the appropriate animation states for this class
-            const animationStates = this.type === 'SOLDIER' 
-                ? SquadMate.SOLDIER_ANIMATION_STATES 
-                : SquadMate.MAGE_ANIMATION_STATES;
+            const animationStates = this.getAnimationStates();
             
             const state = animationStates[this.currentAnimationState];
             if (state) {
@@ -167,8 +180,8 @@ class SquadMate extends Entity {
             this.y += (targetY - this.y) * CONFIG.SQUAD_FOLLOW_SPEED;
         }
 
-        // Animation state determination for SOLDIER and MAGE
-        if (this.type === 'SOLDIER' || this.type === 'MAGE') {
+        // Animation state determination for SOLDIER, MAGE, and WITCH
+        if (this.type === 'SOLDIER' || this.type === 'MAGE' || this.type === 'WITCH') {
             // Determine facing direction from leader angle or movement
             if (leaderAngle !== undefined) {
                 this.facingLeft = Math.cos(leaderAngle) < 0;
@@ -243,25 +256,26 @@ class SquadMate extends Entity {
         if (img && img.complete && img.naturalWidth !== 0) {
             const size = this.radius * 4.0; 
             
-            // Use sprite sheet animation for SOLDIER and MAGE types
-            if (this.type === 'SOLDIER' || this.type === 'MAGE') {
+            // Use sprite sheet animation for SOLDIER, MAGE, and WITCH types
+            if (this.type === 'SOLDIER' || this.type === 'MAGE' || this.type === 'WITCH') {
                 // Get the appropriate animation states for this class
-                const animationStates = this.type === 'SOLDIER' 
-                    ? SquadMate.SOLDIER_ANIMATION_STATES 
-                    : SquadMate.MAGE_ANIMATION_STATES;
+                const animationStates = this.getAnimationStates();
                 
                 const state = animationStates[this.currentAnimationState];
                 if (state) {
+                    // Frame size depends on the class
+                    const frameSize = this.type === 'WITCH' ? 24 : 32;
+                    
                     // Calculate frame position in sprite sheet
                     // Frames 0-3 are right-facing (columns 0-3), frames 4-7 are left-facing (columns 4-7)
                     const baseFrame = this.facingLeft ? 4 : 0;
-                    const frameX = (baseFrame + this.frameIndex) * 32;
-                    const frameY = state.row * 32;
+                    const frameX = (baseFrame + this.frameIndex) * frameSize;
+                    const frameY = state.row * frameSize;
                     
                     // Draw the sprite frame
                     ctx.drawImage(
                         img,
-                        frameX, frameY, 32, 32,  // Source: frame position and size in sprite sheet
+                        frameX, frameY, frameSize, frameSize,  // Source: frame position and size in sprite sheet
                         this.x - size/2, this.y - size/2, size, size  // Destination: screen position and size
                     );
                 } else {
