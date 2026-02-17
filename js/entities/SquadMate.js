@@ -15,7 +15,7 @@ class SquadMate extends Entity {
         DAMAGE: { row: 9, frameCount: 4 },
         DEAD: { row: 10, frameCount: 4 }
     };
-    
+
     // Animation configuration for WITCH sprite sheet
     static WITCH_ANIMATION_STATES = {
         IDLE: { row: 0, frameCount: 4 },
@@ -54,6 +54,13 @@ class SquadMate extends Entity {
         }
     }
 
+    getAnimationStates() {
+        if (this.type === 'SOLDIER') return SquadMate.SOLDIER_ANIMATION_STATES;
+        if (this.type === 'MAGE') return SquadMate.MAGE_ANIMATION_STATES;
+        if (this.type === 'WITCH') return SquadMate.WITCH_ANIMATION_STATES;
+        return null;
+    }
+
     updateAnimation() {
         // Only animate SOLDIER, MAGE, and WITCH types
         if (this.type !== 'SOLDIER' && this.type !== 'MAGE' && this.type !== 'WITCH') return;
@@ -68,11 +75,7 @@ class SquadMate extends Entity {
             this.animationTimer = 0;
             
             // Get the appropriate animation states for this class
-            const animationStates = this.type === 'SOLDIER' 
-                ? SquadMate.SOLDIER_ANIMATION_STATES 
-                : this.type === 'MAGE'
-                ? SquadMate.MAGE_ANIMATION_STATES
-                : SquadMate.WITCH_ANIMATION_STATES;
+            const animationStates = this.getAnimationStates();
             
             const state = animationStates[this.currentAnimationState];
             if (state) {
@@ -256,11 +259,7 @@ class SquadMate extends Entity {
             // Use sprite sheet animation for SOLDIER, MAGE, and WITCH types
             if (this.type === 'SOLDIER' || this.type === 'MAGE' || this.type === 'WITCH') {
                 // Get the appropriate animation states for this class
-                const animationStates = this.type === 'SOLDIER' 
-                    ? SquadMate.SOLDIER_ANIMATION_STATES 
-                    : this.type === 'MAGE'
-                    ? SquadMate.MAGE_ANIMATION_STATES
-                    : SquadMate.WITCH_ANIMATION_STATES;
+                const animationStates = this.getAnimationStates();
                 
                 const state = animationStates[this.currentAnimationState];
                 if (state) {
