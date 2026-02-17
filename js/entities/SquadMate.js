@@ -241,7 +241,7 @@ class SquadMate extends Entity {
         if (this.index === 0) return; 
         const img = ASSETS[this.stats.imgKey];
         if (img && img.complete && img.naturalWidth !== 0) {
-            const size = this.radius * 3.0; 
+            const size = this.radius * 4.0; 
             
             // Use sprite sheet animation for SOLDIER and MAGE types
             if (this.type === 'SOLDIER' || this.type === 'MAGE') {
