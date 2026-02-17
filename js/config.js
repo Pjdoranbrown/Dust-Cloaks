@@ -34,7 +34,7 @@ const CLASS_DEFS = {
     SCOUNDREL: { name: 'Scoundrel', role: 'DPS', color: '#1a1a1a', desc: 'Single Target Stab. Lvl 3 drops slowing traps.', range: 40, cooldown: 40, damage: 35, imgKey: 'SCOUNDREL', iconKey: 'SCOUNDREL' },
     MAGE: { name: 'Mage', role: 'Artillery', color: '#00008b', desc: 'Fast projectiles. Lvl 3 summons Fireball Zones.', range: 400, cooldown: 35, damage: 12, imgKey: 'MAGE', iconKey: 'MAGE_ICON' },
     CLERIC: { name: 'Cleric', role: 'Support', color: '#b8860b', desc: 'AoE Knockback. Lvl 3 heals squad every 10s.', range: 80, cooldown: 80, damage: 12, imgKey: 'CLERIC', iconKey: 'CLERIC' },
-    WITCH: { name: 'Witch', role: 'Debuffer', color: '#4b0082', desc: 'Permanent Poison DoT. Lvl 3 Fears enemies.', range: 250, cooldown: 70, damage: 3, imgKey: 'WITCH', iconKey: 'WITCH' },
+    WITCH: { name: 'Witch', role: 'Debuffer', color: '#4b0082', desc: 'Permanent Poison DoT. Lvl 3 Fears enemies.', range: 250, cooldown: 70, damage: 3, imgKey: 'WITCH', iconKey: 'WITCH_ICON' },
     FOLK_HERO: { name: 'Folk Hero', role: 'Control', color: '#006400', desc: 'Directional shot. Lvl 3 increases XP collection.', range: 300, cooldown: 50, damage: 14, imgKey: 'FOLK_HERO', iconKey: 'FOLK_HERO' }
 };
 
