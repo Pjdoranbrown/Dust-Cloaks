@@ -4059,7 +4059,7 @@ function draw(){
   if (G.exitOpen && MAP.exit && onScreen(MAP.exit)) bodies.push({y:MAP.exit.y, exit:true});
   contractBodies(bodies, onScreen);
   bodies.sort((a,b) => a.y - b.y);
-  for (const b of bodies){
+  for (const b of bodies){ ctx.save(); try {   /* Index 80: one bad body hides only itself */
     if (b.custom){ b.custom(); continue; }
     if (b.tree){ const t = b.tree, near = Math.abs(t.x - L.x) < 34 && L.y < t.y && L.y > t.y - 70;
       if (typeof w3dMapTree === 'function' && w3dMapTree(t, near)) continue;   /* Index 67 */
@@ -4112,7 +4112,7 @@ function draw(){
       if (G.mounted) drawMounted(L.spr, L.x, L.y, 2.7, pickFrame(L, L.moving, 0), L.anim.left, L.flash > 0, L.moving, 0);
       else drawSprite(L.spr, L.x, L.y, 2.7, pickFrame(L, L.moving, 0), L.anim.left, L.flash > 0);
     }
-  }
+  } catch (e) { campDrawError(e, b); } finally { ctx.restore(); } }   /* Index 80 */
 
   for (const s of G.shots){
     const a = Math.atan2(s.vy, s.vx);
@@ -6027,7 +6027,7 @@ function drawCamp(){
   if (has('stables') && holding() === 'fort') L.push({y:(typeof paddockAt === 'function' ? paddockAt()[1] : PLOTS.stables[1] + 46), paddock:true});   /* Index 69 */
   L.sort((a, b) => a.y - b.y);
   const hv = CAMP.hover;
-  for (const it of L){
+  for (const it of L){ ctx.save(); try {   /* Index 80: one bad object hides only itself */
     if (it.tr){ if (!(typeof w3dTree === 'function' && w3dTree(it.tr, t))) blit(treeSprite(it.tr.v), it.tr.x, it.tr.y, 2.6, false, 11, 28); continue; }   /* Index 61 */
     if (it.prop){ drawHoldingProp(it.prop); continue; }
     if (it.d){ if (!(typeof w3dDecor === 'function' && w3dDecor(it.d))) blit(decorSprite(it.d.k), it.d.x, it.d.y, 2.6, false, 6, 8); continue; }   /* Index 67 */
@@ -6070,9 +6070,9 @@ function drawCamp(){
       if (q.kind === 'master' || q.kind === 'scribe' || hot){ ctx.beginPath(); ctx.ellipse(q.x, q.y + 17, 15, 5, 0, 0, TAU);   /* Index 30 */ ctx.strokeStyle = q.kind === 'master' ? '#5aa0e0' : '#ffd860'; ctx.lineWidth = 2; ctx.stroke(); }
       drawSprite(spr, q.x, q.y, s, fr, q.left, false);
     }
-    if (hot){ const sub = q.kind === 'master' ? 'Chapter Master' : q.kind === 'vet' ? 'Veteran: ' + facility(q.p.facility).name : q.kind === 'leader' ? 'Squad Leader' : q.kind === 'officer' ? (q.role === 'train' ? 'Officer, in training' : 'Officer') : q.role === 'rest' ? 'Resting' : q.role === 'train' ? 'Training: ' + (q.p.trainingLabel || '') : SPECS[q.p.spec].name;
+    if (hot){ const sub = q.kind === 'master' ? 'Chapter Master' : q.kind === 'vet' ? 'Veteran: ' + facility(q.p.facility).name : q.kind === 'leader' ? 'Squad Leader' : q.kind === 'officer' ? (q.role === 'train' ? 'Officer, in training' : 'Officer') : q.role === 'rest' ? 'Resting' : q.role === 'train' ? 'Training: ' + (q.p.trainingLabel || '') : q.kind === 'worker' ? 'Builder: ' + (facility(q.site) ? facility(q.site).name : 'a new building') + (typeof inBuild === 'function' && inBuild(q.site) ? ', ' + leftText(q.site) + ' left' : '') : (SPECS[q.p.spec] ? SPECS[q.p.spec].name : 'Townsfolk');   /* Index 80: builders (and anyone without a specialty) have a label */
       campLabel(q.x, q.y - 40, q.p.name, sub); }
-  }
+  } catch (e) { campDrawError(e, it); } finally { ctx.restore(); } }   /* Index 80 */
   for (const p of CAMP.puffs){ ctx.globalAlpha = Math.min(1, p.life / 40) * (p.ember ? 1 : 0.55);
     if (p.ember){ ctx.fillStyle = p.c; ctx.fillRect(p.x, p.y, 2, 2); } else blit(smokePuff(), p.x, p.y, 3 + (110 - p.life) / 40, false, 3, 3); }
   ctx.globalAlpha = 1;
@@ -24729,7 +24729,8 @@ const WORKER_RACES = ['HUMAN', 'HUMAN', 'DWARF', 'HALFLING', 'HALF_ORC', 'GNOME'
 const WORK_SPOTS = [[-54, 28, false], [54, 28, true], [8, 44, false]];
 function workersFor(id){
   return [0, 1, 2].map(i => { const h = hash(id + ':' + i), race = WORKER_RACES[h % WORKER_RACES.length], sex = (h >> 4) % 3 === 0 ? 'f' : 'm';
-    return {id:'wk' + id + i, kind:'worker', site:id, slotI:i, p:{race, spec:'PLAIN', name:'Builder ' + id + i, id:'wk' + id + i, sex}}; });
+    let name = 'Builder'; try { const g = NAMES[RACES[race].grp] || NAMES.HUMAN, list = g[sex] || g.m; name = list[(h >>> 7) % list.length] || 'Builder'; } catch (e) {}   // Index 80: a real name, the same every time
+    return {id:'wk' + id + i, kind:'worker', site:id, slotI:i, p:{race, spec:'PLAIN', name, id:'wk' + id + i, sex}}; });
 }
 campSync = (function(prev){
   return function(){
@@ -25130,6 +25131,31 @@ function applyTextSize(){ document.documentElement.style.setProperty('--uiz', St
 }
 { const f = loadMeta; loadMeta = function(){ const r = f.apply(this, arguments); try { applyTextSize(); if (typeof canvas !== 'undefined' && canvas && ctx) resize(); } catch (e) {} return r; }; }
 /* ===== END INDEX 79 ======================================================= */
+
+/* ============================================================================
+   INDEX 80 - THE CAMP NO LONGER HALF-VANISHES
+   THE BUG     Pointing at a builder (or leaving the mouse where builders walk)
+               asked for the label "SPECS[spec].name", and builders have no
+               specialty, so drawing stopped there every frame: everything
+               lower on the screen (the fire, the wagon, the trophy rack, the
+               square's people, trees and plots) was never drawn.
+   THE FIX     Builders say "Builder: <building>, <seasons> left"; anyone else
+               without a specialty is "Townsfolk".
+   SAFETY NET  The camp and the battlefield now draw each object inside its own
+               guard (with its own canvas state), so one broken object can only
+               hide itself. The first error of each kind is written to the
+               browser console with what was being drawn.
+   ROLLBACK    Delete from this comment to END INDEX 80, and undo the patches
+               marked "Index 80" (the person label and the two draw loops).
+============================================================================ */
+const DRAWERR = new Set();
+function campDrawError(e, it){
+  const what = !it ? '?' : it.q ? 'person ' + (it.q.kind || '') + ' ' + (it.q.id || '') : it.o ? 'object ' + it.o.kind + ' ' + it.o.id : it.e ? 'enemy ' + it.e.k : it.m ? 'squad mate' : Object.keys(it).filter(k => k !== 'y').join(',');
+  const key = (e && e.message) + '|' + what.split(' ').slice(0, 2).join(' ');
+  if (DRAWERR.has(key)) return; DRAWERR.add(key);
+  console.warn('Draw error (skipped, the rest of the scene still draws):', what, e);
+}
+/* ===== END INDEX 80 ======================================================= */
 
 </script>
 </body>
