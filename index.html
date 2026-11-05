@@ -3435,7 +3435,8 @@ function contractBodies(bodies, onScreen){
     const r = G.relic; ctx.fillStyle = 'rgba(255,230,120,' + (0.2 + Math.sin(G.frame / 10) * 0.12) + ')'; ctx.beginPath(); ctx.arc(r.x, r.y, 26, 0, TAU); ctx.fill();
     if (r.prog > 0){ ctx.strokeStyle = '#ffd860'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(r.x, r.y, 32, -Math.PI / 2, -Math.PI / 2 + TAU * r.prog / 150); ctx.stroke(); }
     if (!(typeof w3dMapProp === 'function' && w3dMapProp('m_relic', r.x, r.y + 10))) blit(relicSprite(), r.x, r.y, 2.6, false, 7, 10); }});   /* Index 70 */
-  if (o === 'relic' && G.relic.taken && !G.leader.down) bodies.push({y:G.leader.y + 0.5, custom:() => blit(relicSprite(), G.leader.x, G.leader.y - 44 + Math.sin(G.frame / 10) * 2, 1.8, false, 7, 10)});
+  if (o === 'relic' && G.relic.taken && !G.leader.down) bodies.push({y:G.leader.y + 0.5, custom:() => { const ry = G.leader.y - 44 + Math.sin(G.frame / 10) * 2;   /* Index 76 */
+    if (!(typeof w3dMapProp === 'function' && w3dMapProp('m_relic_held', G.leader.x, ry + 5))) blit(relicSprite(), G.leader.x, ry, 1.8, false, 7, 10); }});
 }
 function drawWagon(){
   const w = G.wagon, hs = horseSprite('riding'), moving = w.flash >= 0 && G.frame % 1 === 0;
@@ -3646,13 +3647,14 @@ const BLIP_LABEL = r => r <= 2 ? 'Decoy: only tracks' : r <= 4 ? 'Sniper nest' :
 // A known Blip Token in the field: shown as the thing itself.
 function drawKnownBlip(b){
   const r = b.known;
-  if (r <= 2){ blit(tracksSprite(), b.x, b.y, 3, false, 9, 6); }
-  else if (r === 5){ blit(pitSprite(), b.x, b.y, 3, false, 9, 6); }
+  const tok = (k, y) => typeof w3dToken === 'function' && w3dToken(k, b.x, y);   /* Index 76 */
+  if (r <= 2){ if (!tok('m_tracks', b.y + 2)) blit(tracksSprite(), b.x, b.y, 3, false, 9, 6); }
+  else if (r === 5){ if (!tok('m_pit', b.y + 2)) blit(pitSprite(), b.x, b.y, 3, false, 9, 6); }
   else {
     const t = blipTroops(), list = r <= 4 ? (t.sk.length ? t.sk : ['goblinsniper']) : (t.br.length ? t.br : ['brigand']);
     for (let i = 0; i < (r <= 4 ? 2 : 3); i++){ const k = list[i % list.length], spr = enemySprite(k), ox = (i - 1) * 18;
       ctx.globalAlpha = 0.85; drawStub(b, i, spr, b.x + ox, b.y - 6 + (i % 2) * 6, BESTIARY[k].sc * 1.1, 0, i % 2 === 0, false); ctx.globalAlpha = 1; }   /* Index 74 */
-    blit(hideSprite(), b.x, b.y + 10, 3, false, 11, 7);
+    if (!tok('m_hide', b.y + 22)) blit(hideSprite(), b.x, b.y + 10, 3, false, 11, 7);   /* Index 76 */
   }
   ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.font = 'bold 10px Georgia'; ctx.textAlign = 'center';
   const lab = BLIP_LABEL(r).toUpperCase(); const w = ctx.measureText(lab).width + 8;
@@ -3913,7 +3915,7 @@ function drawTraps(onScreen){
   for (const t of G.traps){
     if (!t.armed || (t.enemy && !t.seen) || !onScreen(t)) continue;
     if (t.enemy){ ctx.strokeStyle = 'rgba(255,90,60,' + (0.45 + Math.sin(G.frame / 8) * 0.25) + ')'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.arc(t.x, t.y, 24, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }
-    blit(trapSprite(t.kind), t.x, t.y, 2.6, false, 8, 6);
+    if (!(typeof w3dTrap === 'function' && w3dTrap(t.kind, t.x, t.y))) blit(trapSprite(t.kind), t.x, t.y, 2.6, false, 8, 6);   /* Index 76 */
     if (t.enemy && t.dis > 0){ ctx.strokeStyle = '#8fd39a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(t.x, t.y, 28, -Math.PI / 2, -Math.PI / 2 + TAU * t.dis / 90); ctx.stroke(); }
   }
 }
@@ -3992,7 +3994,7 @@ function draw(){
   for (const fz of G.fires) if (onScreen(fz)){
     ctx.globalAlpha = Math.min(1, fz.life / 60) * 0.85;
     ctx.fillStyle = 'rgba(200,70,20,.25)'; ctx.beginPath(); ctx.arc(fz.x, fz.y, fz.r, 0, TAU); ctx.fill();
-    blit(fireSprite(((G.frame / 8) + fz.x) % 2 | 0), fz.x, fz.y, 2.4, false, 6, 9); ctx.globalAlpha = 1; }
+    if (!(typeof w3dFlames === 'function' && w3dFlames(fz.x, fz.y, G.frame + (fz.x | 0)))) blit(fireSprite(((G.frame / 8) + fz.x) % 2 | 0), fz.x, fz.y, 2.4, false, 6, 9); ctx.globalAlpha = 1; }   /* Index 76 */
   // corpses
   for (const x of G.fx) if (x.corpse && onScreen(x)){
     if (typeof r3dCorpse === 'function' && r3dCorpse(x)) continue;   /* Index 55 */
@@ -6034,12 +6036,13 @@ function drawCamp(){
       continue; }
     if (it.grave){ drawGraveyard(hv && hv.kind === 'grave'); continue; }
     if (it.fire){ if (!(typeof w3dFire === 'function' && w3dFire(HUB.fire.x, HUB.fire.y, t))) blit(hubFireSprite((t / 7 | 0) % 2), HUB.fire.x, HUB.fire.y, 3, false, 11, 12);   /* Index 61 */
+      if (!(typeof w3dBenchLogs === 'function' && w3dBenchLogs(HUB.fire.x, HUB.fire.y)))   /* Index 76 */
       for (const [lx, ly, w] of [[-72, 4, 28], [36, 6, 26], [-12, 34, 30]]){   /* Index 47: every holding has its fire logs */ ctx.fillStyle = '#5a3a1a'; ctx.fillRect(HUB.fire.x + lx, HUB.fire.y + ly, w, 8); ctx.fillStyle = '#7a5230'; ctx.fillRect(HUB.fire.x + lx, HUB.fire.y + ly, w, 3); }
       continue; }
     if (it.o){ const o = it.o, hot = hv && hv.kind === o.kind && hv.id === o.id;
       if (o.kind === 'plot'){
         ctx.fillStyle = hot ? 'rgba(150,120,70,.55)' : 'rgba(110,88,52,.4)'; ctx.beginPath(); ctx.ellipse(o.x, o.y - 10, 54, 24, 0, 0, TAU); ctx.fill();
-        blit(plotSprite(), o.x, o.y, 2.6, false, 18, 20);
+        if (!(typeof w3dPlot === 'function' && w3dPlot(o))) blit(plotSprite(), o.x, o.y, 2.6, false, 18, 20);   /* Index 76 */
         if (hot) campLabel(o.x, o.y - 70, facility(o.id).name, `Plot: ${facCost(facility(o.id))}gp`);
         continue; }
       if (o.kind === 'wagon'){ shadowAt(o.x, o.y + 4, 46); if (!(typeof w3dDrawObj === 'function' && w3dDrawObj(o))) blit(qmSprite(), o.x, o.y, 3, false, 17, 22);   /* Index 72 */ if (hot) campLabel(o.x, o.y - 80, HS().qm, 'Squad gear'); continue; }
@@ -8195,7 +8198,7 @@ drawCamp = function(){
     if (it.ledger){ const hot = hv && hv.kind === 'ledger'; if (hot){ ctx.save(); ctx.filter = 'brightness(1.25)'; } if (!w3dWagon(M.ledger.x, M.ledger.y, false, 3.4, false)) blit(wagonSprite(), M.ledger.x, M.ledger.y, 3.4, false, 17, 22); if (hot) ctx.restore();   /* Index 74 */
       if (!w3dChBanner(M.ledger.x + 46, M.ledger.y - 7, 2.6)) blit(bannerSprite2(), M.ledger.x + 46, M.ledger.y - 10, 2.6, false, 1, 21);
       if (hot) campLabel(M.ledger.x, M.ledger.y - 80, 'The Ledger Wagon', (C.slots || []).map(s => WAGON_SLOTS[s].name).join(', ') || 'The Treasury and the ledger'); continue; }
-    if (it.fire){ const at = it.at || {x:M.column.x, y:M.column.y + 40}; blit(campfireSprite((t / 7 | 0) % 2), at.x, at.y, 3, false, 11, 12); continue; }
+    if (it.fire){ const at = it.at || {x:M.column.x, y:M.column.y + 40}; if (!(typeof w3dDraw === 'function' && w3dDraw('campfire', at.x, at.y + 12, {t}))) blit(campfireSprite((t / 7 | 0) % 2), at.x, at.y, 3, false, 11, 12); continue; }   /* Index 76 */
     if (it.st){ const k = it.st, S = STRUCTS[k], s = C.st[k], x = S.face[0] * CELL, y = S.face[1] * CELL;
       if (s.hp > 0 && S.gate) drawGateHouse(k, false, s.hp / s.max);
       const bw = 70, top = y - 26; ctx.fillStyle = 'rgba(0,0,0,.75)'; ctx.fillRect(x - bw / 2 - 1, top - 1, bw + 2, 7);
@@ -8203,7 +8206,8 @@ drawCamp = function(){
       ctx.fillStyle = s.hp <= 0 ? '#ff8a7a' : '#f0e6d2'; ctx.font = 'bold 10px Georgia'; ctx.textAlign = 'center'; ctx.fillText(S.name.toUpperCase() + (s.hp <= 0 ? ' (FALLEN)' : ''), x, top - 3); continue; }
     if (it.dist){ const k = it.dist, D = DISTRICTS[k], x = (D.at[0] + .5) * CELL, y = (D.at[1] + .5) * CELL, r = D.r * CELL, over = C.district[k] === 'overrun' || (C.fallback && k !== 'keep'), hot = hv && hv.kind === 'district' && hv.id === k;
       if (it.area){ ctx.globalAlpha = hot ? 0.3 : 0.16; ctx.fillStyle = over ? '#c03020' : '#d4af37'; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill(); ctx.globalAlpha = 1; continue; }
-      if (over) for (let i = 0; i < 4; i++) blit(fireSprite(((t / 8) + i) % 2 | 0), x + Math.cos(i * 1.7) * r * 0.5, y + Math.sin(i * 2.3) * r * 0.4, 2.4, false, 6, 9);
+      if (over) for (let i = 0; i < 4; i++){ const fx = x + Math.cos(i * 1.7) * r * 0.5, fy = y + Math.sin(i * 2.3) * r * 0.4;   /* Index 76 */
+        if (!(typeof w3dFlames === 'function' && w3dFlames(fx, fy, t + i * 17))) blit(fireSprite(((t / 8) + i) % 2 | 0), fx, fy, 2.4, false, 6, 9); }
       ctx.fillStyle = 'rgba(20,14,8,.7)'; ctx.font = 'bold 14px Georgia'; const lab = D.name.toUpperCase(), lw = ctx.measureText(lab).width + 16; ctx.fillRect(x - lw / 2, y - 12, lw, 20);
       ctx.fillStyle = over ? '#ff8a7a' : '#ffe9b0'; ctx.textAlign = 'center'; ctx.fillText(lab, x, y + 3);
       ctx.font = '11px Georgia'; ctx.fillStyle = over ? '#ff8a7a' : '#c8e8b0'; ctx.fillText(over ? 'OVERRUN' : 'HELD', x, y + 20); continue; }
@@ -12545,9 +12549,10 @@ const crystalSprite = () => simpleSprite('crystal', 16, 20, P => {
       for (const sk of MAP.sinks) if (onScreen(sk, 80)) bodies.push({y:sk.y - 30, custom:() => { ctx.fillStyle = '#0a0808'; ctx.beginPath(); ctx.ellipse(sk.x, sk.y, 46, 26, 0, 0, TAU); ctx.fill();
         ctx.strokeStyle = '#3a3030'; ctx.lineWidth = 3; ctx.stroke(); }});
       for (const b of G.braziers) if (onScreen(b, 80)) bodies.push({y:b.y, custom:() => {
-        blit(beaconSprite(), b.x, b.y, 2.6, false, 9, 20);
+        const b3 = typeof w3dMapProp === 'function' && w3dMapProp(b.lit ? 'm_beacon_lit' : 'm_beacon', b.x, b.y + 6, {t:G.frame, scale:0.87, flash:b.flash > 0});   /* Index 76 */
+        if (!b3) blit(beaconSprite(), b.x, b.y, 2.6, false, 9, 20);
         if (b.lit){ const gl = ctx.createRadialGradient(b.x, b.y - 40, 4, b.x, b.y - 40, 110); gl.addColorStop(0, 'rgba(255,170,60,.4)'); gl.addColorStop(1, 'rgba(255,170,60,0)');
-          ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(b.x, b.y - 40, 110, 0, TAU); ctx.fill(); blit(fireSprite((G.frame / 6 | 0) % 2), b.x, b.y - 46, 3.2, false, 6, 9);
+          ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(b.x, b.y - 40, 110, 0, TAU); ctx.fill(); if (!b3) blit(fireSprite((G.frame / 6 | 0) % 2), b.x, b.y - 46, 3.2, false, 6, 9);
           const bw = 50; ctx.fillStyle = 'rgba(0,0,0,.7)'; ctx.fillRect(b.x - bw / 2, b.y + 14, bw, 5); ctx.fillStyle = '#ffb040'; ctx.fillRect(b.x - bw / 2, b.y + 14, bw * b.hp / b.maxHp, 5); }
         else if (b.relight > 0){ ctx.strokeStyle = '#ffd860'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(b.x, b.y - 10, 40, -Math.PI / 2, -Math.PI / 2 + TAU * b.relight / 120); ctx.stroke(); } }});
       return;
@@ -12557,14 +12562,15 @@ const crystalSprite = () => simpleSprite('crystal', 16, 20, P => {
       bodies.push({y:R.y - R.r, custom:() => {
         ctx.fillStyle = 'rgba(120,90,50,.25)'; ctx.beginPath(); ctx.arc(R.x, R.y, R.r, 0, TAU); ctx.fill();
         ctx.strokeStyle = G.duel.state === 'war' ? 'rgba(200,40,30,.8)' : 'rgba(240,210,120,.85)'; ctx.lineWidth = 3; ctx.setLineDash([10, 8]); ctx.beginPath(); ctx.arc(R.x, R.y, R.r, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
-        for (let i = 0; i < 16; i++){ const a = i / 16 * TAU; blit(trapSprite('stakes'), R.x + Math.cos(a) * R.r, R.y + Math.sin(a) * R.r, 1.8, false, 8, 10); }
+        for (let i = 0; i < 16; i++){ const a = i / 16 * TAU, sx = R.x + Math.cos(a) * R.r, sy = R.y + Math.sin(a) * R.r;   /* Index 76 */
+          if (!(typeof w3dTrap === 'function' && w3dTrap('stakes', sx, sy, 0.7))) blit(trapSprite('stakes'), sx, sy, 1.8, false, 8, 10); }
         ctx.fillStyle = '#ffe9b0'; ctx.font = 'bold 13px Georgia'; ctx.textAlign = 'center'; ctx.fillText('THE CIRCLE OF IRON', R.x, R.y + R.r + 22); }});
       return;
     }
     f(bodies, onScreen);
     if (o === 'quarry') for (const v of G.vaults) if (!v.done && onScreen(v)) bodies.push({y:v.y + 1, custom:() => {
       const glow = 0.25 + Math.sin(G.frame / 9 + v.x) * 0.15; ctx.fillStyle = `rgba(120,210,255,${glow})`; ctx.beginPath(); ctx.arc(v.x, v.y - 10, 34, 0, TAU); ctx.fill();
-      blit(crystalSprite(), v.x, v.y, 3, false, 8, 18); }});
+      if (!(typeof w3dMapProp === 'function' && w3dMapProp('m_crystal', v.x, v.y + 4))) blit(crystalSprite(), v.x, v.y, 3, false, 8, 18); }});   /* Index 76 */
     if (o === 'breach' && G.gates) for (const gt of G.gates) if (!gt.open && onScreen(gt, 80)) bodies.push({y:gt.y + 2, custom:() => {
       ctx.fillStyle = '#4a3020'; ctx.fillRect(gt.x - 30, gt.y - 34, 60, 46); ctx.fillStyle = '#6a4428'; for (let x = -28; x < 28; x += 9) ctx.fillRect(gt.x + x, gt.y - 34, 7, 46);
       ctx.fillStyle = C.steel; ctx.fillRect(gt.x - 30, gt.y - 26, 60, 4); ctx.fillRect(gt.x - 30, gt.y, 60, 4);
@@ -23485,7 +23491,7 @@ contractBodies = (function(prev){
 brawlBodies = (function(prev){
   return function(bodies, onScreen){
     if (!w3dOn()) return prev(bodies, onScreen);
-    for (const a of G.ales) if (onScreen(a)) bodies.push({y:a.y, custom:() => { ctx.fillStyle = 'rgba(255,220,120,' + (0.18 + Math.sin(G.frame / 8) * 0.08) + ')'; ctx.beginPath(); ctx.arc(a.x, a.y, 14, 0, TAU); ctx.fill(); blit(aleSprite(), a.x, a.y, 2.4, false, 4, 9); }});
+    for (const a of G.ales) if (onScreen(a)) bodies.push({y:a.y, custom:() => { ctx.fillStyle = 'rgba(255,220,120,' + (0.18 + Math.sin(G.frame / 8) * 0.08) + ')'; ctx.beginPath(); ctx.arc(a.x, a.y, 14, 0, TAU); ctx.fill(); if (!w3dMapProp('tv_ale', a.x, a.y + 4)) blit(aleSprite(), a.x, a.y, 2.4, false, 4, 9); }});   /* Index 76 */
     bodies.push({y:2.9 * CELL, custom:() => { if (!w3dMapProp('tv_counter', 13 * CELL, 3 * CELL + 2)){ ctx.fillStyle = '#6a4422'; ctx.fillRect(6 * CELL, 2 * CELL, 14 * CELL, 40); }
       drawStub(BARKEEP_OWN, 0, barkeepSprite(), 12.5 * CELL, 1.6 * CELL, 2.5, 0, false, false); }});   /* Index 74 */
     for (const t of MAP.tables) bodies.push({y:(t.y + 0.9) * CELL, custom:() => { if (!w3dMapProp('tv_table', (t.x + 1) * CELL, (t.y + 1) * CELL + 2)){ ctx.fillStyle = '#6a4422'; ctx.fillRect(t.x * CELL, t.y * CELL, 2 * CELL, 40); } }});
@@ -24095,6 +24101,153 @@ loop = function(){
   if (G && !G.over) requestAnimationFrame(loop);
 };
 /* ===== END INDEX 75 ======================================================= */
+
+/* ============================================================================
+   INDEX 76 - THE 3D REPLACEMENT AUDIT, PART 2
+   A second sweep (camp in all four holdings with plots empty and built, all
+   sixteen contract kinds, a raid, the bar fight and the prologue) found these
+   still drawn in pixel art with "3D world" on. Now 3D:
+     CAMP       the signpost and roped stakes on every empty building plot; the
+                bones decor; the three bench logs round the campfire
+     PROLOGUE   the campfire (the camp's own 3D campfire) and the fires burning
+                in overrun districts
+     CONTRACTS  enemy traps (caltrops, snare, tripwire, deadfall, fire pots,
+                stake line); the Circle of Iron's ring of stakes (Trial); the
+                quarry crystals; the Seal's braziers (the Beacons contract's 3D
+                beacon, cold or lit); scouted Blip Tokens (tracks, spike pit,
+                hide); the relic carried above the Leader's head; fire on the
+                ground
+     BAR FIGHT  the tankards of ale
+   Every draw keeps the old pixel art as its fallback, used when "3D world" is
+   off or while a 3D frame is still rendering.
+   ROLLBACK   Delete from this comment to END INDEX 76, and undo each one-line
+              patch marked "Index 76" (plot sign, bench logs, prologue fire,
+              district fires, ground fire, traps, Circle of Iron, crystals,
+              braziers, tracks, pit, hide, carried relic, ale).
+   STILL FLAT ON PURPOSE   arrows, bolts and magic orbs, coin and gem pickups,
+              the "?" Blip Token, smoke puffs, and the HUD.
+============================================================================ */
+// Scale a part list built small up to its screen size.
+const w76Scale = (P, k) => { for (const q of P){ for (const f of ['c', 'a', 'p']) if (q[f]) q[f] = q[f].map(v => v * k); if (q.r !== undefined) q.r = Array.isArray(q.r) ? q.r.map(v => v * k) : q.r * k; } return P; };
+const w76Flame = P => list => { for (const q of list) P.push(Object.assign({b:'flame'}, q)); };
+for (const z of ['crys', 'crysL']) { R3D.EMIT.add(z); R3D_MUTE_SKIP.add(z); }
+
+Object.assign(W3D_KINDS, {
+  /* ---------------------------------------------------------------- camp --- */
+  m_plot:MPK([120, 80, 14], se => { const P = [], add = wAdd(P);
+    const st = [[-36, -10], [36, -10], [30, 12], [-30, 12]];
+    for (const [x, z] of st) add([{t:'cap', a:[x, 0, z], p:[x, 12, z], r:1.8, z:'wood'}, {t:'ell', c:[x, 12.4, z], r:[1.7, 1.2, 1.7], z:'stake'}]);
+    for (let i = 0; i < 4; i++){ const [x1, z1] = st[i], [x2, z2] = st[(i + 1) % 4]; add([{t:'cap', a:[x1, 9, z1], p:[x2, 9, z2], r:0.9, z:'rope'}]); }
+    add([{t:'ell', c:[0, 0.6, -6], r:[4, 1.2, 3], z:'dirt'}, {t:'cap', a:[0, 0, -6], p:[0, 40, -6], r:1.8, z:'woodD'},
+      {t:'box', c:[0, 32, -4.6], r:[18, 8.5, 1], z:'board'}, {t:'box', c:[0, 40.6, -4.6], r:[18.4, 0.8, 1.3], z:'woodL'}]);
+    for (const [x, y, w] of [[-1, 34.5, 12], [-4, 30, 8.5]]) add([{t:'box', c:[x, y, -3.4], r:[w, 0.6, 0.2], z:'ink'}]);
+    if (se === 'winter') add([{t:'box', c:[0, 41.8, -4.6], r:[18, 0.7, 1.4], z:'snow'}]);
+    return {parts:P, zones:SKZ(se, null, {board:'#c8a878', stake:'#d8c8a0', rope:'#e0d4b0', dirt:'#6a5236'}), keepZones:['board', 'rope']}; }),
+  dc_bones:{frame:[50, 30, 8], view:2.3, mirror:true, keep:0.7, clip:'still', build:se => { const P = [], add = wAdd(P);
+    add([{t:'cap', a:[-9, 1.2, 1], p:[3, 1.2, -1], r:1, z:'bone'}, {t:'ell', c:[-9.6, 1.4, 1.6], r:[1.4, 1.2, 1.2], z:'bone'}, {t:'ell', c:[-9.6, 1.4, 0.2], r:[1.4, 1.2, 1.2], z:'bone'},
+      {t:'ell', c:[3.6, 1.4, -0.4], r:[1.4, 1.2, 1.2], z:'bone'}, {t:'ell', c:[3.6, 1.4, -1.8], r:[1.4, 1.2, 1.2], z:'bone'}, {t:'cap', a:[-6, 1, -4], p:[0, 1, 4], r:0.8, z:'boneD'}]);
+    add([{t:'ell', c:[8, 3.4, 2], r:[3.6, 3.2, 3.4], z:'bone'}, {t:'ell', c:[8.4, 1.6, 4.2], r:[2.2, 1.4, 1.6], z:'bone'}, {t:'ell', c:[6.9, 3.8, 5], r:[0.9, 0.9, 0.5], z:'socket'}, {t:'ell', c:[9.5, 3.8, 5], r:[0.9, 0.9, 0.5], z:'socket'}]);
+    for (let i = 0; i < 3; i++) add([{t:'cap', a:[-3 + i * 2.4, 0.8, -6], p:[-4 + i * 2.4, 2.6, -2.4], r:0.5, z:'boneD'}]);
+    if (se === 'winter') add([{t:'ell', c:[8, 6.2, 2], r:[3, 0.8, 2.6], z:'snow'}]);
+    return {parts:w76Scale(P, 1.8), zones:SKZ(se, null, {bone:'#e0d6bc', boneD:'#c4b898', socket:'#2a2218'}), keepZones:['bone', 'boneD']}; }},
+  dc_benchlog:{frame:[60, 30, 8], view:2, keep:0.7, clip:'still', build:se => { const P = [], add = wAdd(P);
+    add([{t:'cap', a:[-10, 4, 0], p:[10, 4, 0], r:4, z:'log'}, {t:'ell', c:[-12.4, 4, 0], r:[1.2, 3.2, 3.2], z:'ring'}, {t:'ell', c:[12.4, 4, 0], r:[1.2, 3.2, 3.2], z:'ring'},
+      {t:'box', c:[0, 7.7, 0], r:[9, 0.4, 2], z:'woodL'}, {t:'cap', a:[-4, 1.6, 3.6], p:[-1, 0.6, 7], r:0.9, z:'woodD'}]);
+    if (se === 'winter') add([{t:'ell', c:[0, 8.2, 0], r:[10, 0.9, 2.8], z:'snow'}]);
+    return {parts:P, zones:SKZ(se, null, {log:'#5a3a1a', ring:'#c8a070'}), keepZones:['ring']}; }},
+
+  /* ------------------------------------------------------------- fire --- */
+  m_flames:{frame:[60, 60, 6], view:2, keep:0.6, clip:'flicker', seasonPass:false, build:se => { const P = [], add = wAdd(P), fl = w76Flame(P);
+    add([{t:'ell', c:[0, 0.6, 0], r:[9, 0.6, 6], z:'ash'}, {t:'cap', a:[-7, 1, -2], p:[6, 2.4, 3], r:1.4, z:'char'}, {t:'cap', a:[-5, 1, 4], p:[7, 1.6, -3], r:1.2, z:'char'}, {t:'ell', c:[2, 1.6, 1], r:[1.4, 1, 1.4], z:'ember'}]);
+    fl([{t:'ell', c:[0, 8, 0], r:[7, 8, 5], z:'flame'}, {t:'ell', c:[1, 14, 0], r:[4.4, 7, 3.6], z:'flame2'}, {t:'ell', c:[-2.6, 18, 1], r:[2.2, 4.4, 2], z:'flame2'},
+      {t:'ell', c:[3, 17, -1], r:[1.8, 3.8, 1.8], z:'flame'}, {t:'ell', c:[0, 23, 0], r:[1.2, 2.6, 1.2], z:'flame2'}]);
+    return {parts:w76Scale(P, 1.5), bones:{flame:{parent:'root', off:[0, 3, 0]}}, zones:{char:'#2a2420', ash:'#3a3230', ember:'#ff7a2a', flame:'#ff9a30', flame2:'#ffd860', snow:'#eef2f6'}, keepZones:['char', 'ash']}; }},
+
+  /* ------------------------------------------------------------ traps --- */
+  m_trap_caltrops:MPK([60, 40, 14], se => { const P = [], add = wAdd(P);
+    for (const [x, z] of [[-12, -4], [-4, -8], [6, -6], [13, 2], [-9, 6], [2, 5], [9, 9]])
+      add([{t:'cap', a:[x, 0.6, z], p:[x, 3.8, z], r:0.7, z:'steel'}, {t:'cap', a:[x, 0.6, z], p:[x + 2.8, 0.4, z + 1.4], r:0.7, z:'steel'}, {t:'cap', a:[x, 0.6, z], p:[x - 2.8, 0.4, z + 1.4], r:0.7, z:'steel'}, {t:'cap', a:[x, 0.6, z], p:[x, 0.4, z - 3], r:0.7, z:'steel'}]);
+    return {parts:P, zones:SKZ(se, null, {steel:'#9aa0a8'}), keepZones:['steel']}; }),
+  m_trap_beartrap:MPK([60, 40, 14], se => { const P = [], add = wAdd(P);
+    add([{t:'ell', c:[0, 1, 0], r:[13, 1, 8], z:'steelD'}, {t:'ell', c:[0, 1.5, 0], r:[9.5, 0.6, 5.4], z:'dark'}, {t:'ell', c:[0, 2, 0], r:[3, 0.5, 2], z:'steel'}]);
+    for (let i = 0; i < 12; i++){ const a = i / 12 * TAU, x = Math.cos(a) * 11, z = Math.sin(a) * 6.6; add([{t:'cap', a:[x, 1.4, z], p:[x * 0.9, 5, z * 0.9], r:0.7, z:'steel'}]); }
+    add([{t:'cap', a:[13, 0.8, 0], p:[20, 0.6, 4], r:0.6, z:'iron'}, {t:'cap', a:[20, 0, 4], p:[20, 3, 4], r:1, z:'woodD'}]);
+    return {parts:P, zones:SKZ(se, null, {steel:'#b8c0c8', steelD:'#5f6870', dark:'#2a2a2a'}), keepZones:['steel', 'steelD']}; }),
+  m_trap_tripwire:MPK([60, 40, 14], se => { const P = [], add = wAdd(P);
+    for (const x of [-18, 18]) add([{t:'cap', a:[x, 0, 0], p:[x, 12, 0], r:1.2, z:'wood'}]);
+    add([{t:'cap', a:[-18, 7, 0], p:[18, 7, 0], r:0.7, z:'line'}, {t:'ell', c:[15.6, 10.6, 1.8], r:[2.2, 2.6, 2.2], z:'gold'}, {t:'ell', c:[15.6, 8.2, 1.8], r:[0.7, 0.7, 0.7], z:'iron'}, {t:'cap', a:[18, 12, 0], p:[15.6, 13, 1.8], r:0.5, z:'line'}]);
+    return {parts:P, zones:SKZ(se, null, {line:'#d8d0c0'}), keepZones:['gold', 'line']}; }),
+  m_trap_deadfall:MPK([60, 50, 14], se => { const P = [], add = wAdd(P);
+    for (const x of [-19, 19]) add([{t:'cap', a:[x, 0, -1], p:[x, 22, -1], r:1.3, z:'woodD'}]);
+    add([{t:'cap', a:[-19, 22, -1], p:[19, 22, -1], r:0.9, z:'woodD'}, {t:'cap', a:[0, 22, -1], p:[0, 24, -1], r:0.5, z:'line'}, {t:'cap', a:[-19, 1.2, 5], p:[19, 1.2, 5], r:0.6, z:'line'}]);
+    [[6, 'wood'], [11.6, 'woodL'], [17.2, 'wood']].forEach(([y, z], i) => { const h = 13 - i; add([{t:'cap', a:[-h, y, -3], p:[h, y, -3], r:2.7, z}, {t:'ell', c:[-h - 2.3, y, -3], r:[0.7, 2.4, 2.4], z:'ring'}, {t:'ell', c:[h + 2.3, y, -3], r:[0.7, 2.4, 2.4], z:'ring'}]); });
+    return {parts:P, zones:SKZ(se, null, {line:'#e8e0d0', ring:'#c8a070'}), keepZones:['line', 'ring']}; }),
+  m_trap_firepot:MPK([60, 40, 14], se => { const P = [], add = wAdd(P), fl = w76Flame(P);
+    [[-12, -2], [0, 3], [12, -1]].forEach(([x, z]) => add([{t:'ell', c:[x, 0.6, z], r:[6.4, 0.6, 5.6], z:'dirt'}, {t:'ell', c:[x, 4.4, z], r:[5.2, 5, 5.2], z:'clay'}, {t:'ell', c:[x, 2.6, z + 3], r:[3.6, 1, 2.4], z:'clayD'},
+      {t:'cap', a:[x, 8.4, z], p:[x, 10, z], r:2.6, z:'clayL'}, {t:'ell', c:[x, 10.4, z], r:[2, 0.4, 2], z:'oil'}, {t:'cap', a:[x, 10, z], p:[x + 0.8, 13.4, z], r:0.5, z:'line'}]));
+    fl([{t:'ell', c:[0.8, 14.6, 3], r:[1.1, 1.8, 1.1], z:'flame2'}]);
+    return {parts:P, bones:{flame:{parent:'root', off:[0, 0, 0]}}, zones:SKZ(se, null, {clay:'#a0603a', clayD:'#7a4426', clayL:'#c08050', oil:'#1a1410', line:'#e8e0d0', dirt:'#4a3a24', flame2:'#ffb040'}), keepZones:['clay', 'clayD', 'clayL']}; }),
+  m_trap_stakes:MPK([60, 50, 14], se => { const P = [], add = wAdd(P);
+    [[-15, 16], [-5, 20], [5, 18], [15, 14]].forEach(([x, h]) => add([{t:'ell', c:[x, 0.6, 0], r:[3, 0.8, 2.6], z:'dirt'}, {t:'cap', a:[x, 0, 0], p:[x, h, 3], r:1.6, z:'wood'}, {t:'ell', c:[x, h + 0.6, 3.1], r:[1, 1.8, 1], z:'stakeT'}]));
+    if (se === 'winter') add([{t:'ell', c:[0, 0.6, 1], r:[18, 0.8, 4], z:'snow'}]);
+    return {parts:P, zones:SKZ(se, null, {stakeT:'#d8c8a0', dirt:'#4a3a24'}), keepZones:['stakeT']}; }),
+
+  /* ------------------------------------------------------- objectives --- */
+  m_crystal:MPK([60, 80, 8], se => { const P = [], add = wAdd(P);
+    add([{t:'ell', c:[0, 3, 0], r:[14, 4, 10], z:'rock'}, {t:'ell', c:[8, 2, 5], r:[6, 3, 4], z:'rockD'},
+      {t:'ell', c:[0, 22, 0], r:[4.4, 20, 4.4], z:'crys'}, {t:'ell', c:[-7, 14, 2], r:[3, 12, 3], rot:[0, 0, 0.35], z:'crysD'}, {t:'ell', c:[7, 15, -1], r:[3.4, 13, 3.4], rot:[0, 0, -0.3], z:'crysD'},
+      {t:'ell', c:[2, 10, 6], r:[2.4, 8, 2.4], rot:[0.3, 0, -0.2], z:'crys'}, {t:'ell', c:[-1, 26, 3.4], r:[0.8, 12, 0.6], z:'crysL'}]);
+    if (se === 'winter') add([{t:'ell', c:[-6, 5.6, 2], r:[7, 1.2, 5], z:'snow'}]);
+    return {parts:w76Scale(P, 1.3), zones:SKZ(se, null, {crys:'#7fd8ff', crysD:'#4aa8e0', crysL:'#e8fcff', rock:'#5a5a66', rockD:'#44444e'}), keepZones:['crys', 'crysD', 'crysL']}; }),
+  m_relic_held:MPK([40, 40, 6], se => { const P = [], add = wAdd(P);
+    add([{t:'box', c:[0, 5, 0], r:[7, 5, 4.4], z:'gold'}, {t:'ell', c:[0, 11, 0], r:[6, 2.6, 4], z:'gold'}, {t:'ell', c:[0, 14.4, 0], r:[1.6, 1.6, 1.6], z:'orb'}, {t:'box', c:[0, 5, 4.6], r:[2, 2.6, 0.4], z:'orb'}]);
+    return {parts:w76Scale(P, 1.3), zones:SKZ(se, null, {orb:'#9fd0ff'}), keepZones:['gold', 'orb']}; }, {seasonPass:false}),
+
+  /* --------------------------------------------------------- blip tokens --- */
+  m_tracks:MPK([60, 30, 10], se => { const P = [], add = wAdd(P);
+    for (let i = 0; i < 5; i++){ const x = -16 + i * 8, z = i % 2 ? 3 : -3; add([{t:'ell', c:[x, 0.25, z], r:[3, 0.3, 1.8], z:'print'}, {t:'ell', c:[x + 3.8, 0.25, z], r:[1, 0.3, 1.4], z:'print'}]); }
+    return {parts:P, zones:SKZ(se, null, {print:'#3a2e22'}), keepZones:['print']}; }),
+  m_pit:MPK([60, 34, 12], se => { const P = [], add = wAdd(P);
+    add([{t:'ell', c:[0, 0.3, 0], r:[16, 0.4, 9], z:'hole'}]);
+    for (let i = 0; i < 12; i++){ const a = i / 12 * TAU; add([{t:'ell', c:[Math.cos(a) * 16.5, 0.8, Math.sin(a) * 9.5], r:[3, 1.2, 2], z:'dirt'}]); }
+    for (const [x, z] of [[-9, -3], [-4, 2], [1, -4], [6, 3], [10, -1], [-1, 5]]) add([{t:'cap', a:[x, -1, z], p:[x, 5, z], r:0.8, z:'steel'}]);
+    add([{t:'box', c:[13, 1.2, 6], r:[5, 0.6, 2], rot:[0, 0.5, 0], z:'wood'}]);
+    return {parts:P, zones:SKZ(se, null, {hole:'#1a1410', dirt:'#5a4630', steel:'#b8c0c8'}), keepZones:['hole', 'steel']}; }),
+  m_hide:MPK([60, 40, 12], se => { const P = [], add = wAdd(P);
+    add([{t:'cap', a:[-12, 0, 6], p:[-7, 14, 0], r:0.9, z:'wood'}, {t:'cap', a:[12, 0, 6], p:[7, 14, 0], r:0.9, z:'wood'},
+      {t:'ell', c:[0, 6, 0], r:[16, 7, 10], z:'leafD'}, {t:'ell', c:[-6, 9, -2], r:[8, 6, 6], z:'leaf'}, {t:'ell', c:[7, 9, -1], r:[8, 5, 6], z:'leafM'}, {t:'ell', c:[0, 4, 8.6], r:[6, 3.4, 1.6], z:'hole'}]);
+    if (se === 'winter') add([{t:'ell', c:[0, 12.4, -1], r:[11, 2, 7], z:'snow'}]);
+    return {parts:P, zones:SKZ(se, null, {leaf:'#5f7e3e', leafD:'#3e5a28', leafM:'#6a8a40', hole:'#1a1410'})}; }),
+
+  /* ---------------------------------------------------------- the tavern --- */
+  tv_ale:MPK([40, 40, 6], se => { const P = [], add = wAdd(P);
+    add([{t:'cap', a:[0, 1.6, 0], p:[0, 8, 0], r:3.4, z:'tank'}, {t:'ell', c:[0, 2.6, 0], r:[3.7, 0.5, 3.7], z:'iron'}, {t:'ell', c:[0, 7.4, 0], r:[3.7, 0.5, 3.7], z:'iron'},
+      {t:'ell', c:[0, 10.4, 0], r:[3.4, 1.6, 3.4], z:'foam'}, {t:'ell', c:[2.4, 9, 2], r:[0.9, 1.4, 0.7], z:'foam'},
+      {t:'cap', a:[3.4, 3, 0], p:[5.6, 5.6, 0], r:0.7, z:'tankD'}, {t:'cap', a:[5.6, 5.6, 0], p:[3.4, 8, 0], r:0.7, z:'tankD'}]);
+    return {parts:w76Scale(P, 1.8), zones:SKZ(se, null, {tank:'#8a5a2b', tankD:'#5a3a1a', foam:'#f4ecd8'}), keepZones:['foam']}; })
+});
+W3D_DECOR.bones = 'dc_bones';
+// Each of these adds its own winter snow; the general seasons pass would scatter flowers round traps and bones.
+for (const k of ['m_plot', 'dc_bones', 'dc_benchlog', 'm_crystal', 'm_tracks', 'm_pit', 'm_hide', 'tv_ale'].concat(Object.keys(W3D_KINDS).filter(k => /^m_trap_/.test(k)))) W3D_KINDS[k].seasonPass = false;
+
+/* ------------------------------------------------------------- helpers --- */
+// The empty building plot. o is the camp object (its foot is o.y).
+function w3dPlot(o){ return w3dOn() && w3dDraw('m_plot', o.x, o.y + 2); }
+// The three bench logs round the camp fire. All or nothing, so the pixel logs never mix with 3D ones.
+const BENCH_LOGS = [[-72, 4, 28], [36, 6, 26], [-12, 34, 30]];
+function w3dBenchLogs(fx, fy){
+  if (!w3dOn()) return false;
+  let ok = true;
+  for (const [lx, ly, w] of BENCH_LOGS) ok = w3dDraw('dc_benchlog', fx + lx + w / 2, fy + ly + 8) && ok;
+  return ok;
+}
+// A patch of burning ground: ground fire on a contract map, or a fire in an overrun district.
+function w3dFlames(x, y, t){ return w3dOn() && w3dDraw('m_flames', x, y + 5, {t}); }
+// An enemy trap. s is a size relative to the pixel trap (the Circle of Iron's stakes are 0.7).
+function w3dTrap(k, x, y, s){ return W3D_KINDS['m_trap_' + k] ? w3dMapProp('m_trap_' + k, x, y + (k === 'stakes' ? 4 : 2) * (s || 1), {scale:s}) : false; }
+// A scouted Blip Token: tracks, a spike pit or a hide.
+function w3dToken(k, x, y){ return w3dMapProp(k, x, y); }
+/* ===== END INDEX 76 ======================================================= */
 
 </script>
 </body>
