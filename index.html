@@ -25017,7 +25017,7 @@ window.addEventListener('keydown', e => {
   const tg = e.target && e.target.tagName; if (tg === 'INPUT' || tg === 'TEXTAREA' || tg === 'SELECT') return;
   if (typeof ASK !== 'undefined' && ASK) return;
   const chr = $('chronicle'); if (chr && chr.style.display !== 'none') return;
-  if (campOverlayOpen() || (typeof inStoryNow === 'function' && inStoryNow())) return;
+  if (campOverlayOpen() || !$('screen-title').classList.contains('hidden') /* Index 81: not from the title screen */ || (typeof inStoryNow === 'function' && inStoryNow())) return;
   const k = e.key.toLowerCase(), L = !!META.leader;
   const act = {r:() => L && openRoster(), p:() => L && openTable(), q:() => openCamp(), h:() => { if (L){ centreCamOn(HUB.fire.x, HUB.fire.y); openPanel('fire', 'fire'); } },
     l:() => openChronicle(), c:() => openChronicle(), m:() => openManual(),
@@ -25156,6 +25156,69 @@ function campDrawError(e, it){
   console.warn('Draw error (skipped, the rest of the scene still draws):', what, e);
 }
 /* ===== END INDEX 80 ======================================================= */
+
+/* ============================================================================
+   INDEX 81 - BUG FIXES FROM THE AUDIT
+   FIXED  1  The camp hint bar listed the camp hotkeys (B, R, P, Q, H, L) on the
+             Varnholt prologue map too, where none of them work. The prologue
+             now shows a short hint without keys; the main camp's hint says
+             "Camp keys" and notes that Q and R spend Luck in a fight. The Manual
+             says the same. (G-BUG-02, G-BUG-03)
+          2  The title screen is centred with justify-content:center, so when
+             it was taller than the window the top (the title) was cut off and
+             could not be scrolled to. It now centres only when it fits.
+          3  Title screen: the note under the Chapter button sat on its divider
+             line; the "No Squad Leader yet" placeholder in the Squad Leader look
+             cards was an unframed, wrapping blob. (G-UI-01, G-UI-02)
+          4  Gear cards (Market and Quartermaster): the EQUIPPED / OWNED stamp
+             floated over the description, and a long SOURCE wrapped into the
+             COST column. The stamp is now a line of its own and the footer
+             keeps COST and SOURCE in separate columns. (G-UI-03, G-UI-04)
+          5  The Reeve's Hall (and any long Planning Table): the table's wood
+             board was squeezed to the window height while its contents ran on
+             below it, so the "Ring the Bell" button hung off the bottom of the
+             board. The board now grows with its contents.
+             The hint bar no longer swallows clicks over the map under it
+             (G-UI-06).
+          6  The camp hotkeys (Index 78) also fired on the title screen: H, L, B
+             and M opened panels hidden behind it and Q, R, P replaced the
+             title screen. They are now off while the title screen shows.
+          7  The debrief's "Now Xgp" total was written before Detailed Salvage
+             and facility upkeep changed the Treasury, so it could be wrong; it
+             now shows the Treasury every time the debrief redraws.
+   ROLLBACK   Delete from this comment to END INDEX 81, and undo the patches
+              marked "Index 81" (including the one in the Index 78 key handler).
+============================================================================ */
+{ const st = document.createElement('style');
+  st.textContent = `.splash-screen{justify-content:safe center}
+    .splash-screen .inner > div[style*="border-top"]{margin-top:26px !important;padding-top:16px !important}
+    .gc-st{position:static;transform:none;align-self:flex-start;display:inline-block;margin:0 8px 6px}
+    .gc-foot{gap:10px} .gc-foot span:first-child{flex:none} .gc-foot span:last-child{flex:1;min-width:0;overflow-wrap:anywhere}
+    #table-inner{flex:0 0 auto}
+    #camp-hint{pointer-events:none;max-width:calc(100vw - 24px)}`;   /* Index 81 */
+  document.head.appendChild(st); }
+const HINT81 = 'WASD or the arrow keys walk your Squad Leader (hold Shift to run). Click buildings';
+function hint81(){
+  const h = $('camp-hint'); if (!h) return;
+  const story = typeof inStoryNow === 'function' && inStoryNow(), tag = story ? 'story' : 'camp';
+  h.dataset.i78 = '1';                                                         // Index 78 must not append its own key list on top
+  if (h.dataset.i81 === tag && h.textContent.indexOf('Keys: B') < 0) return; h.dataset.i81 = tag;
+  h.textContent = story ? HINT81 + ' and people.'
+    : HINT81 + ', plots and people.  Camp keys (in a fight Q and R spend Luck): B build · R roster · P planning table · Q quartermaster · H hire · L ledger · hold Alt for names.';
+}
+{ const f = drawCamp; drawCamp = function(){ try { hint81(); } catch (e) {} return f.apply(this, arguments); }; }   /* Index 81 */
+{ const f = settingsHTML; settingsHTML = function(dark){ const h = f(dark);
+    return h.replace('<div style="height:96px;display:flex;align-items:center">No Squad Leader yet</div>',
+      '<div style="height:96px;width:100%;box-sizing:border-box;display:flex;align-items:center;justify-content:center;text-align:center;padding:8px;font-size:11.5px;opacity:.75">No Squad Leader yet</div>'); }; }   /* Index 81 */
+{ const f = openManual;
+  openManual = function(){
+    f(); const lg = $('manual-inner') && $('manual-inner').querySelector('.log'); if (!lg || lg.querySelector('.idx81')) return;
+    lg.insertAdjacentHTML('beforeend', `<p class="idx81"><b>Q and R mean two things.</b> In camp, Q opens the Quartermaster and R the Roster. In a fight, Q spends and R burns Luck. The camp keys are off while a fight is on.</p>`);
+  };
+}
+// 7 (commander, BUG-07): the debrief's "Now Xgp" was written before Detailed Salvage and facility upkeep changed the Treasury; it is now the Treasury at every redraw.
+{ const f = renderDebrief; renderDebrief = function(head, lines){ try { if (lines && lines.length && META) lines = lines.map((l, i) => i === 0 && typeof l === 'string' ? l.replace(/Now -?\d+gp\./, `Now ${META.treasury}gp.`) : l); } catch (e) {} return f(head, lines); }; }   /* Index 81 */
+/* ===== END INDEX 81 ======================================================= */
 
 </script>
 </body>
