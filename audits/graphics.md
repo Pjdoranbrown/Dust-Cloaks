@@ -159,3 +159,31 @@ What I checked: camp (fort holding, summer and `SEASON_FORCE='winter'`), a Hold 
 - `pop()` text can overlap exactly (GFX-03).
 - The contract fog rim shows a warm yellow band (GFX-04).
 - Not covered: other holdings (barge, warehouse, waystation), the 15 other contract kinds, raid, bar fight and prologue. A follow-up pass with `AUD.campSweep`/`AUD.contractSweep` is recommended before the commander treats this list as complete.
+
+## Implemented (Index 84, `js/graphics.js`)
+
+Everything is done by wrapping game functions from `js/graphics.js`, except GFX-15, which needed one in-place line in `draw()`'s squad-mate loop (marked `/* Index 84 */`, falls back to the old pips if `gfxMateBar` is missing). Rollback: empty `js/graphics.js` and undo that one patch.
+
+Checked in the browser: no page errors and no "Draw error" warnings across the camp (all four holdings x all four seasons via `SEASON_FORCE`), all 16 contract kinds (260 ticks each, seasons rotated), a raid and the bar fight. `draw()` averaged about 2 ms per frame in a winter hunt contract. I did not run `AUD.contractSweep` or watch the game live. The Draw-error check relies on console warnings, so a draw error that is only logged elsewhere would not show up. This save only had a fort layout, so the barge, warehouse and waystation layouts did not visibly change when I switched holding.
+
+| Item | What changed | How to see it |
+|---|---|---|
+| GFX-01 walk cycle | `r3dChoose` wrapper. A per-unit phase advances by a rate that grows with the measured speed (walk 0.045 + 0.05 x px/frame, run 0.07 + 0.06 x px/frame). Synthetic test: 3.0 px/frame advances a frame about every 5.4 ticks (close to the old 6), 1.8 about every 8, 0.6 about every 14. | Walk the Leader in snow (`SEASON_FORCE='winter'`) or while trapped, versus sprinting with Shift. Slow units step slowly. |
+| GFX-09 direction flicker | `r3dDirFor` wrapper. A new facing must hold 3 frames before it shows; one-frame flips never appear. No blending (only 8 pre-rendered directions). | Units pushed about in a melee no longer shimmer between facings. |
+| GFX-03 text stacking | `pop` wrapper. A new label steps up 13 px for each younger label near it (max 4). | In a contract run `pop(L.x, L.y-30,'CRITICAL','#f0c96a'); pop(L.x, L.y-30,'MOMENTUM RANK 2','#9fd0f0'); pop(L.x, L.y-30,'STEADY','#fff')`. They stack in a column. The existing "MOMENTUM RANK" label that appeared twice in one fight is a separate duplicate message, not touched. |
+| GFX-04 fog edge | `fogBlack` wrapper. The black unexplored mask is blurred about one cell, once per fog change (cached). The edge is now smooth instead of showing the cell grid. I could not reproduce the "yellow halo" as a fog colour issue; it looked like lit floor beside the dark. | Any contract: the edge of the black area is a soft ramp. |
+| GFX-05 winter | `drawPuddleList`: in winter puddles are drawn frozen (pale ice, frost bloom, two cracks, glint, no ripple). `drawCampRoads`: in winter the fort's roads get a darker mud edge under the road. Contract roads (terrain bake) were not changed. | Camp or any contract with `SEASON_FORCE='winter'`. |
+| GFX-12 trees +20% | `w3dTreeAt` wrapper scales `W3D.S` by 1.2 around the call (same trick as `w3dMapProp`). Forest density checked in a summer contract: canopies overlap more but the map stays readable. | Any camp forest edge and contract woods. |
+| GFX-13 coins and gems | `simpleSprite` wrapper tags the coin and gem canvases; a `blit` wrapper draws them at 0.79x and 0.82x. | Kill an enemy and look at the coin. |
+| GFX-15 squad bars | `gfxMateBar`: dark plate behind 4x4 pips (was 4x3, no plate), pips go green, amber, red as Constitution drops, a continuous bar when a unit has more than 8 pips. | Any contract or the bar fight; lower a mate's `con`. |
+| GFX-16 corpse shadows | `r3dCorpse` wrapper draws a soft shadow under 3D corpses, fading with the corpse. Not for nests or engines. | Kill a unit and watch the body. |
+| GFX-08 death collapse | Already done. My audit was wrong: `r3dCorpse` is wrapped later (Index 56 for wolf and alpha, Index 57 for the other special kinds), so those do get 3D death clips. I killed one each of wolf, alpha, cinder, wyrm, ogre, devil, nest, engine and enforcer; all drew 3D corpses. Small addition: for kinds that have 3D clips, nothing is drawn for the first 24 frames while the death frames render, instead of the old flat pixel flash. | Run `spawnEnemy(k, x, y, {noNem:true})` then `hurtEnemy(e, 50)`. |
+
+### Skipped, with reasons
+- **GFX-18 seasonal particles:** nothing to do. The cyan crosses I called "blue sparkles" are summer dragonflies and fireflies in `drawSeasonOverlay`; spring has pollen and bees, autumn leaves, winter rain streaks. My audit misread them.
+- **GFX-20 terrain tile seams:** not changed. I found no visible seams in camp or contract terrain across the views checked, only a repeating mottle. Changing the bake without a defect to fix risks more than it gains. Reopen it if the user spots a seam.
+- **Not approved, left alone:** GFX-02, 06, 07, 10, 11, 14, 17, 19.
+
+### Corrections to the audit
+- The bugs section said wolves, cinders, the alpha and the wyrm fall back to a flat pixel corpse. That is wrong; they are 3D (see GFX-08).
+- GFX-15: mate bars are pip rows drawn inline in `draw()` (about line 4101), not 4-6 px bars.

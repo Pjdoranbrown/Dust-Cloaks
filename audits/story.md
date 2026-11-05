@@ -198,3 +198,25 @@ Effort: version one S, version two M, version three L. Owner: version one *deleg
 3. STORY-09, 10, 15, 16: barks, Bard intro, nemesis lines.
 4. STORY-05 and STORY-04: need the user's call on Reynard and on how generic bosses are named.
 5. STORY-13 and the larger onboarding versions: touch the Chronicle and the prologue state flow.
+
+---
+
+## Implemented (Index 85, `js/story.js`)
+
+Tested in the browser at localhost:8765 (saves backed up and restored): prologue Day 1/2/road days, retreat panel, assault debriefs, all ten contract results, a real `startDeployment`/`endDeployment('victory')`, a construction finishing, in-fight `note()` voices. No errors logged. Not tested end to end: a full played assault with Orsolt actually spawning (the spawn/fall/Duruk lines are triggered by exact `note()` texts; Duruk's was confirmed, Orsolt/Ilvaryn "has seen you" confirmed by pattern only).
+
+| Item | What it does | Where it shows |
+|---|---|---|
+| STORY-01 | Reeve line on Day 1 ("I have a purse, a mill and no soldiers... In that order, if you please."), on the last day ("If this fails, Varnholt was a silver town for eleven generations."), on starvation, once on losing the Mill ("That was my grain. I will mention it."), and after Assault 1 and the Quick finale | Day panel news (`dayNews`) |
+| STORY-02 | A win/loss line per assault, Full and Quick ("They came in a line and went away in pieces...", "Horns from the ridge are the best sound anyone has heard all year.") plus Orsolt slain/fled lines | Field Report after an assault |
+| STORY-14 | Assault 1 line explains the levy ("field-hands with a tithe-mark on the wrist... “Those are somebody’s farmers.”") | Same debrief |
+| STORY-03 | Orsolt and Ilvaryn when they see you and when they fall, and a Duruk line when his riders hit ("Horns, from behind the host. Khan Duruk has kept his promise.") | In-fight message feed |
+| STORY-06 | Varnholt's carts join the elves' column; a Grey Cloaks ledger note on a held Keep (text only, no Standing, STORY-17) | Retreat panel; road Night 1 news |
+| STORY-07 | One dry line per objective and result (victory, withdrawn, fled, fallen) | Field Report after a contract |
+| STORY-08 | Per-building and generic finished lines ("The forge is lit. Everyone suddenly has something that needs mending."), appended to the camp note, and under the Scribe's Works line in the debrief (shown once, not duplicated) | Camp note; debrief |
+| STORY-10 | Bard intro: "I'm X. Every company needs someone to sing about it, and I was the only one who put a hand up. Five short jobs..." | Guided start; small patch in `index.html` marked `Index 85` |
+| STORY-15 | Nemesis arrival taunt by host ("You owe me a camp.", "The tithe is never paid in full.") and slain line ("The Scribe closes a page he was fond of.") | In-fight message feed |
+| STORY-16 | Extra bark lines (race, class, region, veteran), extra Bard lines, and a second phrasing for each of the ten contract briefs (50% each; same mechanics text) | Camp chatter; contract board |
+| STORY-17 | Only the text-only part done (Grey Cloaks ledger note). Left as is: Work Orders 3/day vs Manual 2 (probably deliberate balance), "seven districts" (the game has six districts plus walls) | n/a |
+
+Notes: the in-fight feed keeps only four messages, so a voice line can push an older note off sooner. Rollback: remove the `js/story.js` script tag and restore the Bard intro line marked `Index 85`.

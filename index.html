@@ -4098,6 +4098,7 @@ function draw(){
         ctx.lineWidth = 2; ctx.setLineDash([3,3]); ctx.stroke(); ctx.setLineDash([]); }
       if (G.mounted){ drawMounted(m.spr, m.x, m.y, 2.4, pickFrame(m, m.moving, m.slot), m.anim.left, m.flash > 0, m.moving, m.slot); }
       else drawSprite(m.spr, m.x, m.y, 2.4, pickFrame(m, m.moving, m.slot), m.anim.left, m.flash > 0);
+      if (window.gfxMateBar) gfxMateBar(m); else   /* Index 84: bordered, colour-graded squad bar (js/graphics.js) */
       for (let i = 0; i < m.maxCon; i++){ ctx.fillStyle = i < m.con ? '#6fd37a' : 'rgba(0,0,0,.45)';
         ctx.fillRect(m.x - m.maxCon*2.5 + i*5, m.y + 22, 4, 3); }
     } else if (L.down){
@@ -17275,7 +17276,7 @@ const STARTERS = [
 const guideLines = () => {
   const B = ensureBard();
   return {
-    intro:   `Hello there! I'm ${esc(B.name)}. Every company needs someone to sing about it, so I've volunteered to walk you through founding yours. There are five short jobs, and you can go back at any point.`,
+    intro:   `I'm ${esc(B.name)}. Every company needs someone to sing about it, and I was the only one who put a hand up. Five short jobs, in any order you can manage, and you can go back at any point.`, /* Index 85 */
     spec:    `First, your Squad Leader: the one who marches with the squad. Start with what they do in a fight. Hover over a Specialty and watch the card on the right fill in. It's the same card you'll see on your Roster screen. Not sure? Try one of the quick starts above the cards.`,
     cls:     `Now, who were they before the company? Every Class gives one bonus and one catch. Hover over each and watch what changes on the card.`,
     race:    `Last part of the build: their people. Most differences are small. The coloured chips show how each people compares with a Human, and the card shows the result. A Human has no weak spots, so it's a safe first pick.`,
@@ -25220,6 +25221,95 @@ function hint81(){
 { const f = renderDebrief; renderDebrief = function(head, lines){ try { if (lines && lines.length && META) lines = lines.map((l, i) => i === 0 && typeof l === 'string' ? l.replace(/Now -?\d+gp\./, `Now ${META.treasury}gp.`) : l); } catch (e) {} return f(head, lines); }; }   /* Index 81 */
 /* ===== END INDEX 81 ======================================================= */
 
+/* ============================================================================
+   INDEX 82 - ENEMIES FIND THE FACE OF THE WALL
+   THE BUG     Within 260px of a non-leader target, moveEnemy walks in a
+               straight line without looking for walls. Enemies sent at a
+               palisade section or gate (the siege's structures) therefore
+               snagged and stacked on trees and fence corners on the way.
+   THE FIX     When the target is a siege structure and the straight line is
+               blocked, the enemy follows a flow field built from that
+               structure (cached per structure, rebuilt when any wall falls).
+               Clear lines, the leader, every other target and every other
+               contract are untouched.
+   ROLLBACK    Delete from this comment to END INDEX 82.
+============================================================================ */
+{ const f = moveEnemy;
+  moveEnemy = function(e, tx, ty, sp, target){
+    if (target && target.struct && target.k && !clearLine(e, {x:tx, y:ty}, 30)){
+      try {
+        const down = G.structs ? Object.keys(G.structs).filter(k => G.structs[k].hp <= 0).length : 0;
+        if (!G.sflow || G.sflowV !== down){ G.sflow = {}; G.sflowV = down; }
+        const D = G.sflow[target.k] || (G.sflow[target.k] = bfsFrom(tx, ty)), fd = flowDir(D, e.x, e.y);
+        if (fd){
+          const c = cellAt(e.x, e.y), terr = BESTIARY[e.k].flit || e.k === 'cinder' ? 1 : (SLOW[c] || 1);
+          e.wob += 0.08;
+          e.x += fd.x * sp * terr + Math.cos(e.wob) * 0.14; e.y += fd.y * sp * terr + Math.sin(e.wob) * 0.14;
+          if (Math.abs(fd.x) > 0.05) e.left = fd.x < 0;
+          return;
+        }
+      } catch (err) {}
+    }
+    return f.apply(this, arguments);
+  };
+}
+/* ---- UX auditor's bugs (B-1, B-2, B-3, B-5, B-6) ---------------------------------
+   B-1  Disabled buttons used pointer-events:none, so their title tooltips ("why not")
+        never showed. They now take the pointer (cursor:not-allowed); a capture-phase
+        click guard keeps them from ever being activated.
+   B-2  Faction Standing seals on the planning table overlapped; they are nudged apart
+        after the table renders.
+   B-3  The wax seal on Charter Ambition scrolls covered the last words; the scroll has
+        room for it at the bottom.
+   B-5  Not a bug: the Silver Pit's +40gp is applied by nextDay() when the siege starts
+        and the same Morning Report line shows it; the top bar shows the new total
+        together with that report. Left as is.
+   B-6  A 'storage' listener warns once (a banner, no reload) when another tab writes the
+        save, because saving from this stale tab would overwrite it.                  */
+{ const st = document.createElement('style');
+  st.textContent = `.btn:disabled,.mini button:disabled,.sealbtn:disabled{pointer-events:auto;cursor:not-allowed}
+    .btn:disabled:hover,.mini button:disabled:hover{filter:none;transform:none}
+    .sealbtn:disabled:hover img{transform:none}
+    .cscroll{padding-bottom:66px}
+    #tab-warn{position:fixed;left:50%;top:10px;transform:translateX(-50%);z-index:200;max-width:min(560px,92vw);background:#3a1a10;color:#f6e6c8;border:2px solid #d4a040;border-radius:4px;padding:10px 38px 10px 14px;font:14px Georgia,serif;box-shadow:0 6px 18px rgba(0,0,0,.6)}
+    #tab-warn button{position:absolute;right:6px;top:4px;background:none;border:none;color:#f6e6c8;font-size:22px;cursor:pointer}`;   /* Index 82 */
+  document.head.appendChild(st); }
+document.addEventListener('click', e => { try { const b = e.target && e.target.closest && e.target.closest('button:disabled'); if (b){ e.stopPropagation(); e.preventDefault(); } } catch (err) {} }, true);
+function nudgeSeals82(){
+  const wrap = document.querySelector('#tbl-factions .mapwrap'); if (!wrap) return;
+  const els = [...wrap.querySelectorAll('.fseal')]; if (els.length < 2) return;
+  const W = wrap.getBoundingClientRect(); if (W.width < 50 || W.height < 50) return;      // not laid out yet
+  const k = Math.max(0.55, Math.min(1, W.width / 760));                                      // small maps get small seals
+  for (const el of els){ el.style.transform = 'translate(-50%,-50%) scale(' + k + ')'; el.style.marginLeft = el.style.marginTop = '0px'; }
+  const off = els.map(() => [0, 0]), pad = 3;
+  for (let pass = 0; pass < 60; pass++){ let moved = false;
+    for (let i = 0; i < els.length; i++) for (let j = i + 1; j < els.length; j++){
+      const a = els[i].getBoundingClientRect(), b = els[j].getBoundingClientRect();
+      const ox = Math.min(a.right, b.right) - Math.max(a.left, b.left) + pad, oy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) + pad;
+      if (ox > 0 && oy > 0 && ox > pad && oy > pad){ moved = true;
+        if (oy <= ox){ const dir = (a.top + a.bottom) <= (b.top + b.bottom) ? 1 : -1; off[i][1] -= dir * oy / 2; off[j][1] += dir * oy / 2; }
+        else { const dir = (a.left + a.right) <= (b.left + b.right) ? 1 : -1; off[i][0] -= dir * ox / 2; off[j][0] += dir * ox / 2; } } }
+    els.forEach((el, i) => { el.style.marginLeft = off[i][0] + 'px'; el.style.marginTop = off[i][1] + 'px';
+      const r = el.getBoundingClientRect(); if (r.left < W.left) off[i][0] += W.left - r.left; if (r.right > W.right) off[i][0] -= r.right - W.right;
+      if (r.top < W.top) off[i][1] += W.top - r.top; if (r.bottom > W.bottom) off[i][1] -= r.bottom - W.bottom;
+      el.style.marginLeft = off[i][0] + 'px'; el.style.marginTop = off[i][1] + 'px'; });
+    if (!moved) break; }
+}
+{ const f = renderTable; renderTable = function(){ const r = f.apply(this, arguments); try { nudgeSeals82(); const im = document.querySelector('#tbl-factions .mapwrap > img'); if (im && !im.complete) im.addEventListener('load', () => nudgeSeals82(), {once:true}); setTimeout(nudgeSeals82, 120); } catch (e) {} return r; }; }
+window.addEventListener('resize', () => { try { nudgeSeals82(); } catch (e) {} });
+let TABWARN82 = false;
+window.addEventListener('storage', e => {
+  try { if (TABWARN82 || e.storageArea !== localStorage || e.key !== SAVE_KEY) return; TABWARN82 = true;
+    const d = document.createElement('div'); d.id = 'tab-warn';
+    d.innerHTML = 'This save was changed in another tab or window. If you keep playing here, the next save will overwrite it. Close one of them, or reload this page to pick up the other’s changes.<button title="Dismiss" onclick="this.parentNode.remove()">&times;</button>';
+    document.body.appendChild(d); } catch (err) {}
+});
+/* ===== END INDEX 82 ======================================================= */
+
 </script>
+<!-- Index 83+: improvement modules, loaded after the game script; each one wraps game functions the same way the Index sections do. -->
+<script src="js/ux.js"></script>
+<script src="js/graphics.js"></script>
+<script src="js/story.js"></script>
 </body>
 </html>

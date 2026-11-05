@@ -78,3 +78,29 @@ Summary: 6 fixed, 2 need the commander.
 | **G-UI-04** SOURCE collides with COST | **Fixed in Index 81** (BUG-05). |
 | **G-UI-05** formation helper clips | **Not reproduced.** At 1024x768 the "Open Order..." line is drawn at VH-62, above its panel, with room (only the ability bar's labels sit near it). It is not clipped by a container. If it happens, it is on a window shorter than ~600px, where the 10.5px floor pushes the line against the ability bar; the fix would be to move it above the bar. Left as is. |
 | **G-UI-06** Reeve's Keep label and Ring the Bell | **Fixed in Index 81** (BUG-04 for the button; the hint bar no longer intercepts clicks and is one line in the prologue, so it covers less of the map labels). |
+
+## Update: BUG-08 fixed in Index 82
+
+Status: **fixed in Index 82** (was "needs commander").
+
+- Change: new section at the end of `index.html`. `moveEnemy` is wrapped: when the target is a siege structure (`target.struct`) and the straight line is blocked (`clearLine` fails), the enemy follows a flow field built from that structure (cached per structure in `G.sflow`, rebuilt when any wall falls). Clear lines, the leader, every other target and every other contract fall through to the original code unchanged. Rollback: delete Index 82.
+- Scope note: this build has **two** prologue assaults (`ASSAULTS.length` is 2), not six; both were tested, three runs each, 3,600 ticks (one minute) per run, squad idle inside the walls, with and without the patch (a temporary switch, since removed).
+- Time to first wall or gate hit (frames, per run):
+  - Assault 1 before 283 / 275 / 323 (avg 294); after 216 / 382 / 279 (avg 292).
+  - Assault 2 before 92 / 207 / 114 (avg 138); after 198 / 138 / 276 (avg 204). Spread between runs is as wide as the difference, so no real shift.
+- Structures fallen after a minute (per run): before 2,1,1,2,2,2; after 1,2,2,3,3,3. Slightly more walls fall, which is the fix working (fewer enemies lost on corners), so the siege may be a touch harder in the second assault. No balance values were changed.
+- Stuck check (melee enemy outside the walls, unmoved for 240 frames, more than 70px from any wall and the leader), sampled every 240 frames: 0 of 1,205 samples before, 0 of 2,065 after. My check was too strict to show the original snagging, so I can't prove the old bug is gone, only that nothing got stuck and walls and gates are still reached and attacked.
+- Also run on the final code: two raids (bandits, greenskins) and a sortie, no console errors or draw warnings.
+
+## Update: UX auditor's bugs (Index 82)
+
+| Bug | Result |
+|---|---|
+| **B-1** disabled-button tooltips | **Fixed in Index 82.** `.btn`, `.mini button` and `.sealbtn` disabled now take the pointer (`cursor:not-allowed`, hover effects off) so `title` reasons show. A capture-phase document click guard stops any click on a `button:disabled`. Verified: computed `pointer-events:auto`, cursor `not-allowed`, a disabled button's `click()` and a dispatched click both ran no handler. |
+| **B-2** Faction Standing labels overlap | **Fixed in Index 82.** After the table renders (and on image load and resize), `nudgeSeals82` scales the seals to the map width (min 0.55) and pushes colliding ones apart, clamped inside the map. At 1024x768 (map 386x227px): 27 overlapping pairs before, 0 after, all seals inside the map. Labels are small on that map but legible. |
+| **B-3** wax seal over perk text | **Fixed in Index 82.** `.cscroll{padding-bottom:66px}` (computed 66px), so the 48px seal sits below the last line. |
+| **B-4** | Already fixed in Index 81. |
+| **B-5** Treasury 850 -> 890 | **Not a bug, left as is.** `startSiege` runs `nextDay()`, which adds the Silver Pit's +40gp and writes the same "+40gp" line into the Morning Report that opens with Day 1. The bar and the report change together; it only looks early because the Charter Kit screen precedes it. |
+| **B-6** two tabs on one save | **Fixed in Index 82.** A `storage` listener shows one dismissible banner ("This save was changed in another tab or window...") the first time another tab writes the current save key; no auto-reload. Verified: two events produce one banner. |
+
+No console errors during the checks.

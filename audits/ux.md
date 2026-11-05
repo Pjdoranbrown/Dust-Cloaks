@@ -145,4 +145,39 @@ Not duplicating the clipping items already passed on (title screen, market cards
 - **B-3 Charter Ambition wax seals cover text.** In the Ambition scrolls (Fame, Liberation), the 48px seal (`.cscroll .seal`, `:124`) sits over the last words of the perk lines ("…while the squad Charges", "…Ex-Slave recruits on the Hiring Line…"). Add `padding-right:56px` to `.cscroll` or move the seal.
 - **B-4 Prologue shows main-campaign hotkey hint.** On the Varnholt map, `#camp-hint` still lists "B build · P planning table · Q quartermaster · H hire · L ledger", which don't apply in the story slot (UX-07).
 - **B-5 Treasury jumps during the Charter Kit.** The prologue top bar showed 850gp at "The Charter Kit" and 890gp on Day 1 without any purchase. That is the Silver Pit's +40gp in the Morning Report, which is fine, but it was applied before the report was shown. Low priority: worth checking the order, or showing the +40 as it lands.
-- **B-6 Splash showed a stale leader.** The splash said "Brenna" while `localStorage` held "Godfrey". The likely cause is two tabs on the same origin. If so, saving from the stale tab overwrites the other one. Consider a `storage` event listener that reloads META, or warns, when another tab writes `SAVE_KEY`.
+- **B-6 Splash showed a stale leader.** The splash said "Brenna" while `localStorage` held "Godfrey". The likely cause is two tabs on the same origin. If so, saving from the stale tab overwrites the other one. Consider a `storage` event listener that reloads META, or warns, when another tab writes `SAVE_KEY`. (Since done: the game now shows a "This save was changed in another tab" warning.)
+
+---
+
+## Implemented (Index 83, `js/ux.js`)
+
+Everything is in `js/ux.js` and wraps game functions. Nothing in `index.html`, `js/graphics.js` or `js/story.js` was changed. To roll back, empty the file or remove its `<script>` tag.
+
+**How it was tested.** Another tab was writing the shared save, so my test tab used its own storage keys (prefixed `ux83:`, seeded from a copy of the save). The real `dust_cloaks_v4` and `dust_cloaks_story1` were never written by my tests, and the `ux83:` copies were deleted afterwards. One exception: before I set this up, an early run of "Show tips again" on the real save cleared `tipsSeen`. I put `tipsSeen` back from my backup straight away. I checked at 1024×768 and 1920×1080. No console errors came from Index 83 (the one 400 in the log is my own test request to 127.0.0.1, which the local server rejects).
+
+| Item | What changed | How to see it |
+|---|---|---|
+| UX-01 | The title screen shows one `SETTINGS` button that opens the top-bar popover. The popover is grouped into **Sound / Game / Display / Save**, with NEW CAMPAIGN under Save, and scrolls if it is tall. The pause screen keeps Volume, Game speed, Momentum and Music; the rest is under `More settings…` (grouped the same way). On the pause screen the map is capped at `100vh − 470px` and the overlay uses `safe center`, so the title and buttons fit at 1024×768 and 1920×1080. | Title screen → SETTINGS. In a contract press Esc. |
+| UX-02 | With no Chapter yet: the only gold button is `START HERE: THE PROLOGUE` (one-line note above it), with a small `Skip the prologue: found a Chapter` under it. | New campaign → title screen. |
+| UX-04 | Disabled `.btn`s get a red italic reason under them: on the creation steps "Pick 1 Ability to continue." (taken from the step's heading), on the squad pick "Choose 3 more.", and otherwise the button's `title`. Doctrine buttons read `ADOPT · 100gp`. The `pointer-events` CSS fix is left to the bug finder (B-1). | Leader creation, Ability step; Planning table → Book of Doctrines. |
+| UX-10 | Prologue "Your First Squad": `Con / Mv / Melee / Ranged / Magic` chips with tooltips, a role word after the name (KNIFE, SUPPORT…), and `PICK A BALANCED FOUR`. It picks one each of Cleric, Soldier, Folk Hero, Mage, Witch and Scoundrel, skipping the Leader's own Specialty first, then fills by Condition. | Prologue → after SIGN CONTRACT. |
+| UX-11 | Confirms that lose something (wording matches release, stand down, pull down, "replaced", start again, new campaign, concede, abandon, delete, "for good") get a red button with a verb (`RELEASE GRISHA`, `LOAD THIS SAVE`) and focus on THINK AGAIN. ENTER cancels, `[1]` confirms, and the hint line says so. Other confirms are unchanged. Construction `STOP WORK` is an outlined secondary button. | Roster → Release; a construction site panel. |
+| UX-12 | `campNote(msg, kind)`: `good` ✓ green edge, `bad` ! red, `info` i gold. Without a kind it looks as before. Show tips again, Export save and Text size now confirm with a toast. | Settings → Show tips again. |
+| UX-13 | Contract messages (bottom left) sit on a dark rounded strip, at most 5 lines. They fade and count down exactly as before. | Start any contract. |
+| UX-14 | Below 1280px: MANUAL / PORTRAITS / SETTINGS fold into a `☰` menu, and the ledger chip shortens to `⚒ 1 · -60gp` (the full text stays in the tooltip). The bar redraws when the window is resized. | Camp at 1024px wide. |
+| UX-15 | After 3 visits to the camp (`META.uxCampVisits`, counted in `renderTitle`, so closing a sheet back to the camp also counts; raise the threshold if it collapses too soon), the hint reads "WASD walks your Squad Leader · click buildings, plots and people · press ? for the camp keys". `?` toggles the full key list. The prologue hint is unchanged. | Enter the camp a fourth time; press `?`. |
+| UX-16 | The construction bar is striped, animated (still when reduced motion is on) and labelled `Season k of N`. | Click a building site. |
+| UX-17 | Global `:focus-visible` gold outline. The Volume and Music pips are a focusable `role="slider"` (arrows, Home, End). Custom checkboxes have `role="checkbox"` and `aria-checked`. | Tab through Settings. |
+| UX-18 | Faction names: ▲ allied, ▼ hostile. Dice faces: ✓ / ~ / ✗ badges. | Planning table → Faction Standing; any dice result. |
+| UX-19 | While a Leader is being made (founding or prologue), the top bar shows only MANUAL and SETTINGS and doesn't fold into ☰. | Found your Chapter. |
+| G-UI-07 | The builder label reads "Building the Tents" / "Dunstan · 1 season left · click for the site" ("Building something new" when there's no site name). A resting mate's label reads "Resting · sits out the next contract". | Hover a builder in camp. |
+| Onboarding 3 | The first time the Luck offer appears, a yellow "First failed roll?" box explains SPEND (Q) and BURN (R). It is marked seen in `tipsSeen.luck`, and respects the Tips setting. | First failed Leader roll. |
+| Onboarding 4 | `TIPS.wounds` fires the first time the Leader loses a Wound in a contract: "A Wound lost. Hits take Wards, then Shield, then Wounds: at 0 the Leader is down. Healing and Poultices restore them." | Take a hit to Wounds. |
+| Onboarding 5 | The first debrief in the prologue gets a "Back in Varnholt" box (Supply, the hurt and Tend the Wounded, Condition), shown once (`META.uxTown`). | Win the first prologue fight. |
+
+**Skipped or changed from the proposals**
+- The Gemini lead said Wounds "persist until healed". I couldn't confirm that from the code (Wounds live on the contract's Leader), so neither the tip nor the box claims it. The wording follows Manual §"Command Radius" and "Bleeding Out".
+- UX-11: the verb on the red button comes from the dialog's text (first words of the question). A caller can still pass `opts.danger` or `opts.ok` to set it exactly.
+- UX-04: reasons are added only where a reason can be known (creation steps, the squad pick, buttons with a `title`). Other disabled buttons are unchanged.
+- Onboarding 5 couldn't be played through to a real first prologue victory in the time available. I checked it by calling `renderDebrief` in the story slot: the box appears on the first debrief, survives redraws once, and doesn't come back on the second.
+- Not touched, as instructed: UX-03, 05, 06, 07, 08, 09, 20 and save backups.
