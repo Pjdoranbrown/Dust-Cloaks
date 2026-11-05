@@ -1,0 +1,51 @@
+# Dust Cloaks — Jobs & Decisions Backlog
+
+The one list of bigger jobs and open decisions. Keep it current: when something is approved, started, shipped or dropped, change its Status here in the same turn, and log decisions in `game-bible.md` → Decisions log.
+
+- **Jobs** need the user's OK before work starts (bugs don't — fix as found).
+- **Decisions** are the user's call; record the answer in the bible, then turn it into a job if needed.
+- Sources: `audits/*.md` (IDs like UX-03, GFX-02, STORY-05, BAL-01; G-* = Gemini leads in `audits/leads/`).
+- Owner: **commander** (the main chat) or **delegate** (a Sonnet session or the `game-drafter` subagent).
+- Status: `proposed` → `approved` → `in progress` → `shipped (Index N, commit)` / `dropped (why)`.
+
+Last updated: 2026-11-06 (after Index 85, commit c02f2d7).
+
+---
+
+## Jobs
+
+| ID | Job | Sources | Effort | Owner | Status |
+|---|---|---|---|---|---|
+| J-01 | **New-player start**: three ready-made starting leaders (archetype cards that skip Ability/Name), a fixed default kit in the prologue with customisation capped at 350gp, prologue menus hidden until they matter | UX-09, BAL-02, BAL-03, UX-07, G onboarding 1 | M–L | commander (cards: delegate) | proposed |
+| J-02 | **Reeve's Hall Day 1**: only the Sergeant's suggested orders, the rest folded; pulsing "next" card; END THE DAY button in the header with candle count; dice toast when an order resolves | UX-08, G onboarding 2 | M | commander | proposed |
+| J-03 | **Planning table**: sticky footer (contract · pay · squad n/5 · SIGN AND MARCH); right column as tabs (Ambition, Factions, Doctrines, Rivals, Prisoners); P lands on Contracts | UX-03 | M | commander | proposed |
+| J-04 | **HUD scales with the window**, plus a HUD size setting (Auto/100/125/150%); brighter small print | UX-05 | M | commander | proposed |
+| J-05 | **Leader card health rows** that can't be misread: damage order, n/max numbers, shaped pips, flash on loss | UX-06 | S–M | delegate (commander signs off wording) | proposed |
+| J-06 | **Squad spacing**: soft separation in combat (Default, Brace, Open) and for camp idlers, so shield walls read as a line and bars don't stack | GFX-02, GFX-11, G spacing | M | commander | proposed |
+| J-07 | **Rolling save backups** (keep 3, restore from Settings → Save); named slots later only if wanted | G-UI-08 (UX phase 1/2) | M (slots L) | commander | proposed |
+| J-08 | **Game feel**: dust at feet (sprint, Brace, construction), hit knockback/stagger offset, optional hit-stop | GFX-06, GFX-07, G roadmap | M | delegate (hit-stop: commander) | proposed |
+| J-09 | **Visual polish**: in-world overlay style (bubbles, labels, command ring), building vs character light direction, camp plot clutter | GFX-14, GFX-19, GFX-17 | S–M | delegate | proposed |
+| J-10 | **Story, mid-size**: barks and the Chapter Master react to events; patron voices in briefs; a moment for the dead; prologue ending → Chronicle's first entry; carry the Epilogue's tone into the middle | STORY-09, 11, 12, 13, 18 | M each | delegate (13, 18: commander) | proposed |
+| J-11 | **Squad portrait strip** in contracts (5 busts, health bar, red X when down, toggle N) | UX tooltips row | M | commander | proposed |
+| J-12 | **Plain-English one-liners** on specialties, armour and doctrines, rules text under "Details" | UX tooltips row | M | delegate (wording: story) | proposed |
+| J-13 | **Fill `game-bible.md`** sections (core loop, classes, enemies, items, balance, art, story) from the code and audits | — | S | `game-drafter` | proposed |
+
+## Decisions (user's call)
+
+| ID | Question | Options / recommendation | Sources | Status |
+|---|---|---|---|---|
+| D-01 | **Host difficulty spread**: at Tier 1, Monsters/Greenskins/Orcs/Arcana kill a test squad 2–3× faster than the Hollow, for the same pay | (a) pay scales with host danger (touches the board/saves); (b) soften the hard hosts' pools. Balancer: do (b) now, (a) later | BAL-01 | open |
+| D-02 | **Late-game gold glut** from about contract 12: add a sink? | Masterwork Full Plate (tabletop), costlier late facilities/upgrades, or higher late upkeep | BAL-04 | open |
+| D-03 | **Small rule fixes** (mostly drift from the tabletop) | Hazard upkeep per deployed Squad Mate (not per survivor); Merchant Stalls 10% market discount; Hold the Redoubt pay per minute; softer upkeep after a lost contract; cap the raid pay-off; Light Crossbows vs Longbows; armour Move note | BAL-05…09, 11, 12 | open |
+| D-04 | **Tier gating**: by leader level (game) or Charter Rank (tabletop)? | Balancer reads the current rule as deliberate | BAL-14 | open |
+| D-05 | **Goblin / Witch strength** look off in a crude sim | Needs a human playtest before changing | BAL-13 | open |
+| D-06 | **Lore: "Reynard"** — Cayde is titled "Reynard, Grand Master of the Dust Cloaks", but the Manual makes him Grand Master of the Grey Cloaks and Reynard a secret | Change the title, or treat the game as canon | STORY-05 | open |
+| D-07 | **Orsolt and Ilvaryn** die in the prologue but return as generic bosses | Rename the later bosses, or make their return a story beat | STORY-04 | open |
+| D-08 | **Default Squad Leader look**: Crisp (current) or Retro? | Gemini prefers Retro; graphics auditor gives its view in GFX-10 | GFX-10, G cohesion | open |
+| D-09 | **Co-op multiplayer** (1–4 players, WebRTC, host browser authoritative) | Large; not started | Gemini report §8 | open |
+| D-10 | **Prologue cold open**: none, version 1 (S), 2 (M) or 3 (L)? | Story designer recommends version 1 first | audits/story.md → Onboarding cold open | open |
+
+## Recently settled (moved to the bible's Decisions log)
+- Upkeep is 15gp per staffed facility per **season**; one contract = one season (Index 30 calendar).
+- Build times: 1–3 seasons by cost; full refund in the season ordered, half after (Index 77–78).
+- Approved and shipped: audit bug fixes and quick wins (Index 81–85).
