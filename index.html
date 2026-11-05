@@ -24280,8 +24280,8 @@ function w3dToken(k, x, y){ return w3dMapProp(k, x, y); }
        sign to choose from every building you can build (cost, build time,
        what it needs). The palisade keeps its gate plot.
      - BUILD TIMES: a building takes seasons to raise, by its tech level
-       (cost up to 150gp: 1 season; up to 250gp: 2; above: 3). A season is two
-       contracts. Until it is finished it gives no benefit.
+       (cost up to 150gp: 1 season; up to 250gp: 2; above: 3). A season passes
+       with every contract. Until it is finished it gives no benefit.
      - BUILDERS: three unarmoured townsfolk walk in from the edge of the camp
        and hammer at the site; the building rises out of its footings inside
        scaffolding, with timber and stone stacked beside it. Click the site
@@ -24626,11 +24626,17 @@ paddockAt = (function(prev){
 
 /* -------------------------------------------------------- construction --- */
 function buildSeasons(f){ const o = {kennels:1, trapyard:1, edelos:1, watchtower:2, palisade:1}; if (o[f.id] !== undefined) return o[f.id]; return f.cost <= 150 ? 1 : f.cost <= 250 ? 2 : 3; }
-const buildContracts = f => buildSeasons(f) * 2;
-function buildLeft(id){ const b = META.build[id]; return Math.max(0, b.need - ((META.deployments || 0) - b.start)); }
-function buildProg(id){ const b = META.build[id]; return Math.max(0, Math.min(1, ((META.deployments || 0) - b.start) / b.need)); }
+// The clock is the Chronicle's season (one per contract; moving house does not wind it back).
+const buildNow = () => { try { return chron().turn; } catch (e) { return META.deployments || 0; } };
+function buildRec(id){
+  const b = META.build[id];
+  if (b && b.clk !== 't'){ const done = (META.deployments || 0) - b.start; b.need = Math.max(1, Math.round(b.need / 2)); b.start = buildNow() - Math.min(done, b.need - 1); b.clk = 't'; }   // first versions counted half-seasons
+  return b;
+}
+function buildLeft(id){ const b = buildRec(id); return Math.max(0, b.need - (buildNow() - b.start)); }
+function buildProg(id){ const b = buildRec(id); return Math.max(0, Math.min(1, (buildNow() - b.start) / b.need)); }
 const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
-function leftText(id){ const n = buildLeft(id); return n <= 0 ? 'finishing' : n % 2 === 0 ? plural(n / 2, 'season') + ' (' + plural(n, 'contract') + ')' : plural(n, 'contract'); }
+function leftText(id){ const n = buildLeft(id); return n <= 0 ? 'finishing' : plural(n, 'season'); }
 function campNote(msg){
   let el = $('camp-note');
   if (!el){ el = document.createElement('div'); el.id = 'camp-note';
@@ -24645,16 +24651,17 @@ function startBuild(fid, slot){
   META.sites = META.sites || {}; META.build = META.build || {};
   for (const k in META.sites) if (META.sites[k] === slot && !has(k) && !inBuild(k)) delete META.sites[k];
   META.sites[fid] = slot;
-  META.build[fid] = {start:META.deployments || 0, need:buildContracts(f)};
+  META.build[fid] = {start:buildNow(), need:buildSeasons(f), clk:'t', paid:facCost(f)};
   SITE.walkIn[fid] = Date.now(); CAMP.people = CAMP.people.filter(q => !(q.kind === 'worker' && q.site === fid));
   applySites(); saveMeta();
   try { refreshUI(); } catch (e) {}
   SFX.play('pick'); campNote(`${f.name}: the builders are on their way. Ready in ${leftText(fid)}.`);
   openPanel('site', fid);
 }
+const buildRefund = fid => { const b = buildRec(fid), paid = b.paid || facCost(facility(fid)); return buildNow() === b.start ? paid : Math.round(paid / 2); };   // changed your mind this season: all of it back
 function cancelBuild(fid){
   if (!inBuild(fid)) return;
-  const f = facility(fid), back = Math.round(facCost(f) / 2);
+  const f = facility(fid), back = buildRefund(fid);
   META.treasury += back; delete META.build[fid]; if (META.sites) delete META.sites[fid];
   applySites(); saveMeta(); try { refreshUI(); } catch (e) {}
   closePanel(); campNote(`Work on the ${f.name} stops. ${back}gp comes back to the Treasury.`);
@@ -24769,7 +24776,7 @@ function plotPanelHTML(P){
   const opts = FACILITIES.filter(f => L.plots[f.id] && !has(f.id) && !inBuild(f.id) && (slot === 'palisade' ? f.id === 'palisade' : !FIXED_SITE.has(f.id)));
   const cats = [...new Set(opts.map(f => f.cat))];
   let h = `<h2>${slot === 'palisade' ? facility('palisade').name : 'An Empty Plot'}</h2>
-    <div class="desc" style="text-align:left">Choose what to build here. Builders from the town raise it over the seasons; it does nothing until it is finished. A season is two contracts.</div>
+    <div class="desc" style="text-align:left">Choose what to build here. Builders from the town raise it over the seasons (a season passes with every contract); it does nothing until it is finished. Change your mind before the next contract and you get every coin back.</div>
     <div class="desc" style="text-align:left;margin:4px 0"><b>Treasury:</b> ${META.treasury}gp</div>`;
   if (!opts.length) h += `<div class="desc">Everything that can be built is built or under way.</div>`;
   for (const c of cats){
@@ -24785,11 +24792,11 @@ function plotPanelHTML(P){
   return h;
 }
 function sitePanelHTML(P){
-  const f = facility(P.id), b = META.build[P.id], pct = Math.round(buildProg(P.id) * 100), back = Math.round(facCost(f) / 2);
+  const f = facility(P.id), b = buildRec(P.id), pct = Math.round(buildProg(P.id) * 100), back = buildRefund(P.id);
   return `<h2>${f.name}</h2><img class="pimg" src="${buildingURL(f.id)}" style="opacity:.75">
     <div class="tag">${f.cat} · Under construction</div>
     <div style="margin:8px 0;height:12px;background:rgba(0,0,0,.25);border:1px solid #4a3b2a;border-radius:3px"><div style="width:${pct}%;height:100%;background:#7a9a3a;border-radius:2px"></div></div>
-    <div class="desc" style="text-align:left"><b>Ready in ${leftText(P.id)}.</b> Three builders from the town are on the site. ${b.need / 2 === 1 ? 'A simple building: one season.' : `Tech level ${b.need / 2}: ${b.need / 2} seasons.`}</div>
+    <div class="desc" style="text-align:left"><b>Ready in ${leftText(P.id)}.</b> Three builders from the town are on the site. ${b.need === 1 ? 'A simple building: one season.' : `Tech level ${b.need}: ${b.need} seasons.`}${back === (b.paid || facCost(f)) ? ' Ordered this season: stopping now refunds it all.' : ''}</div>
     <div class="desc" style="text-align:left;margin:6px 0">${f.desc}</div>
     <button class="btn small" onclick="cancelBuild('${f.id}')">STOP WORK (REFUND ${back}GP)</button>`;
 }
@@ -24806,6 +24813,243 @@ renderPanel = (function(prev){
 })(renderPanel);
 { const f = startCamp; startCamp = function(){ try { tickBuilds(); } catch (e) {} return f.apply(this, arguments); }; }
 /* ===== END INDEX 77 ======================================================= */
+
+/* ============================================================================
+   INDEX 78 - THE SCRIBE'S LEDGER: WORKS, FORECASTS, MOVING HOUSE BY HOUSE
+   THE LEDGER   The Chapter Scribe (Scribe, Librarian and Historian) now keeps
+                a ledger at the top of the Chronicle:
+                  - Works: every building going up, with a progress bar and the
+                    seasons left;
+                  - The coming season: civilian upkeep (and any debt), Hazard
+                    Upkeep for a full squad, prisoner upkeep, Merchant income
+                    and the pay on the contract board.
+                A "Ledger" chip on the top bar shows the short version (works
+                under way, upkeep due) and opens the Scribe's scroll.
+   THE CHRONICLE   records the works: ground broken (with cost and expected
+                seasons), finished, stopped, moved and pulled down. A "Works"
+                filter shows only those.
+   THE DEBRIEF  after every contract the Scribe reports the works: what is
+                finished and how long the rest will take.
+   CHANGE YOUR MIND   stopping work in the season it was ordered refunds all of
+                it; after that, half (Index 77 already gave half).
+   MOVE AND PULL DOWN   a built facility's panel can move it to any empty plot
+                (a quarter of its cost, at least 20gp: the town's builders take
+                it down and raise it again over the downtime) or pull it down
+                (a quarter back as salvage). Not while another building needs
+                it, nor while a veteran staffs it. The palisade stays put.
+   CAMP KEYS    B build on the nearest empty plot, R roster, P planning table,
+                Q quartermaster, H hire, L or C the Scribe's ledger and Chronicle,
+                M manual. Hold Alt to see the name of every building, site and
+                plot.
+   Fix to Index 77: a season passes with every contract (the calendar of
+                Index 30), so build times now count seasons on the Chronicle's
+                clock; builds already under way are converted.
+   SAVED   Chronicle entries of kind 'works'; META.build[id].paid.
+   ROLLBACK   Delete from this comment to END INDEX 78.
+============================================================================ */
+
+/* ------------------------------------------------- the Chronicle's works --- */
+function worksLog(act, id, extra){ try { chron(); chronAdd('works', Object.assign({act, id, name:facility(id).name}, extra || {}), false); } catch (e) {} }
+{ const f = chronText;
+  chronText = function(e){
+    if (e.k !== 'works') return f(e);
+    const n = `<b>${esc(e.name)}</b>`;
+    return ({start:`Builders break ground on the ${n}${e.cost ? ` (${e.cost}gp)` : ''}.${e.seasons ? ` Expected in ${plural(e.seasons, 'season')}.` : ''}`,
+             done:`The ${n} is finished.`,
+             stop:`Work on the ${n} is stopped${e.back ? `; ${e.back}gp comes back to the Treasury` : ''}.`,
+             move:`The ${n} is taken down and raised again on another plot${e.cost ? ` (${e.cost}gp)` : ''}.`,
+             demolish:`The ${n} is pulled down${e.back ? `; ${e.back}gp of timber and stone is sold` : ''}.`})[e.act] || '';
+  };
+}
+CHR_TAG.works = ['Works', '#2a5a6a'];
+CHR_FILTERS.splice(4, 0, ['works', 'Works']);
+{ const f = chronStats; chronStats = function(log){ const s = f(log); s.spent += log.filter(e => e.k === 'works').reduce((a, e) => a + (e.act === 'start' || e.act === 'move' ? (e.cost || 0) : e.act === 'stop' ? -(e.back || 0) : 0), 0); return s; }; }
+{ const f = startBuild; startBuild = function(fid, slot){ const was = inBuild(fid); f(fid, slot); if (!was && inBuild(fid)){ const b = META.build[fid]; worksLog('start', fid, {cost:b.paid, seasons:b.need}); } }; }
+{ const f = cancelBuild; cancelBuild = function(fid){ if (!inBuild(fid)) return f(fid); const back = buildRefund(fid); f(fid); if (!inBuild(fid)) worksLog('stop', fid, {back}); }; }
+{ const f = tickBuilds;
+  tickBuilds = function(){
+    const before = META && META.build ? Object.keys(META.build) : [];
+    f();
+    for (const id of before) if (!(META.build && META.build[id]) && has(id)) worksLog('done', id);
+  };
+}
+
+/* ------------------------------------------------------- the forecast --- */
+function forecast(){
+  const avail = (META.roster || []).filter(p => !(p.resting > 0)).length, n = Math.min(avail, 5);
+  const pays = (META.board || []).map(c => c.pay || 0).filter(x => x > 0);
+  return {civ:typeof upkeepDue === 'function' ? upkeepDue() : 0, nCiv:typeof upkeepFacilities === 'function' ? upkeepFacilities().length : 0, debt:META.upkeepDebt || 0,
+          hazard:Math.round(n * 10 * (perk('dominion', 6) ? 0.5 : 1)), n, prisoners:!has('cells') ? (META.prisoners || []).length * 5 : 0,
+          merchant:has('merchant') ? (mastery('merchant') ? 30 : 15) : 0, payMin:pays.length ? Math.min(...pays) : 0, payMax:pays.length ? Math.max(...pays) : 0};
+}
+function forecastTitle(){
+  const F = forecast();
+  return `Next contract: civilian upkeep -${F.civ}gp${F.debt ? `, debt ${F.debt}gp` : ''} · Hazard Upkeep up to -${F.hazard}gp${F.prisoners ? ` · prisoners -${F.prisoners}gp` : ''}${F.merchant ? ` · Merchant +${F.merchant}gp` : ''}${F.payMax ? ` · board pays ${F.payMin}-${F.payMax}gp` : ''}. Click for the Scribe's ledger.`;
+}
+function ledgerHTML(){
+  const F = forecast(), S = META.scribe ? META.scribe.name : 'the Scribe', ids = META.build ? Object.keys(META.build) : [];
+  const row = (a, b, c) => `<tr><td style="padding:2px 8px 2px 0">${a}</td><td style="padding:2px 8px;text-align:right;white-space:nowrap">${b}</td><td style="padding:2px 0 2px 8px;font-size:12px;color:#5a4a2a">${c || ''}</td></tr>`;
+  let works = ids.length ? ids.map(id => { const p = Math.round(buildProg(id) * 100);
+    return `<div style="display:flex;align-items:center;gap:8px;margin:3px 0"><span style="min-width:170px"><b>${esc(facility(id).name)}</b></span>
+      <span style="flex:1;height:10px;background:rgba(0,0,0,.15);border:1px solid #8a6d3a;border-radius:3px"><span style="display:block;width:${p}%;height:100%;background:#6a8a3a;border-radius:2px"></span></span>
+      <span style="min-width:90px;text-align:right">${leftText(id)}</span></div>`; }).join('')
+    : `<div style="font-style:italic;color:#5a4a2a">Nothing is being built. Click an empty plot in camp (or press B) to break ground.</div>`;
+  const net = F.merchant - F.civ - F.hazard - F.prisoners - F.debt;
+  return `<div style="margin:4px 22px 8px;padding:8px 12px;background:rgba(138,109,58,.12);border:1px solid #b89a5a;border-radius:4px;text-align:left;font:13.5px Georgia">
+    <div style="font:bold 16px Georgia;color:#5a3a1a;margin-bottom:4px">The Ledger <span style="font:italic 12.5px Georgia;color:#6a5a3a">kept by ${esc(S)}</span></div>
+    <div style="font:bold 12px Georgia;letter-spacing:.5px;color:#2a5a6a;text-transform:uppercase;margin-top:4px">Works</div>${works}
+    <div style="font:bold 12px Georgia;letter-spacing:.5px;color:#6a5a1a;text-transform:uppercase;margin-top:8px">The coming season</div>
+    <table style="border-collapse:collapse;font:13px Georgia">
+      ${row('Civilian staff', `-${F.civ}gp`, F.nCiv ? `${F.nCiv} facilit${F.nCiv === 1 ? 'y' : 'ies'} without a veteran at ${UPKEEP_EACH}gp a season` : 'no facility needs paid staff yet')}
+      ${F.debt ? row('Upkeep owed', `-${F.debt}gp`, 'unpaid from last season') : ''}
+      ${row('Hazard Upkeep', `up to -${F.hazard}gp`, `10gp for each of ${F.n} Squad Mate${F.n === 1 ? '' : 's'} who comes home`)}
+      ${F.prisoners ? row('Prisoner upkeep', `-${F.prisoners}gp`, 'no Prisoner Cells') : ''}
+      ${F.merchant ? row('Merchant Stalls', `+${F.merchant}gp`, 'after a paid contract') : ''}
+      ${row('<b>Before the pay</b>', `<b>${net >= 0 ? '+' : ''}${net}gp</b>`, F.payMax ? `the board offers ${F.payMin === F.payMax ? F.payMax : F.payMin + '-' + F.payMax}gp, plus salvage` : 'no contracts on the board yet')}
+    </table></div>`;
+}
+{ const f = chronicleHTML; chronicleHTML = function(){ const h = f(); try { return h.replace('<div style="padding:2px 22px 6px;', ledgerHTML() + '<div style="padding:2px 22px 6px;'); } catch (e) { return h; } }; }
+// The top bar: works under way and upkeep due; click for the scroll.
+{ const f = renderTopbar;
+  renderTopbar = function(){
+    f();
+    try {
+      if (!META || inStoryNow() || !META.founded) return;
+      const tb = $('topbar'), grow = tb && tb.querySelector('.grow'); if (!grow) return;
+      const n = META.build ? Object.keys(META.build).length : 0, F = forecast();
+      const chip = document.createElement('span'); chip.className = 'stat'; chip.style.cursor = 'pointer'; chip.title = forecastTitle();
+      chip.innerHTML = `Ledger: ${n ? `<b>${n}</b> building · ` : ''}upkeep <b>-${F.civ + F.debt}gp</b>`;
+      chip.onclick = () => openChronicle();
+      tb.insertBefore(chip, grow);
+    } catch (e) {}
+  };
+}
+// The debrief: the Scribe reports on the works.
+{ const f = endDeployment;
+  endDeployment = function(result){
+    const d0 = META ? META.deployments : 0; f(result);
+    try {
+      if (!META || inStoryNow() || !(META.deployments > d0) || !META.build) return;
+      const ids = Object.keys(META.build); if (!ids.length) return;
+      const done = ids.filter(id => buildLeft(id) <= 0);
+      tickBuilds();
+      const still = Object.keys(META.build);
+      const parts = done.map(id => `<b>${esc(facility(id).name)}</b> is finished`).concat(still.map(id => `${esc(facility(id).name)}: ${leftText(id)} to go`));
+      const li = `<p><b>Works</b> (${esc(META.scribe ? META.scribe.name : 'the Scribe')}'s ledger): ${parts.join(' · ')}.</p>`;
+      if (renderDebrief.last) renderDebrief(renderDebrief.last.head, renderDebrief.last.lines.concat([li]));
+    } catch (e) { console.warn('works report:', e); }
+  };
+}
+
+/* --------------------------------------------- moving and pulling down --- */
+const moveFee = f => Math.max(20, Math.round(facCost(f) * 0.25));
+const salvageOf = f => Math.round(facCost(f) * 0.25);
+function demolishBlock(id){
+  const deps = FACILITIES.filter(x => x.req === id && (has(x.id) || inBuild(x.id)));
+  if (deps.length) return `The ${deps.map(d => d.name).join(' and the ')} need${deps.length === 1 ? 's' : ''} it.`;
+  if (staffOf(id)) return `${staffOf(id).name} staffs it; a veteran cannot be turned out.`;
+  return '';
+}
+function beginMove(id){
+  const f = facility(id); if (!has(id) || FIXED_SITE.has(id) || META.treasury < moveFee(f)) return;
+  closePanel(); CAMP.moving = id;
+  campNote(`Click an empty plot to move the ${f.name} there (${moveFee(f)}gp). Click anything else to cancel.`);
+}
+function doMove(fid, slot){
+  const f = facility(fid), fee = moveFee(f);
+  if (!slot || FIXED_SITE.has(slot) || !has(fid) || META.treasury < fee) return;
+  META.treasury -= fee; META.sites = META.sites || {};
+  for (const k in META.sites) if (META.sites[k] === slot && !has(k) && !inBuild(k)) delete META.sites[k];
+  META.sites[fid] = slot; applySites(); saveMeta();
+  worksLog('move', fid, {cost:fee});
+  try { refreshUI(); } catch (e) {}
+  if (PLOTS[fid]) CAMP.fx.push({x:PLOTS[fid][0], y:PLOTS[fid][1], life:70});
+  SFX.play('win'); campNote(`The town's builders take the ${f.name} down and raise it again on its new plot.`);
+}
+function askDemolish(id){
+  const f = facility(id), why = demolishBlock(id); if (!has(id) || why) return;
+  askConfirm(`Pull down the ${f.name}?`, `It stops working at once. The timber and stone sell for <b>${salvageOf(f)}gp</b>. Building it again costs the full price and takes ${plural(buildSeasons(f), 'season')}.`, () => doDemolish(id));
+}
+function doDemolish(id){
+  const f = facility(id); if (!has(id) || demolishBlock(id)) return;
+  const back = salvageOf(f);
+  delete META.facilities[id]; if (META.damaged) delete META.damaged[id]; if (META.sites) delete META.sites[id];
+  META.treasury += back; applySites(); saveMeta();
+  worksLog('demolish', id, {back});
+  closePanel(); try { refreshUI(); } catch (e) {}
+  campNote(`The ${f.name} comes down. ${back}gp of salvage goes to the Treasury.`);
+}
+renderPanel = (function(prev){
+  return function(){
+    prev();
+    try {
+      const P = CAMP.panel; if (!P || P.kind !== 'building' || !has(P.id) || !PLOTS[P.id] || !curLayout().plots[P.id]) return;
+      const f = facility(P.id), fee = moveFee(f), why = demolishBlock(P.id);
+      const h = `<div style="margin-top:10px;border-top:1px solid rgba(74,59,42,.4);padding-top:6px;text-align:left"><b>Works</b><br>
+        ${FIXED_SITE.has(P.id) ? '' : `<button class="btn small" ${META.treasury >= fee ? '' : 'disabled'} onclick="beginMove('${P.id}')">MOVE TO ANOTHER PLOT (${fee}GP)</button>`}
+        <button class="btn small" ${why ? 'disabled' : ''} onclick="askDemolish('${P.id}')">PULL DOWN (+${salvageOf(f)}GP)</button>
+        ${why ? `<div class="desc" style="color:#8b0000">${esc(why)}</div>` : ''}</div>`;
+      $('camp-panel').insertAdjacentHTML('beforeend', h);
+    } catch (e) {}
+  };
+})(renderPanel);
+openPanel = (function(prev){
+  return function(kind, id){
+    if (CAMP.moving){ const mv = CAMP.moving; CAMP.moving = null;
+      if (kind === 'plot'){ const slot = SITE.map && SITE.map[id]; if (slot && !FIXED_SITE.has(slot)) return doMove(mv, slot); }
+      campNote('Move cancelled.'); }
+    return prev(kind, id);
+  };
+})(openPanel);
+closePanel = (function(prev){ return function(){ if (CAMP.moving){ CAMP.moving = null; campNote('Move cancelled.'); } return prev(); }; })(closePanel);
+
+/* ---------------------------------------------- camp keys and Alt labels --- */
+const KEYS78 = {alt:false};
+function nearestPlot(){
+  const L = META.leader && CAMP.people.find(q => q.kind === 'leader'), cx = L ? L.x : CAMP.cam.x + VW / 2, cy = L ? L.y : CAMP.cam.y + VH / 2;
+  let best = null, bd = 1e9; for (const o of campObjects()) if (o.kind === 'plot' && o.id !== 'palisade'){ const d = Math.hypot(o.x - cx, o.y - cy); if (d < bd){ bd = d; best = o; } }
+  return best;
+}
+window.addEventListener('keydown', e => {
+  if (e.key === 'Alt'){ KEYS78.alt = true; e.preventDefault(); return; }
+  if (G || !CAMP.on || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+  const tg = e.target && e.target.tagName; if (tg === 'INPUT' || tg === 'TEXTAREA' || tg === 'SELECT') return;
+  if (typeof ASK !== 'undefined' && ASK) return;
+  const chr = $('chronicle'); if (chr && chr.style.display !== 'none') return;
+  if (campOverlayOpen() || (typeof inStoryNow === 'function' && inStoryNow())) return;
+  const k = e.key.toLowerCase(), L = !!META.leader;
+  const act = {r:() => L && openRoster(), p:() => L && openTable(), q:() => openCamp(), h:() => { if (L){ centreCamOn(HUB.fire.x, HUB.fire.y); openPanel('fire', 'fire'); } },
+    l:() => openChronicle(), c:() => openChronicle(), m:() => openManual(),
+    b:() => { const o = nearestPlot(); if (o){ centreCamOn(o.x, o.y); openPanel('plot', o.id); } }}[k];
+  if (act){ act(); SFX.play('pick'); }
+});
+window.addEventListener('keyup', e => { if (e.key === 'Alt'){ KEYS78.alt = false; e.preventDefault(); } });
+window.addEventListener('blur', () => { KEYS78.alt = false; });
+function campOverlays78(){
+  const mv = CAMP.moving, alt = KEYS78.alt; if (!mv && !alt) return;
+  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.translate(-Math.round(CAMP.cam.x), -Math.round(CAMP.cam.y));
+  for (const o of campObjects()){
+    if (mv && o.kind === 'plot' && o.id !== 'palisade'){ const a = 0.5 + 0.35 * Math.sin(CAMP.t / 8);
+      ctx.strokeStyle = `rgba(255,216,96,${a})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(o.x, o.y - 10, 60, 27, 0, 0, TAU); ctx.stroke(); }
+    if (alt){
+      if (o.kind === 'building') campLabel(o.x, o.y - o.img.height * BSCALE * 0.9, facility(o.id).name, staffOf(o.id) ? 'Staffed by ' + staffOf(o.id).name : upkeepLabel(o.id));
+      else if (o.kind === 'site') campLabel(o.x, o.y - 60, facility(o.id).name, 'Building: ' + leftText(o.id));
+      else if (o.kind === 'plot') campLabel(o.x, o.y - 60, o.id === 'palisade' ? facility('palisade').name : 'Empty plot', o.id === 'palisade' ? 'Gate plot' : 'B to build');
+      else if (o.kind === 'house') campLabel(o.x, o.y - 120, HS().house, 'Planning table (P)');
+      else if (o.kind === 'wagon') campLabel(o.x, o.y - 80, HS().qm, 'Squad gear (Q)');
+    }
+  }
+  ctx.restore();
+}
+{ const f = drawCamp; drawCamp = function(){ const r = f.apply(this, arguments); try { if (!G && !inStoryNow()) campOverlays78(); } catch (e) {} return r; }; }
+{ const f = startCamp; startCamp = function(){ const r = f.apply(this, arguments); try { const h = $('camp-hint'); if (h && !h.dataset.i78){ h.dataset.i78 = '1'; h.textContent += '  Keys: B build · R roster · P planning table · Q quartermaster · H hire · L ledger · hold Alt for names.'; } } catch (e) {} return r; }; }
+{ const f = openManual;
+  openManual = function(){
+    f(); const lg = $('manual-inner') && $('manual-inner').querySelector('.log'); if (!lg || lg.querySelector('.idx78')) return;
+    lg.insertAdjacentHTML('beforeend', `<p class="idx78"><b>Building and the Scribe's ledger.</b> Click any empty plot (or press B) to choose a building. It takes 1 to 3 seasons to build (a season passes with every contract) and does nothing until finished; stop work in the season you ordered it for a full refund, later for half. A built facility can be moved to another plot for a quarter of its cost, or pulled down for a quarter back. The Scribe's Chronicle opens with the Ledger: works under way and what the coming season will cost. Camp keys: B build, R roster, P planning table, Q quartermaster, H hire, L ledger, M manual; hold Alt to name everything.</p>`);
+  };
+}
+/* ===== END INDEX 78 ======================================================= */
 
 </script>
 </body>
