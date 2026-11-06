@@ -2,7 +2,7 @@
 
 Keep this current at the end of every task: what changed, what's in flight, where things are. Short facts only.
 
-Last updated: 2026-11-06, after commit 9d0b481 (Index 85b-d).
+Last updated: 2026-11-06, after commit 790b303 (audio review).
 
 ## Where things are
 - Repo: this folder; GitHub `Pjdoranbrown/Dust-Cloaks` (branch `main`); live: https://pjdoranbrown.github.io/Dust-Cloaks/ (GitHub Pages, updates a minute after push).
@@ -37,13 +37,33 @@ Last updated: 2026-11-06, after commit 9d0b481 (Index 85b-d).
   - sound-designer `local_c09b4f98-2340-447d-a424-ae1e42c0b183` — audio review (`audits/audio.md`, demo `audits/audio-demo.html`); future code in `js/audio.js`. Role card: `.claude/agents/sound-designer.md`.
 - For one-off heavy reading or drafting inside a chat, use the `game-drafter` subagent (`.claude/agents/game-drafter.md`). For audio work, the `sound-designer` subagent (`.claude/agents/sound-designer.md`).
 
-## In flight
-- story-designer: J-16/17/18 shipped (Index 85b-d, commit 9d0b481).
-- game-balancer: J-14 (Tier 1 softening via speed x0.9 and -1 Skill for Greenskins, Monsters, Orcs, Arcana) and J-15 (5 gear sinks) shipped in Index 86.
-- sound-designer review done: `audits/audio.md` (AUD-01…16), demo `audits/audio-demo.html` (live on Pages). Backlog J-19…J-22 await the user after they listen.
-- Still waiting on the user: approval of jobs J-01..J-13.
+## In flight (as of commit 790b303)
+- Nothing running. All delegates idle.
+- Waiting on the user:
+  - **Audio:** listen to the demo at https://pjdoranbrown.github.io/Dust-Cloaks/audits/audio-demo.html (or `audits/audio-demo.html` locally), then approve J-19…J-22. Recommended order: J-19 (mellow town audio, delegate, M) first; J-20 (one continuous theme + Humanity-style tempo) is the big one.
+  - **Jobs J-01…J-13** (new-player start, Reeve's Hall Day 1, planning-table sticky bar, HUD scaling, health rows, squad spacing, save backups, game feel, visual polish, mid-size story, portrait strip, plain tooltips, bible fill).
+- Shipped this run: Index 81–82 bugs, 83 UX, 84 graphics, 85/85b-d story, 86 balance; decisions D-01…D-10 (see bible).
+
+## History in brief (what this chat did, so it isn't lost)
+- Set up Git/GitHub (Pjdoranbrown/Dust-Cloaks), moved image data to `assets/*.js`, then Index 76–80 (3D props, baked terrain, tavern, build-anywhere + construction + builders, Scribe's ledger, move/demolish, camp keys, sharp high-DPI text, draw guards).
+- Ran a five-auditor Sonnet team (bugs, story, balance, UX, graphics), then a sixth (sound). Reports in `audits/`.
+- A Gemini playtest report ("Dust Cloaks — Beta Test & Polish Report") was pasted in by the user (the Google Doc at `G:\My Drive\…gdoc` can't be read locally: Google Docs are placeholders). It was sliced per role into `audits/leads/*.md`; several of its claims were out of date (verify Gemini claims before acting). Its co-op multiplayer design (§8) is parked (D-09).
+- Things declined or deferred: D-03 small rule fixes; facility upgrades as gold sinks (too heavy); GFX-18/20 (not real problems); full cold-open rewrite (only v1 built).
+
+## Rules and environment quirks
+- Commit messages end with `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`; PR bodies end with `🤖 Generated with [Claude Code](https://claude.com/claude-code)`.
+- Commit only reviewed, tested work; never commit a delegate's unreviewed changes. Don't commit if a delegate is mid-edit on `index.html`.
+- The local server dies between sessions: restart `.claude/serve.ps1` (background) before browser testing.
+- Hidden browser pane → `innerWidth` 0: `resize_window` to 1280x800 before sweeps, `preset: desktop` after. Its timers are throttled; long scripts time out at 45s, so use `AUD.run` and poll.
+- Shells: PowerShell 5.1 (no `&&`); Git Bash also available. Node is not installed. Git at `C:\Program Files\Git\cmd\git.exe`.
+- Test browser saves (e.g. "Godfrey") are test data in the pane, not the user's campaign. Delegates back up and restore saves when testing.
+- `CLAUDE.md` and `game-bible.md` were created by the user (via another tool) and are now part of the system.
 
 ## User preferences
-- Plain, non-technical summaries; leads with the outcome.
+- Plain, non-technical summaries; leads with the outcome. Australian English is fine (the game uses it).
 - Wants iteration via GitHub (commits per change), not new HTML files.
-- Uses Gemini for outside playtests; feed its findings to the right delegate, verify first.
+- Likes decisions put as short multiple-choice questions with a recommended option first (2–4 per round).
+- Bugs: fix as found. Improvements: ask first; once approved, delegate to Sonnet if confident without re-asking.
+- Uses Gemini for outside playtests; feed findings to the right delegate, verify first.
+- Watches usage limits: keep delegates focused; a usage-limit stop leaves delegates idle (resume them by SendMessage with their id).
+- Audio taste: Humanity-style synth tempo that follows game speed; mellow lute and hand drums in town, not synth pipes; the same theme builds into contracts.
