@@ -33,11 +33,15 @@ Last updated: 2026-11-06, after commit c02f2d7 (Index 85).
   - ux-graphics `local_401dbc2c-9c28-4ff1-aa29-8ca2b44dbe3f` — `js/ux.js`.
   - game-graphics `local_c7b7b6e4-c3eb-4429-8389-0acac45ab847` — `js/graphics.js`.
   - story-designer `local_f57aa233-9ce1-47b6-bc71-47f1599d89a4` — `js/story.js`.
-  - game-balancer `local_90755013-6a51-4dc2-9076-1d1d037c2b84` — read-only so far.
+  - game-balancer `local_90755013-6a51-4dc2-9076-1d1d037c2b84` — `js/balance.js` (Index 86).
 - For one-off heavy reading or drafting inside a chat, use the `game-drafter` subagent (`.claude/agents/game-drafter.md`).
 
 ## In flight
-- Nothing running. Waiting on the user: which backlog jobs to approve, and decisions D-01…D-10.
+- Decisions D-01…D-10 made (see `game-bible.md` log). Dispatched 2026-11-06:
+  - game-balancer → J-14 (soften hard hosts' Tier 1 pools) and J-15 (tabletop gold sinks) in `js/balance.js` (Index 86; script tag added after `js/story.js`).
+  - story-designer → J-16 (Cayde = Grand Master of the Grey Cloaks, no "Reynard"), J-17 (new lieutenants replace Orsolt/Ilvaryn after the prologue), J-18 (prologue cold open v1) in `js/story.js`.
+- When they report: review the diff, run the standard regression, commit `index.html` + `js/` + `audits/`, update the backlog statuses.
+- Still waiting on the user: approval of jobs J-01…J-13.
 
 ## User preferences
 - Plain, non-technical summaries; leads with the outcome.

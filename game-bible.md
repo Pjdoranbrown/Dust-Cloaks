@@ -28,6 +28,16 @@ A bullet heaven / action RPG adaptation of the Dust Cloaks tabletop game. Runs i
 
 ## Decisions log
 Newest first. One line each: date — decision — why.
+- 2026-11-06 — D-10: build the small (version 1) prologue cold open — eases new players in with the least rewrite.
+- 2026-11-06 — D-09: co-op multiplayer parked — finish single-player polish first; it touches almost every system.
+- 2026-11-06 — D-08: default Squad Leader look stays Crisp — the 3D world and sharp text are built for it.
+- 2026-11-06 — D-07: Orsolt and Ilvaryn stay dead after the prologue; later contracts get new named lieutenants — continuity.
+- 2026-11-06 — D-06: Cayde is Grand Master of the Grey Cloaks, as in the Manual; "Reynard" is not part of his public title — the Manual is the lore authority.
+- 2026-11-06 — D-05: Goblin/Witch strength unchanged until a real playtest — the simulation was too crude to act on.
+- 2026-11-06 — D-04: contract tiers keep unlocking by Squad Leader level (not Charter Rank) — a deliberate video-game simplification.
+- 2026-11-06 — D-03: the seven small rule fixes (hazard upkeep per deployed mate, Merchant discount, etc.) are not made for now.
+- 2026-11-06 — D-02: add the tabletop's gold sinks (Masterwork Full Plate and costly late upgrades) — gold piles up from about contract 12.
+- 2026-11-06 — D-01: soften the hardest hosts' Tier 1 pools (Monsters, Greenskins, Orcs, Arcana) rather than paying more for them — same pay should mean similar danger.
 - 2026-11-06 — Improvements from audits ship as separate modules (`js/ux.js`, `js/graphics.js`, `js/story.js`) loaded after `index.html`'s script — lets several delegates work at once without edit clashes.
 - 2026-11-06 — Bugs are fixed as found; improvements need the user's OK (tracked in `.claude/backlog.md`) — the user's working rule.
 - 2026-11-06 — Facility upkeep is 15gp per staffed facility per season; one contract is one season (Index 30 calendar) — confirmed by the user.

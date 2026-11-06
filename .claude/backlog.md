@@ -8,7 +8,7 @@ The one list of bigger jobs and open decisions. Keep it current: when something 
 - Owner: **commander** (the main chat) or **delegate** (a Sonnet session or the `game-drafter` subagent).
 - Status: `proposed` → `approved` → `in progress` → `shipped (Index N, commit)` / `dropped (why)`.
 
-Last updated: 2026-11-06 (after Index 85, commit c02f2d7).
+Last updated: 2026-11-06 (decisions D-01…D-10 made; J-14…J-18 dispatched).
 
 ---
 
@@ -29,21 +29,26 @@ Last updated: 2026-11-06 (after Index 85, commit c02f2d7).
 | J-11 | **Squad portrait strip** in contracts (5 busts, health bar, red X when down, toggle N) | UX tooltips row | M | commander | proposed |
 | J-12 | **Plain-English one-liners** on specialties, armour and doctrines, rules text under "Details" | UX tooltips row | M | delegate (wording: story) | proposed |
 | J-13 | **Fill `game-bible.md`** sections (core loop, classes, enemies, items, balance, art, story) from the code and audits | — | S | `game-drafter` | proposed |
+| J-14 | **Soften the hard hosts** at Tier 1 (Monsters, Greenskins, Orcs, Arcana) via their enemy pools, toward the middle of the spread; same pay (from D-01) | BAL-01(b) | S | game-balancer → `js/balance.js` | in progress |
+| J-15 | **Tabletop gold sinks**: Masterwork Full Plate and costly late upgrades for facilities/gear (from D-02) | BAL-04 | M | game-balancer → `js/balance.js` | in progress |
+| J-16 | **Cayde's title** matches the Manual: Grand Master of the Grey Cloaks, no "Reynard" (from D-06) | STORY-05 | S | story-designer → `js/story.js` | in progress |
+| J-17 | **New named lieutenants** replace Orsolt and Ilvaryn as later bosses (from D-07) | STORY-04 | S–M | story-designer → `js/story.js` | in progress |
+| J-18 | **Prologue cold open, version 1** (from D-10) | audits/story.md → Onboarding cold open | S | story-designer (commander reviews flow) | in progress |
 
 ## Decisions (user's call)
 
 | ID | Question | Options / recommendation | Sources | Status |
 |---|---|---|---|---|
-| D-01 | **Host difficulty spread**: at Tier 1, Monsters/Greenskins/Orcs/Arcana kill a test squad 2–3× faster than the Hollow, for the same pay | (a) pay scales with host danger (touches the board/saves); (b) soften the hard hosts' pools. Balancer: do (b) now, (a) later | BAL-01 | open |
-| D-02 | **Late-game gold glut** from about contract 12: add a sink? | Masterwork Full Plate (tabletop), costlier late facilities/upgrades, or higher late upkeep | BAL-04 | open |
-| D-03 | **Small rule fixes** (mostly drift from the tabletop) | Hazard upkeep per deployed Squad Mate (not per survivor); Merchant Stalls 10% market discount; Hold the Redoubt pay per minute; softer upkeep after a lost contract; cap the raid pay-off; Light Crossbows vs Longbows; armour Move note | BAL-05…09, 11, 12 | open |
-| D-04 | **Tier gating**: by leader level (game) or Charter Rank (tabletop)? | Balancer reads the current rule as deliberate | BAL-14 | open |
-| D-05 | **Goblin / Witch strength** look off in a crude sim | Needs a human playtest before changing | BAL-13 | open |
-| D-06 | **Lore: "Reynard"** — Cayde is titled "Reynard, Grand Master of the Dust Cloaks", but the Manual makes him Grand Master of the Grey Cloaks and Reynard a secret | Change the title, or treat the game as canon | STORY-05 | open |
-| D-07 | **Orsolt and Ilvaryn** die in the prologue but return as generic bosses | Rename the later bosses, or make their return a story beat | STORY-04 | open |
-| D-08 | **Default Squad Leader look**: Crisp (current) or Retro? | Gemini prefers Retro; graphics auditor gives its view in GFX-10 | GFX-10, G cohesion | open |
-| D-09 | **Co-op multiplayer** (1–4 players, WebRTC, host browser authoritative) | Large; not started | Gemini report §8 | open |
-| D-10 | **Prologue cold open**: none, version 1 (S), 2 (M) or 3 (L)? | Story designer recommends version 1 first | audits/story.md → Onboarding cold open | open |
+| D-01 | **Host difficulty spread**: at Tier 1, Monsters/Greenskins/Orcs/Arcana kill a test squad 2–3× faster than the Hollow, for the same pay | (a) pay scales with host danger (touches the board/saves); (b) soften the hard hosts' pools. Balancer: do (b) now, (a) later | BAL-01 | decided: soften hard hosts (J-14) |
+| D-02 | **Late-game gold glut** from about contract 12: add a sink? | Masterwork Full Plate (tabletop), costlier late facilities/upgrades, or higher late upkeep | BAL-04 | decided: tabletop sinks (J-15) |
+| D-03 | **Small rule fixes** (mostly drift from the tabletop) | Hazard upkeep per deployed Squad Mate (not per survivor); Merchant Stalls 10% market discount; Hold the Redoubt pay per minute; softer upkeep after a lost contract; cap the raid pay-off; Light Crossbows vs Longbows; armour Move note | BAL-05…09, 11, 12 | decided: none for now |
+| D-04 | **Tier gating**: by leader level (game) or Charter Rank (tabletop)? | Balancer reads the current rule as deliberate | BAL-14 | decided: keep leader level |
+| D-05 | **Goblin / Witch strength** look off in a crude sim | Needs a human playtest before changing | BAL-13 | decided: wait for a real playtest |
+| D-06 | **Lore: "Reynard"** — Cayde is titled "Reynard, Grand Master of the Dust Cloaks", but the Manual makes him Grand Master of the Grey Cloaks and Reynard a secret | Change the title, or treat the game as canon | STORY-05 | decided: match the Manual (J-16) |
+| D-07 | **Orsolt and Ilvaryn** die in the prologue but return as generic bosses | Rename the later bosses, or make their return a story beat | STORY-04 | decided: rename later bosses (J-17) |
+| D-08 | **Default Squad Leader look**: Crisp (current) or Retro? | Gemini prefers Retro; graphics auditor gives its view in GFX-10 | GFX-10, G cohesion | decided: keep Crisp |
+| D-09 | **Co-op multiplayer** (1–4 players, WebRTC, host browser authoritative) | Large; not started | Gemini report §8 | decided: parked |
+| D-10 | **Prologue cold open**: none, version 1 (S), 2 (M) or 3 (L)? | Story designer recommends version 1 first | audits/story.md → Onboarding cold open | decided: version 1 (J-18) |
 
 ## Recently settled (moved to the bible's Decisions log)
 - Upkeep is 15gp per staffed facility per **season**; one contract = one season (Index 30 calendar).
