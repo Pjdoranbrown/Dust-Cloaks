@@ -99,8 +99,8 @@
   document.head.appendChild(st);
 
   /* ---- UX-01: settings grouped, off the splash and the pause screen ------- */
-  const SEC = [['Sound', /^(Volume|Music)\b/], ['Save', /^(Export save|Import save|NEW CAMPAIGN)/],
-               ['Display', /Screen shake|Squad Leader look|^Retro|3D world|Sharp text|Text size|Seasonal weather/], ['Game', /./]];
+  const SEC = [['Sound', /^(Volume|Music|Effects)\b/], ['Save', /^(Export save|Import save|NEW CAMPAIGN|Restore a backup)/],
+               ['Display', /Screen shake|Squad Leader look|^Retro|3D world|Sharp text|Text size|HUD size|Seasonal weather/], ['Game', /./]];
   function groupSettings(flex){
     if (!flex || flex.dataset.ux83) return; flex.dataset.ux83 = '1';
     const kids = [...flex.children], box = {};
@@ -458,3 +458,310 @@
   }
 })();
 /* ===== END INDEX 83 ======================================================= */
+
+/* ============================================================================
+   INDEX 83b - UX ROUND 2 (J-03, J-04, J-05, J-07, J-11, J-12)
+   J-03  Planning table: a sticky footer (contract, pay, squad n / 5, SIGN AND
+         MARCH, with the reason when it is off), the right column as tabs
+         (Ambition, Factions, Doctrines, Rivals, Prisoners), and opening the
+         table (P) lands on Contracts.
+   J-04  The contract HUD scales with the window: HUDK = clamp(VH/760, 1, 1.6)
+         x text size (Auto), or a fixed 100 / 125 / 150% (Settings > Display >
+         HUD size). The HUD is drawn in a scaled coordinate frame, so every
+         overlay inside drawHUD (alerts, carried items, braziers, Momentum
+         cards, messages) follows. Small grey print is brightened.
+   J-05  Leader card: rows in the order damage takes them (Wards, Shield,
+         Mount, Wounds, then Condition and Luck), each with n/max, shaped pips
+         (Ward diamond, Shield square, Wounds circle, Luck triangle) and a red
+         flash when the row loses a pip. Filled = what is left.
+   J-07  Rolling backups: on each season change the campaign is copied into
+         three rotating slots (<save>_bk1..3); Settings > Save > "Restore a
+         backup..." lists them. Main campaign only; the prologue slot and its
+         hand-over are never touched.
+   J-11  A squad portrait strip under the leader card (N hides it): a bust and
+         a Condition bar per Squad Mate, red X when down.
+   J-12  Plain one-line summaries on the six Specialty cards, the armour and
+         shield cards and the doctrines, with the rules text under "Details".
+   ROLLBACK  Delete from this comment to END INDEX 83b (nothing else changed).
+============================================================================ */
+(function(){
+  const UX = window.UX83 = window.UX83 || {};
+  const $q = (s, r) => (r || document).querySelector(s), $all = (s, r) => [...(r || document).querySelectorAll(s)];
+  const safe = (name, fn) => { try { return fn(); } catch (e) { console.warn('Index 83b ' + name + ':', e); } };
+  const esc2 = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;'}[c]));
+  const css = document.createElement('style');
+  css.textContent = `
+  /* J-03 */
+  .ux-tabs{display:flex;flex-wrap:wrap;gap:4px;margin:14px 8px 0;padding:0 4px;border-bottom:3px solid #1a0e06;position:relative;z-index:2}
+  .ux-tabs button{font:bold 14px Georgia;font-variant:small-caps;color:#f0e6d2;background:linear-gradient(#6e4e2c,#4a3018);border:2px solid #24160a;border-bottom:none;border-radius:6px 6px 0 0;padding:6px 14px;cursor:pointer;margin:0}
+  .ux-tabs button:hover{background:linear-gradient(#8a6238,#5a3a1c)}
+  .ux-tabs button.on{background:#d8c9a8;color:#3a2a1a;transform:translateY(3px)}
+  #ux-foot{position:sticky;bottom:0;z-index:6;max-width:1320px;margin:16px auto 0;box-sizing:border-box;display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;
+    padding:8px 16px;background:linear-gradient(#3a2414,#22140a);border:2px solid #b8902a;border-radius:4px;box-shadow:0 -6px 16px rgba(0,0,0,.55);color:#f0e6d2;font-family:Georgia}
+  #ux-foot .fc{flex:1 1 220px;min-width:0}
+  #ux-foot .fc small,#ux-foot .fs small{display:block;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;opacity:.75}
+  #ux-foot .fc b{display:block;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #ux-foot .fs{flex:0 0 auto;text-align:center}
+  #ux-foot .fs b{font-size:17px}
+  #ux-foot .btn{margin:0;padding:9px 22px;font-size:16px}
+  #ux-foot .fw{flex:1 0 100%;font:italic 12.5px Georgia;color:#ffb0a0;margin:0}
+  #ux-foot .fn{flex:1 0 100%;font:italic 12.5px Georgia;color:#e8d8b0;margin:0}
+  /* J-07 */
+  #ux-bk{position:fixed;inset:0;z-index:220;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.7)}
+  #ux-bk .bx{width:min(560px,94vw);max-height:86vh;overflow:auto;background:var(--parch,#d8c9a8);border:3px solid #3a2a1a;box-shadow:0 0 0 2px #8a6a3a inset,0 16px 40px rgba(0,0,0,.7);padding:18px 22px;font-family:Georgia;color:#2a2520}
+  #ux-bk h2{margin:0 0 6px;font-variant:small-caps;font-size:26px;border-bottom:3px double #4a3b2a}
+  #ux-bk .brow{display:flex;gap:10px;align-items:center;border-top:1px solid #c9bba4;padding:7px 0;font-size:14px}
+  #ux-bk .brow .g{flex:1}
+  #ux-bk .brow small{display:block;color:#6a5a44;font-size:12px}
+  /* J-12 */
+  .ux-plain{font:italic 13px/1.35 Georgia;color:#3a2a1a;margin:3px 0 4px;text-align:center}
+  .line .ux-plain,.ledger .ux-plain{text-align:left}
+  details.ux-det{margin-top:3px;text-align:left}
+  details.ux-det summary{cursor:pointer;font:bold 11.5px Georgia;color:#7a3e26;list-style:none}
+  details.ux-det summary::before{content:'\\25B8 '}
+  details.ux-det[open] summary::before{content:'\\25BE '}
+  details.ux-det summary::-webkit-details-marker{display:none}
+  `;
+  document.head.appendChild(css);
+
+  /* ---- J-03: planning table ------------------------------------------------ */
+  const TABS = [['ambition', 'Ambition'], ['factions', 'Factions'], ['doctrines', 'Doctrines'], ['rivals', 'Rivals'], ['ledger', 'Prisoners']];
+  UX.tab = UX.tab || 'ambition';
+  function tableExtras(){
+    const inner = $q('#table-inner'); if (!inner || !META || !META.leader) return;
+    const grid = $q('.table-grid', inner); if (!grid || grid.children.length < 2) return;
+    const col = grid.children[1];
+    $all('.ux-tabs', col).forEach(e => e.remove());
+    const bar = document.createElement('div'); bar.className = 'ux-tabs'; bar.setAttribute('role', 'tablist');
+    const np = (META.prisoners || []).length;
+    const show = id => { UX.tab = id; TABS.forEach(([t]) => { const el = $q('#tbl-' + t, col); if (el) el.style.display = t === id ? '' : 'none'; });
+      $all('button', bar).forEach(b => { const on = b.dataset.tab === id; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); }); };
+    TABS.forEach(([id, label]) => { const b = document.createElement('button'); b.type = 'button'; b.dataset.tab = id; b.setAttribute('role', 'tab');
+      b.textContent = label + (id === 'ledger' && np ? ' (' + np + ')' : ''); b.onclick = () => { SFX.play('pick'); show(id); }; bar.appendChild(b); });
+    col.insertBefore(bar, col.firstChild); show(TABS.some(t => t[0] === UX.tab) ? UX.tab : 'ambition');
+    // sticky footer
+    $all('#ux-foot', inner).forEach(e => e.remove());
+    const sel = META.board && META.board[MU.contract]; if (!sel) return;
+    const over = META.roster.length > rosterCap();
+    const foot = document.createElement('div'); foot.id = 'ux-foot';
+    const pay = sel.pay + 'gp' + (sel.edges && sel.edges.includes('terms') ? ' +20%' : '');
+    const title = sel.title || OBJECTIVES[sel.obj].name, n = MU.ids.length;
+    let note = '';
+    if (!sel.council) note = 'The War Council has not been rolled: you can still march on the terms as they stand.';
+    else if (sel.picks > 0) note = 'You can still choose ' + sel.picks + ' Contract Edge' + (sel.picks > 1 ? 's' : '') + ' above.';
+    else if (!n) note = 'Your Leader marches alone. Pick Squad Mates in Who Marches.';
+    foot.innerHTML = `<div class="fc"><small>Contract</small><b title="${esc2(title)}">${esc2(title)}</b></div>
+      <div class="fs"><small>Pay</small><b>${pay}</b></div><div class="fs"><small>Squad</small><b>${n} / 5</b></div>
+      <button class="btn gold" ${over ? 'disabled' : ''} onclick="deploy()">SIGN AND MARCH</button>
+      ${over ? `<p class="fw">Roster over capacity (${META.roster.length} / ${rosterCap()}): release someone first.</p>` : note ? `<p class="fn">${esc2(note)}</p>` : ''}`;
+    inner.appendChild(foot);
+  }
+  { const f = renderTable; renderTable = function(){ const r = f.apply(this, arguments); safe('table', tableExtras); return r; }; }
+  { const f = openTable;
+    openTable = function(focus){
+      if (focus && TABS.some(t => t[0] === focus)) UX.tab = focus;
+      const r = f.apply(this, arguments);
+      safe('table top', () => { if (!focus){ const s = $q('#screen-table'); if (s) s.scrollTop = 0; } });
+      return r;
+    };
+  }
+
+  /* ---- J-04: the HUD scales with the window ---------------------------------- */
+  const hudSet = () => { try { return settings().hudSize || 'auto'; } catch (e) { return 'auto'; } };
+  function hudK(){
+    const s = hudSet(); let k;
+    if (s === 'auto') k = Math.min(1.6, Math.max(1, VH / 760)) * (typeof textScale === 'function' ? textScale() : 1);
+    else k = (+s || 100) / 100;
+    return Math.min(2, Math.max(0.75, k));
+  }
+  UX.hudK = hudK;
+  const FILL = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillStyle');
+  const BRIGHT = {'#aaa':'#d6cbb6', '#aaaaaa':'#d6cbb6', '#c8bca8':'#e8dfcb', '#cdbf9f':'#e6dcc3', '#bbb':'#e0d8c6', '#bbbbbb':'#e0d8c6'};
+  function hookFill(){
+    if (!ctx || ctx.__ux83f) return; ctx.__ux83f = true;
+    Object.defineProperty(ctx, 'fillStyle', {configurable:true, get(){ return FILL.get.call(this); },
+      set(v){ if (UX.inHud && typeof v === 'string' && BRIGHT[v]) v = BRIGHT[v]; FILL.set.call(this, v); }});
+  }
+  { const f = drawSeasonOverlay;       // the weather is not HUD: draw it in the true frame
+    drawSeasonOverlay = function(cx, cy, w, h, t, mode){
+      if (!UX.inHud || !(UX.k > 1.001 || UX.k < 0.999) || !G || !G.leader) return f.apply(this, arguments);
+      const sv = [VW, VH]; VW = UX.vw; VH = UX.vh;
+      ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0);
+      const nx = Math.round(G.leader.x - VW / 2), ny = Math.round(G.leader.y - VH / 2); ctx.translate(-nx, -ny);
+      try { return f.call(this, nx, ny, w, h, t, mode); } finally { ctx.restore(); VW = sv[0]; VH = sv[1]; }
+    };
+  }
+  { const f = drawHUD;
+    drawHUD = function(){
+      if (!G) return f.apply(this, arguments);
+      hookFill();
+      const k = hudK(), ow = VW, oh = VH, m = CAMP.mouse, mx = m.x, my = m.y;
+      UX.k = k; UX.vw = ow; UX.vh = oh; UX.inHud = true;
+      VW = ow / k; VH = oh / k; m.x = mx / k; m.y = my / k;
+      ctx.save(); ctx.scale(k, k);
+      try { f.apply(this, arguments); safe('squad strip', () => squadStrip()); }
+      finally {
+        ctx.restore(); VW = ow; VH = oh; m.x = mx; m.y = my; UX.inHud = false;
+        safe('momentum rects', () => { const ch = G && G.momChoice; if (ch && ch.rects && !ch.rects.__ux && k !== 1){
+          ch.rects = ch.rects.map(r => ({x:r.x * k, y:r.y * k, w:r.w * k, h:r.h * k})); ch.rects.__ux = true; } });
+      }
+    };
+  }
+
+  /* ---- J-05: the leader card rows ------------------------------------------- */
+  const SHAPE = {'#87ceeb':'diamond', '#d4af37':'square', '#a0784f':'square', '#d47a6a':'circle', '#6fa37a':'bar', '#f0c96a':'tri'};
+  { const f = pips;
+    pips = function(x, y, n, max, on){
+      if (!UX.inHud || !SHAPE[on]) return f.apply(this, arguments);
+      if (UX.pg !== G){ UX.pg = G; UX.prev = {}; UX.fl = {}; }
+      const kind = SHAPE[on], step = 11;
+      for (let i = 0; i < max; i++){
+        const cx = x + i * step + 4, cy = y + 4, full = i < n;
+        ctx.beginPath();
+        if (kind === 'diamond'){ ctx.moveTo(cx, cy - 5); ctx.lineTo(cx + 5, cy); ctx.lineTo(cx, cy + 5); ctx.lineTo(cx - 5, cy); ctx.closePath(); }
+        else if (kind === 'circle') ctx.arc(cx, cy, 4.2, 0, TAU);
+        else if (kind === 'tri'){ ctx.moveTo(cx, cy - 5); ctx.lineTo(cx + 5, cy + 4); ctx.lineTo(cx - 5, cy + 4); ctx.closePath(); }
+        else if (kind === 'bar') ctx.rect(cx - 4, cy - 3, 8, 7);
+        else ctx.rect(cx - 4, cy - 4, 8, 8);
+        if (full){ ctx.fillStyle = on; ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.4)'; ctx.lineWidth = 1; ctx.stroke(); }
+        else { ctx.fillStyle = 'rgba(245,239,227,.08)'; ctx.fill(); ctx.strokeStyle = 'rgba(245,239,227,.4)'; ctx.lineWidth = 1; ctx.stroke(); }
+      }
+      const ta = ctx.textAlign; ctx.textAlign = 'left'; ctx.fillStyle = '#e8dfcb'; ctx.font = 'bold 10.5px Georgia'; ctx.fillText(n + '/' + max, x + max * step + 4, y + 8.5); ctx.textAlign = ta;
+      const pv = UX.prev[on]; if (pv != null && n < pv) UX.fl[on] = G.frame + 40; UX.prev[on] = n;
+      if (UX.fl[on] > G.frame){ const a = (UX.fl[on] - G.frame) / 40;
+        ctx.strokeStyle = 'rgba(255,70,50,' + (0.4 + 0.6 * a).toFixed(2) + ')'; ctx.lineWidth = 2; ctx.strokeRect(x - 5, y - 3, max * step + 36, 14); }
+    };
+  }
+
+  /* ---- J-11: the squad portrait strip ----------------------------------------- */
+  function stripOn(){ try { return settings().squadStrip !== false; } catch (e) { return true; } }
+  function squadStrip(){
+    if (!G || !G.squad || !G.squad.length || !stripOn()) return;
+    const rows = 5 + (G.mountMax > 0 ? 1 : 0);                      // WARDS, SHIELD, [MOUNT], WOUNDS, CON, LUCK
+    const top = 14 + 76 + rows * 14 + 6, S = 44, gap = 8, mates = G.squad.slice(0, 5), w = mates.length * (S + gap) + gap;
+    panel(10, top, Math.min(300, w + 4), S + 36);
+    mates.forEach((m, i) => {
+      const x = 16 + i * (S + gap), y = top + 8, dead = m.state === 'dead', down = m.state === 'bleeding' || m.state === 'stable';
+      ctx.fillStyle = '#3a3226'; ctx.fillRect(x, y, S, S);
+      ctx.save(); ctx.beginPath(); ctx.rect(x, y, S, S); ctx.clip();
+      try { ctx.globalAlpha = dead ? 0.35 : down ? 0.6 : 1; ctx.imageSmoothingEnabled = false; ctx.drawImage(personBust(m.p, false), x, y, S, S); } catch (e) {}
+      ctx.restore(); ctx.globalAlpha = 1;
+      ctx.strokeStyle = dead ? '#7a2a22' : down ? '#e0a030' : '#d4af37'; ctx.lineWidth = 1.5; ctx.strokeRect(x + .5, y + .5, S - 1, S - 1);
+      const fr = dead ? 0 : Math.max(0, Math.min(1, m.con / (m.maxCon || 1)));
+      ctx.fillStyle = '#000'; ctx.fillRect(x, y + S + 3, S, 6);
+      ctx.fillStyle = fr > 0.6 ? '#6fa37a' : fr > 0.3 ? '#d4af37' : '#d4503a'; ctx.fillRect(x + 1, y + S + 4, Math.round((S - 2) * fr), 4);
+      ctx.textAlign = 'center';
+      if (dead){ ctx.strokeStyle = '#e03030'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x + 6, y + 6); ctx.lineTo(x + S - 6, y + S - 6); ctx.moveTo(x + S - 6, y + 6); ctx.lineTo(x + 6, y + S - 6); ctx.stroke(); }
+      else if (down){ ctx.font = 'bold 10.5px Georgia'; ctx.fillStyle = '#000'; ctx.fillText('DOWN', x + S / 2 + 1, y + S - 4); ctx.fillStyle = '#ffd890'; ctx.fillText('DOWN', x + S / 2, y + S - 5); }
+      ctx.textAlign = 'left';
+    });
+    ctx.font = '10.5px Georgia'; ctx.fillStyle = '#c8bca8'; ctx.textAlign = 'left'; ctx.fillText('[N] hide', 16, top + S + 26);
+    if (!UX.stripTip){ UX.stripTip = true; tip('squadstrip'); }
+  }
+  TIPS.squadstrip = 'The portraits under your Leader show each Squad Mate’s Condition. A red X is dead. N hides them.';
+  window.addEventListener('keydown', e => {
+    if (e.key.toLowerCase() !== 'n' || e.repeat || e.ctrlKey || e.metaKey || e.altKey || !G || G.paused) return;
+    const t = e.target; if (t && /INPUT|TEXTAREA|SELECT/.test(t.tagName)) return;
+    settings().squadStrip = !stripOn(); saveMeta();
+  });
+
+  /* ---- HUD size setting and the backup button ---------------------------------- */
+  { const f = settingsHTML;
+    settingsHTML = function(dark){
+      const h = f(dark);
+      const s = hudSet(), o = (v, l) => `<option value="${v}" ${String(s) === v ? 'selected' : ''}>${l}</option>`;
+      const add = `<label title="Size of the panels and bars during a contract">HUD size <select onchange="setSetting('hudSize', this.value)">${o('auto', 'Auto')}${o('100', '100%')}${o('125', '125%')}${o('150', '150%')}</select></label>`
+        + (SAVE_KEY === MAIN_SLOT && META && META.leader ? `<button class="btn small" style="font-size:12px;padding:4px 10px" onclick="uxBackups()">Restore a backup…</button>` : '');
+      const i = h.lastIndexOf('</div>'); return i < 0 ? h + add : h.slice(0, i) + add + h.slice(i);
+    };
+  }
+
+  /* ---- J-07: rolling backups ---------------------------------------------------------- */
+  const BK = () => [1, 2, 3].map(i => MAIN_SLOT + '_bk' + i);
+  function bkList(){ return BK().map(k => { try { const v = JSON.parse(localStorage.getItem(k)); return v && v.raw ? v : null; } catch (e) { return null; } }); }
+  function bkMake(label){
+    try {
+      if (SAVE_KEY !== MAIN_SLOT || !META || !META.leader) return false;
+      saveMeta(); const raw = localStorage.getItem(MAIN_SLOT); if (!raw) return false;
+      const L = bkList(), keys = BK();
+      const entry = {when:Date.now(), label:label || 'Backup', leader:META.leader.name, season:seasonName(), gold:META.treasury, contracts:META.deployments || 0, raw};
+      const write = () => { for (let i = 2; i >= 1; i--) if (L[i - 1]) localStorage.setItem(keys[i], JSON.stringify(L[i - 1])); localStorage.setItem(keys[0], JSON.stringify(entry)); };
+      try { write(); } catch (e) { localStorage.removeItem(keys[2]); L[1] = null; write(); }
+      return true;
+    } catch (e) { console.warn('Index 83b backup:', e); return false; }
+  }
+  UX.backup = bkMake;
+  { const f = endDeployment;
+    endDeployment = function(result){
+      const s0 = (META && META.leader) ? seasonName() : null;
+      const r = f.apply(this, arguments);
+      safe('season backup', () => { if (s0 && SAVE_KEY === MAIN_SLOT && META && META.leader && seasonName() !== s0) bkMake('New season'); });
+      return r;
+    };
+  }
+  window.uxBackups = function(){
+    $all('#ux-bk').forEach(e => e.remove());
+    const box = document.createElement('div'); box.id = 'ux-bk';
+    const L = bkList(), fmt = t => new Date(t).toLocaleString([], {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'});
+    box.innerHTML = `<div class="bx"><h2>Backups</h2><div style="font-size:13.5px;margin:4px 0 8px">A copy is kept at every change of season (three at most, the oldest drops off). Restoring one replaces the campaign you are playing, and backs it up first.</div>`
+      + L.map((b, i) => b ? `<div class="brow"><div class="g"><b>${esc2(b.leader)}</b> · ${esc2(b.season)} · ${b.gold}gp · ${b.contracts} contract${b.contracts === 1 ? '' : 's'}<small>${esc2(b.label)}, saved ${fmt(b.when)}</small></div><button class="btn small" onclick="uxRestore(${i})">Restore</button></div>`
+        : `<div class="brow"><div class="g" style="color:#6a5a44;font-style:italic">Empty slot</div></div>`).join('')
+      + `<div style="margin-top:10px;text-align:right"><button class="btn small" onclick="uxBackupNow()">Back up now</button><button class="btn small" onclick="document.getElementById('ux-bk').remove()">Close</button></div></div>`;
+    box.addEventListener('mousedown', e => { if (e.target === box) box.remove(); });
+    document.body.appendChild(box);
+  };
+  window.uxBackupNow = function(){ const ok = bkMake('Manual backup'); campNote(ok ? 'Backed up.' : 'Nothing to back up yet.', ok ? 'good' : 'bad'); uxBackups(); };
+  window.uxRestore = function(i){
+    const b = bkList()[i]; if (!b) return;
+    const bx = $q('#ux-bk'); if (bx) bx.remove();
+    askConfirm('Restore this backup?', `<b>${esc2(b.leader)}</b>, ${esc2(b.season)}, ${b.gold}gp. The campaign you are playing now will be replaced (it is backed up first).`, () => {
+      bkMake('Before restoring');
+      try { const m = JSON.parse(b.raw);
+        META = Object.assign(freshMeta(), m); saveMeta(); applySkin(); G = null; CAMP.dirty = true; if (typeof MU !== 'undefined') MU = null;
+        const tb = $q('#tb-settings'); if (tb) tb.remove(); showSplash(); campNote('Backup restored.', 'good');
+      } catch (e) { askAlert('Could not restore', 'That backup could not be read (' + esc2(e.message) + ').'); }
+    }, {ok:'RESTORE', danger:true});
+  };
+
+  /* ---- J-12: plain-English one-liners ---------------------------------------------------- */
+  const PL_SPEC = {Soldier:'Front-line fighter. Takes hits and cuts through crowds.', 'Folk Hero':'Archer. Shoots fast from a safe distance.', Scoundrel:'Knife-fighter. Does most harm to someone already busy.',
+    Cleric:'Healer. Keeps the squad on its feet.', Mage:'Wizard. Magic darts that do not miss.', Witch:'Hexer. Weakens and slows what you cannot kill yet.'};
+  const PL_GEAR = {'Rags':'Barely clothes. Better than nothing.', 'Padded Gambeson':'Light and cheap. Takes the edge off a blow.', 'Hardened Leather':'Light armour that turns the odd blow.',
+    'Studded Brigandine':'Light armour stiffened with studs. Blows glance off more often.', 'Chain Shirt':'Light armour that also gives a Ward Token each fight.',
+    'Thick Hide & Furs':'Medium armour. Tougher, but you walk a step slower.', 'Scale Hauberk':'Medium armour. Strong, but a step slower.', 'Heavy Chainmail':'Heavy mail. Hard to hurt, a step slower.',
+    'Cuirass / Breastplate':'Strong plate for the chest. A step slower.', 'Splint Mail':'Heavy plates. Strong, and two steps slower.', 'Banded Lamellar':'Plates that shrug off grazes. Two steps slower.',
+    'Half-Plate':'The best armour money buys. Shrugs off grazes. Two steps slower.', 'Light Bucklers':'Small shields. A little protection each fight.', 'Heavy Infantry Shields':'Big shields. A deep pool of protection each fight.'};
+  const PL_DOC = {Concealment:'Creep up on sleeping camps: guards spot you from about half as far.', 'Earthworks & Traps':'Stakes are in the ground before the fight begins.',
+    'Spear Wall Mastery':'Spears hold firm: charging enemies run into a harder wall.', 'Shield Wall Lock':'Brace, and the wall steadies each round and blows land softer.',
+    'Push Through':'Charge them, and the survivors may lose their nerve.', 'Skirmisher Drill':'Skirmishers are ready from the first minute.', 'Volley Fire':'Archers loose together from the first minute.',
+    'Feigned Retreat':'Fall back, and anyone who chases you into the open pays for it.', 'Field Medicine':'Medics are ready from the start and get people up in half the time.',
+    'Plunder Management':'Looting is already drilled before you march.', 'Munitions Drill':'Sharpers (demolition kits) are ready from the first minute.', 'Propaganda & Parlay':'Talk the enemy down: Parlay rolls improve by one step.'};
+  function plainify(){
+    $all('.card:not([data-ux83p])').forEach(c => {
+      if (c.closest('#askbox')) return;
+      const t = $q('.ttl', c); if (!t) return;
+      const name = t.textContent.trim(), line = PL_SPEC[name] || PL_GEAR[name]; if (!line) return;
+      c.dataset.ux83p = '1';
+      const p = document.createElement('div'); p.className = 'ux-plain'; p.textContent = line;
+      const d = $q('.desc', c), role = $q('.role', c);
+      (role || t).after(p);
+      if (d && PL_SPEC[name]){ const det = document.createElement('details'); det.className = 'ux-det'; det.innerHTML = '<summary>Details</summary>'; d.before(det); det.appendChild(d); det.addEventListener('click', e => e.stopPropagation()); }
+    });
+    $all('.gcard:not([data-ux83p])').forEach(c => {       // Quartermaster and Market gear cards
+      const n = $q('.gc-name', c); if (!n) return; c.dataset.ux83p = '1';
+      const line = PL_GEAR[n.textContent.trim()]; if (!line) return;
+      const p = document.createElement('div'); p.className = 'ux-plain'; p.style.fontSize = '12px'; p.textContent = line; n.after(p);
+    });
+    $all('#tbl-doctrines .line:not([data-ux83p])').forEach(l => {
+      const b = $q('b', l); if (!b) return; const line = PL_DOC[b.textContent.trim()]; l.dataset.ux83p = '1'; if (!line) return;
+      const g = $q('.grow', l), span = g && $q(':scope > span[style*="font-size:12px"]', g); if (!span) return;
+      const p = document.createElement('div'); p.className = 'ux-plain'; p.textContent = line;
+      const det = document.createElement('details'); det.className = 'ux-det'; det.innerHTML = '<summary>Details</summary>';
+      const br = span.previousElementSibling; span.before(p); span.before(det); det.appendChild(span); if (br && br.tagName === 'BR') br.remove();
+    });
+  }
+  let plT = 0;
+  new MutationObserver(() => { clearTimeout(plT); plT = setTimeout(() => safe('plain', plainify), 30); }).observe(document.body, {childList:true, subtree:true});
+  UX.plainify = plainify;
+})();
+/* ===== END INDEX 83b ====================================================== */

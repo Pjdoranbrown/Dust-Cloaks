@@ -270,3 +270,16 @@ Together with Full Plate (4,000), these give a spend ladder from about 400gp (co
 **Not done:** facility upgrades. Every building is tied to plots, art in four holdings and the 3D set (see how Huts/Bunks/Fortress Church were added), so a new upgrade is an art task, not a balance patch. Suggested follow-up if wanted: a "Master Armoury" (+1 Ward Token, ~450gp, needs Armoury run by a veteran) and a "Grand Market" (+25gp a contract, ~400gp, needs Merchant Stalls), each reusing its parent building's art.
 
 **Known limits:** the 3D weapon model for Masterwork Greatswords falls back to the spear (`r3dMeleeOf` is a const and cannot be wrapped from outside). The Masterwork Longbows do not get the Longbow's "Critical ignores 1 armour step" rule, which is keyed to the id `longbows`. Both are cosmetic or minor. The items were each run for 30s in the sim without errors and their cards render; I did not click through the Quartermaster screen by hand.
+
+## 8. Implemented (round 2): J-01, the new-player start (`js/balance.js`, Index 86b)
+
+| Change | Old | New |
+|---|---|---|
+| Starting Leaders | three small quick-start pills (Dwarf Freeman Soldier, Human Outcast Folk Hero, Human Devout Cleric; no ability) | three large cards at the first step of Leader creation, prologue and founding: **The Shield** (Human Freeman Soldier, Shield Wall Mastery), **The Bow** (Human Freeman Folk Hero, Rallying Cry), **The Medic** (Human Devout Cleric, Litany of the Shield). One click sets race, class, specialty and ability, rolls a name, and opens the signing step with SIGN CONTRACT and "Change anything…". "Surprise me" kept. |
+| Soldier role label | "Vanguard" (clashed with the ability) | "Front-liner" |
+| Prologue kit | nothing issued; 350gp to spend, no cap | Brigandine, Heavy Shields, Spears, Shortbows issued (200gp, treasury 850 → 650); kit capped at 350gp of gear; handing back an issued piece refunds it |
+| Prologue top bar | WORK ORDERS, ROSTER, MARKET, MANUAL, PORTRAITS, SETTINGS, MAIN MENU from the start | WORK ORDERS, MANUAL, SETTINGS, MAIN MENU until Day 1 ends; MARKET on the kit day and from Day 2; ROSTER and PORTRAITS after the first assault |
+
+Verified in the browser (1280×800, muted): all three cards in the prologue and the founding give the right race/class/specialty/ability and reach the next step. Prologue with The Shield: kit issued (treasury 650), Half-Plate and Longbows refused at the cap, Chain Shirt accepted with the Brigandine refunded (+150), top bar as above on each stage. No console errors.
+Not checked: playing the Bow and Medic all the way through the prologue (same code path), a full assault (ROSTER step tested by setting the assault count), the ☰ fold below 1280px width. Founding gear presets per archetype are not done (the cards set the Leader only).
+Rollback: delete the Index 86b section of `js/balance.js`.

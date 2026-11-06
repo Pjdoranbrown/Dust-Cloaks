@@ -187,3 +187,30 @@ Checked in the browser: no page errors and no "Draw error" warnings across the c
 ### Corrections to the audit
 - The bugs section said wolves, cinders, the alpha and the wyrm fall back to a flat pixel corpse. That is wrong; they are 3D (see GFX-08).
 - GFX-15: mate bars are pip rows drawn inline in `draw()` (about line 4101), not 4-6 px bars.
+
+## Implemented (round 2): Index 84b, `js/graphics.js`
+
+Same method as round 1 (wrapping game functions). One more marked patch in `index.html`: the command ring in `draw()` calls `gfxRing(sw)` when it exists (`/* Index 84b */`, with the old stroke as the fallback). Rollback: delete the Index 84b block at the end of `js/graphics.js` and undo that patch.
+
+Tested muted (volume 0) at 1280x800 with `.claude/audit.js` loaded. Because the shared save had no campaign, I built a Leader and five mates in memory only (with `saveMeta` disabled in the page, nothing was written to the save). Results: no page errors and no "Draw error" warnings across all 16 contract kinds (seasons rotated, Brace and sprinting forced during each), a raid, the bar fight, the camp in all four holdings x four seasons with the Leader sprinting, and the prologue's Reeve's Hall screen. The prologue's in-world scene did not exist as a canvas in this build (`openStory()` shows the Reeve's Hall panel), so only that panel was checked. I did not do a long live play session, so "nobody gets stuck" is checked by 150-160 tick runs with five mates, not by playing.
+
+### J-06 Squad spacing (GFX-02, GFX-11)
+- **Brace line:** `slotTarget` wrapper. In Brace the mates form a front arc of the Leader instead of a full ring: radius 34, 22 px along the arc (never more than 2.4 rad in total). Formation, Open Order slots, wall avoidance and the flow-field fallback in `updateMates` are untouched.
+- **Separation:** `updateMates` wrapper runs `sepMates()` after the original. Mates and the Leader keep 16 px apart (vertical gaps count 1.25x so the bar under the feet does not overlap the next unit). Only mates are pushed, at most 1.2 px per frame, then `collide(m, 9, true)` keeps them off walls. Test: five mates, Open Order after a 150-tick charge, minimum separation 42; after 160 ticks of Brace the minimum was 16 and the arc spans y -26 to +28 around the Leader.
+- **Camp idlers:** `anchorFor` wrapper. People who share the same role spot (training yard, hospital, rest spot) are spread in a small ring (14 px + 6 per extra four, 8 px tall) round it, in a stable order. Seated and wandering people are untouched (wanderers already use `separatePeople`).
+- Not covered: bench seats and furniture overlap of wandering people (no furniture list to test against); the bar fight has one mate, so spacing there is untested beyond "no errors".
+
+### J-08 Game feel (GFX-06, GFX-07)
+- **Dust:** `update` wrapper. While the squad is charging (`G.chargeT > 0`) the Leader and moving mates throw 2 dust specks every 6 frames; on starting Brace everyone gets a 4-speck burst. Colour follows the season (`SEASONS_CFG[s].dust2`, pale grey in winter). Uses plain `G.fx` particles (life 20-24), so it is a few specks per second, with no per-frame object churn beyond that. Camp: `moveLeader` wrapper adds a puff every 5 frames while the Leader sprints (Shift). Construction dust already existed in `drawSite` and is unchanged.
+- **Knock-back:** `hurtEnemy` wrapper. A struck normal enemy is shoved 3.6 px (1.2 px x 3 frames) away from the nearest squad unit, through `collide()`. Not for bosses, fixed targets, dormant or charging enemies. The existing white flash and 'hit' pose supply the stagger; I did not add a movement freeze.
+- **Hit-stop:** off by default. New "Hit-stop" checkbox in Settings (stored as `settings().hitstop`). On: a hit of 3 or more freezes the action for 1 frame, 5 or more for 2 frames. Test: with it on, a 5-damage hit stopped 2 of 3 updates; with it off nothing changes.
+
+### J-09 Visual polish (GFX-14, GFX-19, GFX-17)
+- **Command ring:** `gfxRing` (patch in `draw()`): same dashes and colours, with a dark under-line so it reads on grass and stone.
+- **Speech bubbles and camp labels:** parchment bubbles with notched pixel corners, a 2 px ink edge, a stepped tail and a soft drop; `campLabel` uses the same notched, gold-edged plate. Fonts are unchanged (Index 79 sizing still applies). The old bubble is hidden for one frame and redrawn in the new style by a `drawCamp` wrapper; a freshly spoken bark may show the old style for its first frame.
+- **Light direction:** the 3D characters and buildings already share `R3D_LIGHT` (upper left), so the shading was consistent. What was inconsistent was cast shadows, which sat straight under things. `shadow()` now offsets 20% of its width to the right and is 8% wider (every ground shadow in the game). The camp fire throws a warm pool on the ground (additive radial gradient, 96 px).
+- **Plot clutter:** empty plot signs and stakes fade to half at 420 px from the walking Leader (full within 260 px, and when hovered). Only while the Leader is under keyboard control; otherwise nothing changes.
+
+### Not done or watch
+- The in-world labels above bosses and the floating text in combat were left alone.
+- If other sessions edit `shadow`, `slotTarget`, `updateMates`, `anchorFor`, `update`, `hurtEnemy`, `drawCamp` or `campLabel`, the wrap order can change; each wrapper is self-contained and wrapped in try/catch where it touches state.

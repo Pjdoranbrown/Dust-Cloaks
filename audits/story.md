@@ -238,3 +238,24 @@ Notes: the in-fight feed keeps only four messages, so a voice line can push an o
 - **For the commander:** nothing risky was needed. The larger versions (ready-made archetypes with auto-picked mates, the actual ambush fight with a no-death flag and a new `ambush` part in the state flow) are still described in the cold-open section and were not attempted.
 
 Tested in the browser (saves backed up and restored; no console errors): hero step text, commander names in the main slot and in a fresh `newStory()`, the arrival card flow into Day 1, coach line, muster text, voice lines including "the Younger" names, and `spawnEnemy('orsolt')` inside a started Hollow contract.
+
+---
+
+## Implemented (round 2)
+
+Both jobs are in `js/story.js` (sections 85e and 85f). Tested at 1280x800, muted via `.claude/audit.js`, no console errors. Also fixed a round-1 bug: the Scribe's contract-result lines blocked the assault and Works lines in the same debrief (they shared a marker); they now use separate markers.
+
+**J-02 Reeve's Hall, Day 1 (85e).**
+- On siege Day 1 the Work Orders show only Rally the Town, Scrounge, Scout and Ditch and Stakes. Everything else is folded under "More orders (available) (n)", with locked cards (needs a Cleric, from Day 2, and so on) under "Unlocks later (n)". Folded cards stay clickable; open/closed state survives a redraw. Later days keep the full board.
+- The next suggested card (Rally, Scout, Stakes, Scrounge, in that order, skipping ones already done today) pulses gold.
+- A bell button sits in the top-right corner of the board on every siege day (and as NIGHTFALL on the road): "RING THE BELL: END THE DAY / 2 of 3 orders left" (or "MAN THE WALLS" on assault days). It pulses when the suggested orders are done or no orders are left. The header makes room for it. The board still grows with its contents (Index 81 height fix intact).
+- Dice toast after any order that rolls: the die in its skill colour, "5 against 4 (+1)", and Full Success / Partial Success / Miss, for about four seconds, reusing the `.die` styles. Note: the Leader's own rolls already open the Luck dice tray (Index 32), so Rally the Town shows both the tray and the toast. That also answers my earlier question: Work Order rolls do offer Luck.
+
+**J-10 the camp remembers (85f).**
+- STORY-09: the Chapter Master and camp barks react to the last 8 Chronicle entries: a death ("We lost Brannoc Vale. The ledger has the line. The stone will have the name."), a win, a loss, a finished building, gold under 80, a living nemesis, the finale due, and for prologue militia ("Used to farm barley. Now I farm bandits.").
+- STORY-11: a patron line before each brief, for all ten patrons (e.g. "Payment on delivery, by weight."; "The Arbiter reminds you that the charter is watching.").
+- STORY-12: a Scribe line under each death in the debrief ("X is cut into the stone. The Scribe has spelled it correctly."), a different line for a fallen Leader, and a line at the top of the graveyard panel naming the newest grave.
+- STORY-13: founding from the prologue writes the Chronicle's first entries: Summer and Autumn, Year 616 (days held, the Keep, Orsolt, nights on the road, Column Strength at Kalloon, names that did not arrive), then the Spring 625 founding. The Chronicle opens plainly instead of "earlier years were not kept". The Epilogue's date range still starts at the founding.
+- STORY-18: Scribe lines at Charter milestones 3, 6 and 9, in the debrief and in the Chronicle.
+
+**Check:** the browser's saved Chapter (`dust_cloaks_v4`) was overwritten during testing; it is the shared test save in the preview browser (a Godfrey, level 1, 8600gp now; it was a different test Chapter earlier), not anything under `Dust Cloaks/`. Rollback: delete the 85e and 85f blocks.

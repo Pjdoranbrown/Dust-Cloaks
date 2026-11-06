@@ -181,3 +181,28 @@ Everything is in `js/ux.js` and wraps game functions. Nothing in `index.html`, `
 - UX-04: reasons are added only where a reason can be known (creation steps, the squad pick, buttons with a `title`). Other disabled buttons are unchanged.
 - Onboarding 5 couldn't be played through to a real first prologue victory in the time available. I checked it by calling `renderDebrief` in the story slot: the box appears on the first debrief, survives redraws once, and doesn't come back on the second.
 - Not touched, as instructed: UX-03, 05, 06, 07, 08, 09, 20 and save backups.
+
+---
+
+## Implemented (round 2): Index 83b, `js/ux.js`
+
+Appended to `js/ux.js` as "INDEX 83b". Nothing in `index.html` was changed. To roll back, delete from the 83b header comment to END INDEX 83b.
+
+**Testing.** Run in the built-in browser at 1280×800 and 1920×1080, volume 0, `.claude/audit.js` loaded, with the campaign kept in separate storage keys (prefixed `ux83:`), removed afterwards; the real `dust_cloaks_v4` and the prologue slot were not written. The real save was a blank campaign when I started (someone else had reset it), so I made a small test campaign (leader plus four hires). No console errors. The pane is closed and the window is back to desktop size.
+
+| Job | What changed | How to see it |
+|---|---|---|
+| J-03 | Planning table: a sticky footer (contract, pay, `Squad n / 5`, SIGN AND MARCH). It is off, with the reason, only when the roster is over capacity, and shows a hint when the War Council has not been rolled, Edges are unspent, or the squad is empty. The right column is tabs: Ambition · Factions · Doctrines · Rivals · Prisoners (n). The chosen tab is remembered. `openTable('ambition'/'ledger')` opens the right tab, and opening the table with no target (P, the top-bar button) scrolls to the top (Contracts). | Planning Table; press P. |
+| J-04 | The contract HUD is drawn in a scaled frame: `HUDK = clamp(VH/760, 1, 1.6) × text size` (Auto, capped at 2), or a fixed 100 / 125 / 150% from **Settings → Display → HUD size**. Everything drawn inside `drawHUD` follows (leader card, objective, coin, minimap, key strip, alerts, carried items, brazier arrows, Momentum cards, message stack). The weather is drawn in the true frame. Momentum card clicks and hover still work (rects are converted to screen coordinates). Small grey print (`#aaa`, `#c8bca8` and similar) is brightened inside the HUD. Auto gives about 1.05× at 1280×800 and 1.42× at 1920×1080. | Start a contract at different window sizes. |
+| J-05 | Leader card pips: Ward diamond, Shield and Mount squares, Wounds circle, Condition bar, Luck triangle. Filled means what is left, with `n/max` after each row. The row order is unchanged because the card already lists them in the order damage takes them (Wards, Shield, Mount, Wounds, then Condition and Luck). A row gets a red outline for about two-thirds of a second when it loses a pip. | Take a hit in a contract. |
+| J-07 | Rolling backups: at each change of season (checked in `endDeployment`) the campaign is copied into three rotating slots (`dust_cloaks_v4_bk1…3`, newest first). **Settings → Save → Restore a backup…** lists leader · season · gold · contracts and when it was saved, with `Back up now`. Restoring asks first (red button), backs the current campaign up as "Before restoring", then loads the copy. Main campaign only: nothing happens in the prologue slot, and the prologue hand-over code is untouched. | Settings → Save. |
+| J-11 | A squad portrait strip under the leader card: bust, Condition bar (green, amber, red), `DOWN` for bleeding mates, a red X when dead, up to 5. N hides or shows it (saved in settings). A one-time tip announces it. It scales with the HUD. | Any contract. |
+| J-12 | Plain one-liners in the game's dry voice, with the rules text under `Details`. Specialties (leader creation and any Specialty card): six lines. Armour and shield cards (Quartermaster, Market): fourteen lines, with the stats left where they were. Doctrines: all twelve, with the rules text under `Details`. The story designer should review the wording. | Leader creation; Quartermaster; Planning Table → Doctrines. |
+
+**Notes and limits**
+- J-04: the HUD is not re-laid out, only scaled, so at HUD size 150% on a small window the panels grow but never leave the screen (layout is computed in the scaled space). The key strip at the bottom is 760 units wide, so at 150% on a 1024-wide window it takes most of the width.
+- J-05: I did not rename the WOUNDS label. The circles, the numbers and the red flash are what make it unambiguous; renaming it would need a patch inside `drawHUD`.
+- J-07: backups store the whole save text three times (about 4 KB each in my test; a late campaign is much larger). If storage is full, the oldest backup is dropped and the write is retried once.
+- J-12: only cards whose title matches exactly are changed, so renamed or new gear gets no line until it is added to `PL_GEAR` in `js/ux.js`.
+- Settings grouping was updated for the HUD size, Restore, and the new Effects slider (Sound).
+- Not done in this round: the Gemini "cold open" ideas, UX-07/08/09/20 (still listed above as not yet approved).

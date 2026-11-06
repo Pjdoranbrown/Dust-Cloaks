@@ -4036,7 +4036,8 @@ function draw(){
   ctx.beginPath(); ctx.arc(L.x, L.y, G.mod.radius, 0, TAU);
   const sw = G.formation === 'SHIELD';
   ctx.strokeStyle = sw ? 'rgba(110,150,255,.75)' : G.chargeT ? 'rgba(255,220,110,.85)' : 'rgba(240,210,110,.5)';
-  ctx.lineWidth = sw ? 3 : 2; ctx.setLineDash([8,10]); ctx.stroke(); ctx.setLineDash([]);
+  if (window.gfxRing) gfxRing(sw); else {   /* Index 84b: ink-backed command ring (js/graphics.js) */
+  ctx.lineWidth = sw ? 3 : 2; ctx.setLineDash([8,10]); ctx.stroke(); ctx.setLineDash([]); }
 
   for (const p of G.pickups){ if (!onScreen(p) || !visNow(p)) continue;
     const bob = Math.sin((G.frame + p.x) / 10) * 1.5;

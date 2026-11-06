@@ -207,3 +207,204 @@ if (typeof fogBlack === 'function' && typeof FOGK !== 'undefined'){
 /* ---- GFX-18 (seasonal particles): nothing to do. The "blue sparkles" are summer dragonflies and
    fireflies in drawSeasonOverlay; spring has pollen and bees, autumn leaves, winter rain streaks. */
 })();
+
+/* ============================================================================
+   INDEX 84b - SQUAD SPACING, GAME FEEL AND IN-WORLD POLISH (J-06, J-08, J-09)
+   J-06  slotTarget / updateMates / anchorFor
+           Brace is a shoulder-to-shoulder arc in front of the Leader; squad mates
+           keep 16px apart (they, never the Leader, are pushed, then collide()d
+           off walls); camp people who share a role spot are spread round it.
+   J-08  update / hurtEnemy / moveLeader
+           dust at the feet when the squad charges, braces, and when the camp
+           Leader sprints (construction dust already existed in drawSite);
+           struck enemies are shoved 3.6px over 3 frames; optional hit-stop
+           (setting "Hit-stop", off by default) of 1-2 frames on hits of 3+.
+   J-09  gfxRing (one patch in draw()), camp speech bubbles, campLabel, shadow,
+         w3dFire, w3dPlot
+           ink-backed command ring, notched-corner parchment bubbles and
+           labels, cast shadows fall lower-right (the light is upper-left, as
+           in R3D_LIGHT), a warm light pool under the campfire, and empty
+           plots fade when the Leader is far away.
+   ROLLBACK  Delete from this comment to the end of this file and undo the
+             "Index 84b" patch in draw() (command ring).
+============================================================================ */
+(function(){
+'use strict';
+
+/* ---- J-06: Brace as a line, and personal space ---------------------------------------- */
+{ const f = slotTarget;
+  slotTarget = function(i, n, shieldWall){
+    if (!shieldWall) return f(i, n, shieldWall);
+    const L = G.leader, fa = (typeof G.facing === 'number') ? G.facing : 0;
+    const step = Math.min(22 / 34, 2.4 / Math.max(1, n - 1)), a = fa + (i - (n - 1) / 2) * step;
+    return {x: L.x + Math.cos(a) * 34, y: L.y + Math.sin(a) * 30};
+  };
+}
+const SEP_R = 16;
+function sepMates(){
+  const S = G.squad, L = G.leader; if (!S || !L) return;
+  for (let i = -1; i < S.length; i++){
+    const a = i < 0 ? L : S[i]; if (i >= 0 && a.state !== 'up') continue;
+    for (let j = i + 1; j < S.length; j++){
+      const b = S[j]; if (b.state !== 'up') continue;
+      let dx = b.x - a.x, dy = (b.y - a.y) * 0.8, d = Math.hypot(dx, dy);   // vertical neighbours need more room: sprites are tall and the bar sits under the feet
+      if (d >= SEP_R) continue;
+      if (d < 0.01){ dx = (j % 2 ? 1 : -1); dy = 0.3; d = Math.hypot(dx, dy); }
+      const p = Math.min(1.2, (SEP_R - d) * 0.25), mx = dx / d * p, my = dy / d * p / 0.8;
+      if (i < 0){ b.x += mx; b.y += my; }
+      else { a.x -= mx / 2; a.y -= my / 2; b.x += mx / 2; b.y += my / 2; }
+      b.sep84 = 2; if (i >= 0) a.sep84 = 2;
+    }
+  }
+  for (const m of S) if (m.sep84 > 0){ m.sep84--; if (m.state === 'up') collide(m, 9, true); }
+}
+{ const f = updateMates;
+  updateMates = function(sw){ f(sw); try { if (G && !G.over) sepMates(); } catch (e) {} };
+}
+// camp people who share a role spot (training yard, hospital, ...) stand in a small ring round it
+{ const f = anchorFor;
+  anchorFor = function(q, role){
+    const a = f(q, role); if (!a || role === 'sit') return a;
+    try {
+      q._gax = a.x; q._gay = a.y; q._gar = role;
+      let k = 0; const P = CAMP.people;
+      for (let i = 0; i < P.length; i++){ const o = P[i]; if (o === q) break; if (o._gar === role && o.role === role && Math.abs(o._gax - a.x) < 10 && Math.abs(o._gay - a.y) < 10) k++; }
+      if (k){ const ang = k * 2.4; a.x += Math.cos(ang) * (14 + 6 * (k >> 2)); a.y += Math.sin(ang) * 8; }
+    } catch (e) {}
+    return a;
+  };
+}
+
+/* ---- J-08: dust, knock-back, optional hit-stop ----------------------------------------- */
+const dustCol = () => { const s = seasonOf(); return s === 'winter' ? '#dfe6e6' : (SEASONS_CFG[s] || SEASONS_CFG.summer).dust2; };
+function dust(x, y, n, spread, life){
+  const c = dustCol();
+  for (let i = 0; i < n; i++) G.fx.push({x: x + rnd(-spread, spread), y: y + rnd(-2, 2), vx: rnd(-0.5, 0.5), vy: rnd(-0.35, -0.1), life: life || 20, c, px: 2 + (i % 2)});
+}
+{ const f = update;
+  update = function(){
+    if (G && !G.over && !G.paused && G.hs84 > 0){ G.hs84--; return; }               // hit-stop: this frame does not advance
+    f.apply(this, arguments);
+    try {
+      if (!G || G.over || G.paused) return;
+      const L = G.leader;
+      if (G.frame % 6 === 0 && G.chargeT > 0){
+        if (L.moving && !L.down) dust(L.x, L.y + 15, 2, 5);
+        for (const m of G.squad) if (m.state === 'up' && m.moving) dust(m.x, m.y + 15, 2, 5);
+      }
+      const sh = G.formation === 'SHIELD';
+      if (sh && !G.sh84){ dust(L.x, L.y + 16, 4, 10, 24); for (const m of G.squad) if (m.state === 'up') dust(m.x, m.y + 16, 4, 10, 24); }
+      G.sh84 = sh;
+      for (const e of G.enemies){ const k = e.kb84; if (k && k.t > 0 && !e.dead){ e.x += k.x; e.y += k.y; collide(e, e.r * 0.7); k.t--; } }
+    } catch (e) {}
+  };
+}
+{ const f = hurtEnemy;
+  hurtEnemy = function(e, n){
+    try {
+      if (G && e && !e.dead){
+        const B = BESTIARY[e.k];
+        if (B && !B.boss && B.arch !== 'fixed' && !e.dormant && !e.charging){
+          let best = G.leader, bd = Math.hypot(e.x - best.x, e.y - best.y);
+          for (const m of G.squad){ if (m.state !== 'up') continue; const d = Math.hypot(e.x - m.x, e.y - m.y); if (d < bd){ bd = d; best = m; } }
+          const a = Math.atan2(e.y - best.y, e.x - best.x); e.kb84 = {x: Math.cos(a) * 1.2, y: Math.sin(a) * 1.2, t: 3};
+        }
+        if (n >= 3 && settings().hitstop) G.hs84 = Math.max(G.hs84 || 0, n >= 5 ? 2 : 1);
+      }
+    } catch (err) {}
+    return f(e, n);
+  };
+}
+// the Settings row (stored as META.settings.hitstop; off unless ticked)
+{ const f = settingsHTML;
+  settingsHTML = function(dark){
+    const h = f(dark), box = `<label title="Freeze the action for a frame or two on big hits"><input type="checkbox" ${settings().hitstop ? 'checked' : ''} onchange="setSetting('hitstop', this.checked)"> Hit-stop</label>`;
+    return h.includes('Screen shake</label>') ? h.replace('Screen shake</label>', 'Screen shake</label>\n    ' + box) : h;
+  };
+}
+{ const f = moveLeader;
+  moveLeader = function(q){
+    f(q);
+    try { if (q.moving && keys.shift && CAMP.t % 5 === 0){ const s = seasonOf(); CAMP.puffs.push({x: q.x + rnd(-4, 4), y: q.y + 14, vx: rnd(-0.25, 0.25), vy: -0.12, life: 30, c: s === 'winter' ? '#dfe6e6' : (SEASONS_CFG[s] || SEASONS_CFG.summer).dust2}); } } catch (e) {}
+  };
+}
+
+/* ---- J-09: in-world overlay style ------------------------------------------------------- */
+window.gfxRing = function(sw){
+  const col = ctx.strokeStyle; ctx.save(); ctx.setLineDash([6, 8]);
+  ctx.lineWidth = sw ? 5 : 4; ctx.strokeStyle = 'rgba(18,12,6,.3)'; ctx.stroke();      // a dark under-line so it reads on grass and stone
+  ctx.lineWidth = sw ? 3 : 2; ctx.strokeStyle = col; ctx.stroke(); ctx.restore();
+};
+function inkBox(x, y, w, h, fill, edge, hl){
+  x = Math.round(x); y = Math.round(y); w = Math.round(w); h = Math.round(h);
+  ctx.fillStyle = edge; ctx.fillRect(x + 2, y - 2, w - 4, 2); ctx.fillRect(x + 2, y + h, w - 4, 2); ctx.fillRect(x - 2, y + 2, 2, h - 4); ctx.fillRect(x + w, y + 2, 2, h - 4);
+  ctx.fillRect(x, y, 2, 2); ctx.fillRect(x + w - 2, y, 2, 2); ctx.fillRect(x, y + h - 2, 2, 2); ctx.fillRect(x + w - 2, y + h - 2, 2, 2);
+  ctx.fillStyle = fill; ctx.fillRect(x + 2, y, w - 4, h); ctx.fillRect(x, y + 2, w, h - 4);
+  if (hl){ ctx.fillStyle = hl; ctx.fillRect(x + 2, y, w - 4, 1); }
+}
+function bubble(x, y, w, text){
+  const bx = x - w / 2, by = y - 18, tx = Math.round(x);
+  inkBox(bx + 2, by + 3, w, 24, 'rgba(0,0,0,.2)', 'rgba(0,0,0,0)');                          // soft drop
+  inkBox(bx, by, w, 24, '#ece0c4', '#3a2c1a', '#f7efd9');
+  ctx.fillStyle = '#3a2c1a'; ctx.fillRect(tx - 4, by + 24, 8, 2); ctx.fillRect(tx - 3, by + 26, 6, 2); ctx.fillRect(tx - 2, by + 28, 4, 2);   // stepped tail
+  ctx.fillStyle = '#ece0c4'; ctx.fillRect(tx - 2, by + 24, 4, 2); ctx.fillRect(tx - 1, by + 26, 2, 2);
+  ctx.fillStyle = '#2a1a0a'; ctx.textAlign = 'center'; ctx.font = 'italic 13px Georgia'; ctx.fillText(text, x, y - 1, w - 10);
+}
+{ const f = drawCamp;
+  drawCamp = function(){
+    let hid = null;
+    if (!G) for (const q of CAMP.people) if (q.bark){ (hid || (hid = [])).push(q, q.bark); q.bark = null; }   // the old bubble skips them
+    const r = f.apply(this, arguments);
+    if (G) return r;
+    try {
+      if (hid) for (let i = 0; i < hid.length; i += 2){ const q = hid[i]; if (!q.bark) q.bark = hid[i + 1]; if (q.bark === hid[i + 1]) q.barkLife--; }
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      for (const q of CAMP.people){
+        if (!q.bark || !(q.barkLife > 0)) continue;
+        const x = q.x - CAMP.cam.x, y = q.y - CAMP.cam.y - 62; if (x < -100 || x > VW + 100 || y < -40 || y > VH) continue;
+        ctx.font = 'italic 13px Georgia'; const w = Math.min(260, ctx.measureText(q.bark).width + 16);
+        ctx.globalAlpha = Math.min(1, q.barkLife / 30); bubble(x, y, w, q.bark); ctx.globalAlpha = 1;
+      }
+    } catch (e) { if (hid) for (let i = 0; i < hid.length; i += 2) if (!hid[i].bark) hid[i].bark = hid[i + 1]; }
+    return r;
+  };
+}
+campLabel = function(x, y, title, sub){
+  ctx.font = 'bold 15px Georgia'; const w1 = ctx.measureText(title).width; ctx.font = '12px Georgia'; const w2 = ctx.measureText(sub).width;
+  const w = Math.max(w1, w2) + 20;
+  inkBox(x - w / 2, y - 40, w, 40, 'rgba(30,20,10,.92)', '#d4af37', 'rgba(255,233,176,.18)');
+  ctx.textAlign = 'center'; ctx.fillStyle = '#ffe9b0'; ctx.font = 'bold 15px Georgia'; ctx.fillText(title, x, y - 22);
+  ctx.fillStyle = '#cdbf9f'; ctx.font = '12px Georgia'; ctx.fillText(sub, x, y - 7);
+};
+
+/* ---- J-09: light direction. The 3D light comes from the upper left (R3D_LIGHT x < 0), so
+   cast shadows now fall to the lower right, and the campfire throws a warm pool on the ground. */
+{ const f = shadow;
+  shadow = function(x, y, w){ return f(x + w * 0.2, y, w * 1.08); };
+}
+{ const f = w3dFire;
+  w3dFire = function(x, y, t){
+    try {
+      if (!G && w3dOn()){
+        const r = 96 + Math.sin(t / 5) * 4, g = ctx.createRadialGradient(x, y + 6, 8, x, y + 6, r);
+        g.addColorStop(0, 'rgba(255,160,70,.2)'); g.addColorStop(1, 'rgba(255,160,70,0)');
+        ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x, y + 6, r, r * 0.55, 0, 0, TAU); ctx.fill(); ctx.restore();
+      }
+    } catch (e) {}
+    return f(x, y, t);
+  };
+}
+/* ---- J-09: camp plot clutter. Empty plots (sign and stakes) fade when the Leader is far away. */
+{ const f = w3dPlot;
+  w3dPlot = function(o){
+    let a = 1;
+    try {
+      const Lq = CAMP.people.find(q => q.kind === 'leader');
+      if (Lq && CAMP.ctrl){ const d = Math.hypot(Lq.x - o.x, Lq.y - o.y); a = d > 420 ? 0.5 : d > 260 ? 0.5 + (420 - d) / 160 * 0.5 : 1; }
+      const hv = CAMP.hover; if (hv && hv.kind === o.kind && hv.id === o.id) a = 1;
+    } catch (e) {}
+    if (a >= 1) return f(o);
+    ctx.save(); ctx.globalAlpha *= a; try { return f(o); } finally { ctx.restore(); }
+  };
+}
+})();

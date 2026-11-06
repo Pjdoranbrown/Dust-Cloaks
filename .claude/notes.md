@@ -79,3 +79,4 @@ Last updated: 2026-11-06, after commit 790b303 (audio review).
 ## Round 2 build (dispatched 2026-11-06)
 - All jobs J-01…J-13 approved and in progress, split by file: ux → `js/ux.js` (J-03, 04, 05, 07, 11, 12); graphics → `js/graphics.js` (J-06, 08, 09); balancer → `js/balance.js` (J-01); story → `js/story.js` (J-02, J-10); bug-finder → `game-bible.md` (J-13); sound → `js/audio.js` (J-21, J-22).
 - Next: as each reports, review + muted regression + commit. When all are in, send every delegate a re-audit of its specialty on the new build (write `audits/<role>-r2.md`), then triage.
+- Round 2 COMPLETE: J-01…J-13 and J-19…J-23 all shipped (round-2 code committed after the usage-limit pause; full muted regression clean). Next: re-audit round — each delegate writes `audits/<role>-r2.md` on the new build.

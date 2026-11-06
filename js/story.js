@@ -144,17 +144,17 @@
     const f = renderDebrief;
     renderDebrief = function(h, l){
       try {
-        if (Array.isArray(l) && !l.some(x => /class="sx/.test(x))){
+        if (Array.isArray(l) && !l.some(x => /class="sxr/.test(x))){
           l = l.slice();
           const wi = l.findIndex(x => /<b>Works<\/b>/.test(x) && /is finished/.test(x));
-          if (wi >= 0 && lastDone.length) l.splice(wi + 1, 0, `<p class="sx"><i>${worksFlavour(lastDone)}</i></p>`);
+          if (wi >= 0 && lastDone.length) l.splice(wi + 1, 0, `<p class="sxr"><i>${worksFlavour(lastDone)}</i></p>`);
           if (story() && G && G.contract && G.contract.obj === 'siege'){
             const C = CP(), A = ASSAULTS[G.contract.assault], T = A && ASSAULT_AFTER[A.name];
             if (T){
               const win = l.some(x => /the town holds\./.test(x)), at = l.findIndex(x => /is over:/.test(x));
-              const extra = [`<p class="sx"><i>${win ? T.win : T.loss}</i></p>`];
-              if (l.some(x => /Orsolt the Hollow Reeve is dead/.test(x))) extra.push(`<p class="sx"><i>${ORSOLT.slain}</i></p>`);
-              else if (l.some(x => /Orsolt the Hollow Reeve is still standing/.test(x))) extra.push(`<p class="sx"><i>${ORSOLT.fled}</i></p>`);
+              const extra = [`<p class="sxr"><i>${win ? T.win : T.loss}</i></p>`];
+              if (l.some(x => /Orsolt the Hollow Reeve is dead/.test(x))) extra.push(`<p class="sxr"><i>${ORSOLT.slain}</i></p>`);
+              else if (l.some(x => /Orsolt the Hollow Reeve is still standing/.test(x))) extra.push(`<p class="sxr"><i>${ORSOLT.fled}</i></p>`);
               l.splice(at >= 0 ? at + 1 : l.length, 0, ...extra);
               const rl = REEVE_AFTER[A.name]; C.lastReeve = rl || null;
             }
@@ -366,6 +366,301 @@
         if (C && C.part === 'siege' && C.day === 1) out.unshift('The Reeve asked for three things: <b>Scout</b> the north road, <b>Rally the Town</b> for spears, and <b>Ditch and Stakes</b> for the gate. Start there.');
       } catch (e) {}
       return out;
+    };
+  }
+})();
+
+/* ============================================================================
+   INDEX 85e - J-02: THE REEVE'S HALL ON DAY 1
+   On Day 1 of the siege the Work Board shows only the Sergeant's suggested
+   orders (Rally the Town, Scout, Scrounge, Ditch and Stakes); the rest fold
+   under "More orders (available)" and "Unlocks later". The next suggested card
+   pulses gold. A fixed bell button in the corner shows the candles left and
+   rings the bell (or launches the night) like the big button at the bottom.
+   Every order that rolls dice shows a short toast: the die, the face against
+   the target, and the result. Later days keep the full board, with the bell.
+   Nothing is hidden for good: folded cards are still clickable.
+   ROLLBACK: delete this block.
+============================================================================ */
+(function(){
+  const $$ = id => document.getElementById(id);
+  const CSS = `
+  @keyframes pulse85{0%,100%{box-shadow:0 0 0 2px #d4af37,0 0 4px 2px rgba(255,216,96,.45)}50%{box-shadow:0 0 0 3px #ffd860,0 0 16px 6px rgba(255,216,96,.95)}}
+  .wcard.next85{animation:pulse85 1.5s ease-in-out infinite;outline:2px solid #ffd860}
+  details.more85{margin-top:8px;border-top:1px solid rgba(74,48,24,.4);padding-top:4px}
+  details.more85 summary{cursor:pointer;font:bold 13px Georgia;color:#4a3018;padding:3px 2px;list-style:revert}
+  details.more85 .wcards{margin-top:6px}
+  #bell85{position:fixed;top:56px;right:14px;z-index:45;width:236px;box-sizing:border-box;text-align:center;line-height:1.15;padding:6px 8px 5px;font-size:14px}
+  #screen-table.has-bell85 .table-head{margin-right:252px}
+  #bell85 small{display:block;font:12px Georgia;opacity:.9;letter-spacing:0}
+  #bell85.ready{animation:pulse85 1.5s ease-in-out infinite}
+  #toast85{position:fixed;left:50%;bottom:34px;transform:translateX(-50%);z-index:80;background:var(--parch,#efe3c8);color:#2a2520;border:3px double #4a3b2a;border-radius:4px;
+    padding:8px 16px;box-shadow:0 6px 16px rgba(0,0,0,.5);display:flex;gap:14px;align-items:center;pointer-events:none;transition:opacity .5s;font:14px Georgia}
+  #toast85 .dice{margin:0;gap:10px} #toast85 .die{width:auto;min-width:64px}
+  #toast85 .tx b.res{font-size:16px}`;
+  const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
+
+  // ---- remember rolls made by Work Orders (cpRoll wraps attackDie) ----
+  let cap = false; const CAP = [];
+  if (typeof attackDie === 'function'){
+    const f = attackDie;
+    attackDie = function(skill, ac){ const r = f.apply(this, arguments); if (cap) CAP.push({skill:clampSkill(skill), ac, face:r.face, out:r.out}); return r; };
+  }
+  if (typeof cpRoll === 'function'){
+    const f = cpRoll;
+    cpRoll = function(){ const was = cap; cap = true; try { return f.apply(this, arguments); } finally { cap = was; } };
+  }
+  const ORDER = {rally:'Rally the Town', scout:'Scout', scrounge:'Scrounge', train:'Train', forage:'Forage', recruit:'Recruit', parley:'Parley'};
+  const WORD = {solid:'Full Success', crit:'Full Success', graze:'Partial Success', miss:'Miss'};
+  const CLS = {solid:'success', crit:'success', graze:'partial', miss:'miss'};
+  function toast(name, rolls){
+    let el = $$('toast85'); if (el) el.remove();
+    el = document.createElement('div'); el.id = 'toast85';
+    el.innerHTML = `<div class="dice">${rolls.map(r => `<div class="die ${CLS[r.out]}"><b style="${typeof dieStyle === 'function' ? dieStyle(r.skill) : ''}">${r.face}</b>Skill ${r.skill}</div>`).join('')}</div>
+      <div class="tx"><div>${name}</div><div>${rolls.map(r => `${r.face} against ${r.ac}${r.face - r.ac > 0 ? ' (+' + (r.face - r.ac) + ')' : r.face - r.ac < 0 ? ' (' + (r.face - r.ac) + ')' : ''}`).join(', ')}</div><b class="res">${rolls.map(r => WORD[r.out]).join(' · ')}</b></div>`;
+    document.body.appendChild(el);
+    clearTimeout(toast.t); toast.t = setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 600); }, 4200);
+  }
+  if (typeof workOrder === 'function'){
+    const f = workOrder;
+    workOrder = function(id){
+      const C = CP(), before = C ? C.orders : 0; CAP.length = 0;
+      f.apply(this, arguments);
+      try {
+        const D = CP();
+        if (D && D.orders < before && D.part === 'siege' && D.day === 1) (D.d1 = D.d1 || {})[id] = true;
+        if (CAP.length && ORDER[id]) toast(ORDER[id], CAP.slice());
+      } catch (e) {}
+    };
+  }
+  if (typeof fortify === 'function'){
+    const f = fortify;
+    fortify = function(id){
+      const C = CP(), before = C ? C.orders : 0;
+      f.apply(this, arguments);
+      try { const D = CP(); if (D && D.orders < before && D.part === 'siege' && D.day === 1) (D.d1 = D.d1 || {})[id] = true; } catch (e) {}
+    };
+  }
+
+  // ---- the board itself ----
+  const KEEP = [['rally', 'Rally the Town'], ['scout', 'Scout'], ['stakes', 'Ditch and Stakes'], ['scrounge', 'Scrounge']];
+  function fold(C){
+    const root = $$('table-inner'); if (!root) return;
+    const cards = [...root.querySelectorAll('.wcard')];
+    const nm = c => { const t = c.querySelector('.wt'); return t ? t.textContent.trim() : ''; };
+    const more = [], locked = [];
+    for (const c of cards){ if (KEEP.some(k => k[1] === nm(c))) continue; if (c.closest('.wcards.one')) continue; (c.classList.contains('off') ? locked : more).push(c); }
+    const holder = [...root.querySelectorAll('.wcards')][0];
+    const mk = (title, list, key) => {
+      if (!list.length) return;
+      const d = document.createElement('details'); d.className = 'more85'; d.open = !!BOARD['o85' + key];
+      d.innerHTML = `<summary>${title} (${list.length})</summary><div class="wcards"></div>`;
+      d.addEventListener('toggle', () => { BOARD['o85' + key] = d.open; });
+      const box = d.querySelector('.wcards'); for (const c of list) box.appendChild(c);
+      (key === 'a' ? holder : holder).parentElement.appendChild(d);
+    };
+    mk('More orders (available)', more, 'a'); mk('Unlocks later', locked, 'b');
+    for (const e of root.querySelectorAll('.wcards.two')) if (!e.children.length) e.remove();
+    // pulse the next suggested card
+    const done = C.d1 || {};
+    for (const [key, name] of KEEP){
+      if (done[key]) continue;
+      const c = cards.find(x => nm(x) === name && !x.classList.contains('off'));
+      if (c){ c.classList.add('next85'); return true; }
+    }
+    return false;
+  }
+  if (typeof renderWorkBoard === 'function'){
+    const f = renderWorkBoard;
+    renderWorkBoard = function(){
+      f.apply(this, arguments);
+      try {
+        const C = CP(); if (!C || !(C.part === 'siege' || C.part === 'road')) return;
+        let pending = false;
+        if (C.part === 'siege' && C.day === 1) pending = fold(C);
+        const scr = $$('screen-table'), big = $$('table-inner') && $$('table-inner').querySelector('.sealbtn.big');
+        let b = $$('bell85'); if (!b){ b = document.createElement('button'); b.id = 'bell85'; b.className = 'btn gold'; scr.appendChild(b); }
+        if (!big){ b.style.display = "none"; scr.classList.remove("has-bell85"); return; }
+        b.style.display = ""; scr.classList.add("has-bell85"); b.onclick = () => big.click();
+        const left = C.orders, tot = typeof ordersPerDay === 'function' ? ordersPerDay() : 3;
+        b.innerHTML = `${big.textContent.trim()}<small>${left} of ${tot} ${C.part === 'road' ? 'actions' : 'orders'} left</small>`;
+        b.classList.toggle('ready', left <= 0 || (C.part === 'siege' && C.day === 1 && !pending));
+      } catch (e) { console.warn('story board', e); }
+    };
+  }
+})();
+
+/* ============================================================================
+   INDEX 85f - J-10: THE CAMP REMEMBERS (STORY-09, 11, 12, 13, 18)
+   09  The Chapter Master and camp barks react to the last contract, a death,
+       a finished building, low gold, a nemesis, and the finale.
+   11  Patron voices: a short line in front of each contract brief.
+   12  The dead: a Scribe line in the debrief for each death, and at the graveyard.
+   13  The prologue's ending is written into the Chronicle as its first entries
+       (Summer and Autumn, Year 616), followed by the founding.
+   18  Tone: Scribe lines at Charter milestones 3, 6 and 9.
+   ROLLBACK: delete this block.
+============================================================================ */
+(function(){
+  const pick = a => a[Math.random() * a.length | 0];
+  const live = () => { try { return !(typeof inStoryNow === 'function' && inStoryNow()) && META && !META.cp; } catch (e) { return false; } };
+  const logTail = n => { try { return chron().log.slice(-n); } catch (e) { return []; } };
+
+  // ---- 09: what just happened ----
+  function mood(){
+    const L = logTail(8).reverse(), out = {};
+    const d = L.find(e => e.k === 'death'); if (d) out.death = d.name;
+    const c = L.find(e => e.k === 'contract'); if (c) out.result = c.result;
+    const w = L.find(e => e.k === 'works' && e.act === 'done'); if (w) out.works = w.name;
+    out.gold = META.treasury; out.nem = (META.nemeses || [])[0] && META.nemeses[0].name;
+    try { out.finale = finaleDue(); } catch (e) {}
+    return out;
+  }
+  function masterReacts(){
+    const m = mood(), p = [];
+    if (m.death) p.push(`We lost ${m.death}. The ledger has the line. The stone will have the name.`);
+    if (m.result === 'victory') p.push('Good work. The patron paid on time, which is how I know it was a good job.', 'Another win. I keep waiting for the catch.');
+    if (m.result && m.result !== 'victory') p.push('That one went badly. Eat something, then tell me about it.', 'Not every contract is a victory. This one was a lesson with a bill.');
+    if (m.works) p.push(`The ${m.works} is finished. Someone give the builders a drink.`);
+    if (m.gold < 80) p.push(`Our coffers hold ${m.gold}gp. That is not a figure, that is an apology.`);
+    if (m.nem) p.push(`${m.nem} is still out there. I am not sleeping well.`);
+    if (m.finale) p.push('The charter is almost done. Nobody is brave enough to say so.');
+    return p;
+  }
+  if (typeof masterLine === 'function'){
+    const f = masterLine;
+    masterLine = function(){
+      try { if (live() && META.leader && META.ambition){ const p = masterReacts(); if (p.length && Math.random() < 0.7) return pick(p); } } catch (e) {}
+      return f.apply(this, arguments);
+    };
+  }
+  if (typeof barkFor === 'function'){
+    const f = barkFor;
+    barkFor = function(p){
+      try {
+        if (live()){
+          const m = mood(), s = [];
+          if (m.death) s.push(`Someone should say a word for ${m.death}. No? I will.`);
+          if (m.result === 'victory') s.push('Good pay, no complaints. Suspicious.');
+          if (m.result && m.result !== 'victory') s.push('My boots are still wet from that last one.');
+          if (m.works) s.push(`The new ${m.works}. Finally, something that was not here to be set on fire.`);
+          if (m.gold < 80) s.push('I have counted the coin twice. It did not help.');
+          if (p && p.militia) s.push('Used to farm barley. Now I farm bandits.', 'Varnholt had a mill. I miss the noise.');
+          if (s.length && Math.random() < 0.55) return pick(s);
+        }
+      } catch (e) {}
+      return f.apply(this, arguments);
+    };
+  }
+
+  // ---- 11: patron voices ----
+  const PATRON_VOICE = {
+    'Minor Imperial Noble':['The Marshal’s office wants this done quietly and on paper.', 'An Imperial seal, a firm hand and very little patience.'],
+    'Suderian Freeman Merchant':['Their purse is open and their questions are closed.', 'A merchant who has done the sums and does not like them.'],
+    'Mendorian Order Prelate':['The Prelate has prayed on it. You are the answer.', 'A blessing is attached. So is a deadline.'],
+    'Dwarven Syndicate Factor':['Payment on delivery, by weight.', 'The Factor has read the contract. Twice. In the margins.'],
+    'Reprobate Collective':['Don’t ask what is in the crate.', 'Paid in advance, which is the first warning.'],
+    'A Shadowy Broker':['A note, a coin, no signature.', 'Someone watched you read this, and did not stay.'],
+    'Hrimheim House Envoy':['The Envoy speaks as if every word were charged by the syllable.', 'A cold house, a cold fee and an exact date.'],
+    'Steppe Clan Outrider':['The Outrider wants it done before the horses get bored.', 'Short orders, a long ride, no paperwork.'],
+    'Arcana Guild Magister':['The Guild requires a signature. In triplicate. In ink.', 'A Magister who would very much like this not to be mentioned.'],
+    'Dust Cloaks Arbiter':['The Arbiter reminds you that the charter is watching.', 'Chapter business, charged at the Chapter’s rate.']
+  };
+  if (typeof makeContract === 'function'){
+    const f = makeContract;
+    makeContract = function(){
+      const c = f.apply(this, arguments);
+      try { const v = c && !c.finale && !c.storyDone && PATRON_VOICE[c.patron]; if (v && c.brief && !c.voiced){ c.brief = pick(v) + ' ' + c.brief; c.voiced = true; } } catch (e) {}
+      return c;
+    };
+  }
+
+  // ---- 12: the dead ----
+  const DEAD_LINES = [n => `${n} is cut into the stone. The Scribe has spelled it correctly.`, n => `${n} has a line in the book now, and the line is not short.`, n => `The Scribe writes ${n}’s name last in the day’s ledger, so it is the last thing on the page.`];
+  const LEAD_LINES = [n => `The Scribe closes ${n}’s page and turns the lamp down.`, n => `${n} led the squad to the last day. The book says so.`];
+  if (typeof renderDebrief === 'function'){
+    const f = renderDebrief;
+    renderDebrief = function(h, l){
+      try {
+        if (Array.isArray(l) && !l.some(x => /class="sxd/.test(x))){
+          const out = []; let hit = false;
+          for (const x of l){
+            out.push(x);
+            let m = /<p class="bad">([^<]+?) died in the field\.<\/p>/.exec(x);
+            if (m){ out.push(`<p class="sxd"><i>${pick(DEAD_LINES)(m[1])}</i></p>`); hit = true; continue; }
+            m = /<b>([^<]+?) (?:bled out on the field|dies on the field)\.<\/b>/.exec(x);
+            if (m){ out.push(`<p class="sxd"><i>${pick(LEAD_LINES)(m[1])}</i></p>`); hit = true; }
+          }
+          if (hit) l = out;
+        }
+      } catch (e) {}
+      return f.call(this, h, l);
+    };
+  }
+  if (typeof renderPanel === 'function'){
+    const f = renderPanel;
+    renderPanel = function(){
+      f.apply(this, arguments);
+      try {
+        const P = CAMP.panel, el = document.getElementById('camp-panel');
+        if (P && P.kind === 'grave' && el && !el.querySelector('.sxg') && (META.memorial || []).length){
+          const d = el.querySelector('.desc'), last = META.memorial[META.memorial.length - 1], nm = typeof last === 'string' ? last : last.name;
+          if (d) d.insertAdjacentHTML('afterend', `<div class="desc sxg" style="text-align:left;font-style:italic;margin-bottom:6px">The Scribe sweeps the stone himself and says the names in order once a season. The newest is ${esc(nm)}.</div>`);
+        }
+      } catch (e) {}
+    };
+  }
+
+  // ---- 18: milestones in the Scribe's voice ----
+  const MILE = {3:'The charter is a third done. The Scribe has ordered more ink.', 6:'More than half. The Scribe has started using the good pen.', 9:'One page left in the charter. The Scribe has bought more ink and told nobody.'};
+  if (typeof checkMilestones === 'function'){
+    const f = checkMilestones;
+    checkMilestones = function(ctx, lines){
+      const A = META && META.ambition, before = A ? A.done : 0;
+      f.apply(this, arguments);
+      try {
+        if (!A || !live()) return;
+        for (let n = before + 1; n <= A.done; n++) if (MILE[n]){
+          if (lines) lines.push(`<p class="sx"><i>${MILE[n]}</i></p>`);
+          try { chron(); chronAdd('scribe', {text:MILE[n]}, true); } catch (e) {}
+        }
+      } catch (e) {}
+    };
+  }
+
+  // ---- 13: the prologue joins the Chronicle ----
+  try { CHR_TAG.prologue = ['Before', '#1a4a6a']; CHR_TAG.scribe = ['Scribe', '#5a4a8a']; } catch (e) {}
+  if (typeof chronText === 'function'){
+    const f = chronText;
+    chronText = function(e){
+      if (e.k === 'prologue' || e.k === 'scribe') return esc(e.text || '');
+      return f(e);
+    };
+  }
+  if (typeof finishFound === 'function'){
+    const f = finishFound;
+    finishFound = function(){
+      let snap = null;
+      try {
+        if (FD && FD.fromStory && META.cp){
+          const C = META.cp;
+          snap = {full:!!C.full, days:C.day, won:!!C.siegeWon, orsolt:C.orsolt, nights:C.night, cs:Math.max(0, C.column || 0), dead:(META.memorial || []).length};
+        }
+      } catch (e) {}
+      const r = f.apply(this, arguments);
+      try {
+        if (snap && META && !META.cp && !META.prologueChron){
+          META.prologueChron = true;
+          if (typeof ensureScribe === 'function') ensureScribe();
+          chron({k:'open'});
+          const T0 = META.chron.turn;
+          const add = (t, text) => { chronAdd('prologue', {text}, true); META.chron.log[META.chron.log.length - 1].t = t; };
+          add(T0 - 35, `The company held Varnholt for ${snap.days} days. ${snap.won ? 'The Keep stood, and the Reeve paid what he had promised.' : 'The Keep fell, and the town went out through the sally gate.'} ${snap.orsolt === 'slain' ? 'Orsolt the Hollow Reeve did not live to see the end of it.' : snap.orsolt === 'fled' ? 'Orsolt the Hollow Reeve got away, and the Scribe has left him a page.' : ''}`.trim());
+          add(T0 - 34, `${snap.nights ? snap.nights + ' nights' : 'The nights'} on the road with the elves of Tarim. Column Strength at the ford of Kalloon: ${snap.cs}. The cloaks were the colour of the road by the end of it.${snap.dead ? ' ' + (snap.dead === 1 ? 'One name' : snap.dead + ' names') + ' did not reach Kalloon.' : ''}`);
+          chronAdd('found', {holding:META.holding, master:META.master ? META.master.name : '', hero:META.master ? META.master.hero || null : null, ambition:META.ambition ? META.ambition.track : null}, false);
+        }
+      } catch (e) { console.warn('story prologue chronicle', e); }
+      return r;
     };
   }
 })();
