@@ -40,7 +40,7 @@ Last updated: 2026-11-06, after commit 790b303 (audio review).
 
 ## In flight (as of commit 790b303)
 - J-19 shipped (Index 87, js/audio.js). Demo section 4 "J-19 as built" lets the user compare old and new town audio.
-- J-20 shipped (Index 87b). Music-cut report: the measured cause was the old fade-and-restart at contract end (fixed by J-20); two AudioContexts may still glitch → J-21 would remove that.
+- J-20 shipped (Index 87b); the user confirmed the music cut is gone.
 - Waiting on the user:
   - **Audio:** J-19 shipped; next audio jobs J-20 (continuous theme + Humanity-style tempo), J-21 (audio plumbing), J-22 (more music contexts and feedback sounds) await approval. Demo: https://pjdoranbrown.github.io/Dust-Cloaks/audits/audio-demo.html
   - **Jobs J-01…J-13** (new-player start, Reeve's Hall Day 1, planning-table sticky bar, HUD scaling, health rows, squad spacing, save backups, game feel, visual polish, mid-size story, portrait strip, plain tooltips, bible fill).
@@ -70,7 +70,7 @@ Last updated: 2026-11-06, after commit 790b303 (audio review).
 - Watches usage limits: keep delegates focused; a usage-limit stop leaves delegates idle (resume them by SendMessage with their id).
 - Audio taste: Humanity-style synth tempo that follows game speed; mellow lute and hand drums in town, not synth pipes; the same theme builds into contracts.
 
-## Recently fixed from user testing (2026-11-06)
+## Recently fixed from user testing (2026-11-06) — user confirmed both fixed
 - Music cut at effects: cause measured at contract end (fade/restart) → fixed by J-20; if the user still hears cuts, J-21's single shared AudioContext is the next step.
 - Palisade gates: missing only with the 3D world off (or the Pixel sprite look) → fixed in Index 88; not reproducible with 3D on — ask the user which look they use if it recurs.
 - Fixed build plots for palisade and watchtowers (J-23, Index 88; extend via FIXED_SITE).
