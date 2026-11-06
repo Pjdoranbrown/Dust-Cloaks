@@ -41,6 +41,7 @@ Last updated: 2026-11-06, after commit 790b303 (audio review).
 ## In flight (as of commit 790b303)
 - J-19 shipped (Index 87, js/audio.js). Demo section 4 "J-19 as built" lets the user compare old and new town audio.
 - J-20 shipped (Index 87b); the user confirmed the music cut is gone.
+- sound-designer is building J-21 (shared AudioContext, ducking, Effects/Music sliders, node cleanup) then J-22 (title, prologue, debrief, raid, bar-fight contexts; feedback sounds) in `js/audio.js` (Index 87c, 87d); uncommitted until reviewed.
 - Waiting on the user:
   - **Audio:** J-19 shipped; next audio jobs J-20 (continuous theme + Humanity-style tempo), J-21 (audio plumbing), J-22 (more music contexts and feedback sounds) await approval. Demo: https://pjdoranbrown.github.io/Dust-Cloaks/audits/audio-demo.html
   - **Jobs J-01…J-13** (new-player start, Reeve's Hall Day 1, planning-table sticky bar, HUD scaling, health rows, squad spacing, save backups, game feel, visual polish, mid-size story, portrait strip, plain tooltips, bible fill).
