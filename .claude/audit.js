@@ -31,8 +31,8 @@
 
   A.campSweep = async function(label){
     CAMP.dirty = true;
-    const W = CAMP_W, H = CAMP_H, pts = [];
-    for (let y = -60; y < H; y += VH * 0.7) for (let x = -40; x < W; x += VW * 0.7) pts.push([x, y]);
+    const W = CAMP_W, H = CAMP_H, pts = [], SX = Math.max(400, VW * 0.7), SY = Math.max(300, VH * 0.7);   // a hidden pane reports a 0x0 window
+    for (let y = -60; y < H; y += SY) for (let x = -40; x < W; x += SX) pts.push([x, y]);
     A.scene = '-';
     for (let pass = 0; pass < 3; pass++) for (const [x, y] of pts){ CAMP.cam.x = x; CAMP.cam.y = y; for (let i = 0; i < 6; i++){ CAMP.t++; drawCamp(); await A.tick(); } }
     A.scene = label;
@@ -51,8 +51,8 @@
     if (!G) return;
     if (opts.setup) { try { opts.setup(G); } catch(e){ A.log.push(label + ' setup: ' + e.message); } }
     const L = G.leader, lx = L.x, ly = L.y;
-    const W = MAP.w * CELL, H = MAP.h * CELL, pts = [];
-    for (let y = VH / 2; y < H; y += VH * 0.7) for (let x = VW / 2; x < W; x += VW * 0.7) pts.push([x, y]);
+    const W = MAP.w * CELL, H = MAP.h * CELL, pts = [], SX = Math.max(400, VW * 0.7), SY = Math.max(300, VH * 0.7);
+    for (let y = SY / 2; y < H; y += SY) for (let x = SX / 2; x < W; x += SX) pts.push([x, y]);
     const at = async (n) => { for (const [x, y] of pts){ L.x = x; L.y = y; for (let i = 0; i < n; i++){ G.frame++; try { draw(); } catch(e){ A.log.push(label + ' draw: ' + e.message); return; } await A.tick(); } } };
     await at(4); await at(4);
     A.scene = label; await at(2); A.scene = '-';

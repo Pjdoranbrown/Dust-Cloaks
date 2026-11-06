@@ -233,3 +233,40 @@ Priority order is my judgement of player impact versus effort. "Delegate" means 
 - **Facility prices and upkeep:** match Table 4.3 and 4.4 (15gp per staffed facility, 50gp Training Grounds drill). Tier payouts match the tabletop's ratio (see section 1).
 - **Raid frequency:** reasonable. Raids only start after contract 3 and never on consecutive contracts (line 6497).
 - **Hiring at 10gp** is cheap but matches the manual; it is not a balance problem because Hazard Upkeep is the real roster cost.
+
+---
+
+## 7. Implemented (J-14 and J-15, in `js/balance.js`, Index 86)
+
+**Correction to BAL-04:** I said Masterwork Full Plate was missing. It is not: `GEAR.push` at `index.html` line ~15977 already adds Full Plate (4,000gp, needs a veteran-run Blacksmith) and Runed Deep-Iron Plate (3,200gp). I missed that second `GEAR.push`. The sinks below are additional.
+
+### J-14: Tier 1 of the four hardest hosts (revised: no outside troops)
+First attempt swapped in `levy` and `brigand`, which blurred host identity, so it was withdrawn. Pools are now **unchanged**. Attempts that kept identity, bot sim, 8 runs, avg survival in seconds:
+
+| Lever tried | Greenskins | Monsters | Orcs | Arcana |
+|---|---|---|---|---|
+| Baseline (no change) | 35 | 27 | 30 | 27 |
+| Re-weight pool with own troops only | 32–36 | 32 | 27–35 | 35–41 |
+| 35% fewer ordinary spawns + 25% less Condition | 33 | 49 | 29 | 45 |
+| Condition x0.5 | 40 | 37 | 31 | 44 |
+| Speed x0.85 only | 44 | 41 | 36 | 48 |
+| **Final: speed x0.9 and Skill −1 (melee and ranged)** | **62** | **47** | **44** | **57** |
+
+Final change (`js/balance.js`, getters on the shared `BESTIARY` entries that only answer differently while a Tier 1 contract against Greenskins, Monsters, Orcs or Arcana is running): every ordinary troop moves 10% slower and fights at −1 Skill. Bosses, nests and engines, Tier 2/3, other hosts and pay are untouched; outside such a contract the values read as before (checked: `BESTIARY.wolf.speed` is 1.42 on a fresh load). Pools: Old = New. The four hosts now sit at 44–62s against Bandits' about 70s and Deserters' 37–48s, a spread of about 1.6x instead of 3x. Orcs remain the hardest. Bandits, Hollow and Deserters were not re-run after the final change (their code is untouched). Tier 2 was not re-measured. Rollback: delete the J-14 block in `js/balance.js`.
+
+### J-15: late gold sinks (five new Quartermaster cards, `GEAR.push`)
+Priced against the income model (about 530gp net a contract at contracts 7–12 and 860 from 13).
+
+| Item | Slot | Cost | Effect | Needs |
+|---|---|---|---|---|
+| Masterwork Greatswords | melee | 650 | Dmg 4, strips **2** armour steps (Heavy Greatswords: 160gp, strips 1) | Blacksmith run by a veteran |
+| Masterwork Longbows | ranged | 600 | Dmg 4, range 400 (Longbows: 160gp, Dmg 3, range 370) | Carpentry + Blacksmith |
+| Bastion Shields | shield | 400 | Shield Pool 6 (Heavy Infantry Shields: 50gp, pool 4) | Blacksmith |
+| Elven Mail | armour (light) | 1,100 | AC 5, shift −2, Move 0, +1 Ward Token | Blacksmith + Leatherworking |
+| Destriers | mount | 900 | speed x1.22, Mount Pool 12 (Warhorses: 480gp, pool 8) | Stables + Barracks |
+
+Together with Full Plate (4,000), these give a spend ladder from about 400gp (contract ~8) to 4,000gp (contract ~18+).
+
+**Not done:** facility upgrades. Every building is tied to plots, art in four holdings and the 3D set (see how Huts/Bunks/Fortress Church were added), so a new upgrade is an art task, not a balance patch. Suggested follow-up if wanted: a "Master Armoury" (+1 Ward Token, ~450gp, needs Armoury run by a veteran) and a "Grand Market" (+25gp a contract, ~400gp, needs Merchant Stalls), each reusing its parent building's art.
+
+**Known limits:** the 3D weapon model for Masterwork Greatswords falls back to the spear (`r3dMeleeOf` is a const and cannot be wrapped from outside). The Masterwork Longbows do not get the Longbow's "Critical ignores 1 armour step" rule, which is keyed to the id `longbows`. Both are cosmetic or minor. The items were each run for 30s in the sim without errors and their cards render; I did not click through the Quartermaster screen by hand.

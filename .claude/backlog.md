@@ -8,7 +8,7 @@ The one list of bigger jobs and open decisions. Keep it current: when something 
 - Owner: **commander** (the main chat) or **delegate** (a Sonnet session or the `game-drafter` subagent).
 - Status: `proposed` → `approved` → `in progress` → `shipped (Index N, commit)` / `dropped (why)`.
 
-Last updated: 2026-11-06 (decisions D-01…D-10 made; J-14…J-18 dispatched).
+Last updated: 2026-11-06 (J-14, J-15 shipped in Index 86).
 
 ---
 
@@ -29,8 +29,8 @@ Last updated: 2026-11-06 (decisions D-01…D-10 made; J-14…J-18 dispatched).
 | J-11 | **Squad portrait strip** in contracts (5 busts, health bar, red X when down, toggle N) | UX tooltips row | M | commander | proposed |
 | J-12 | **Plain-English one-liners** on specialties, armour and doctrines, rules text under "Details" | UX tooltips row | M | delegate (wording: story) | proposed |
 | J-13 | **Fill `game-bible.md`** sections (core loop, classes, enemies, items, balance, art, story) from the code and audits | — | S | `game-drafter` | proposed |
-| J-14 | **Soften the hard hosts** at Tier 1 (Monsters, Greenskins, Orcs, Arcana) via their enemy pools, toward the middle of the spread; same pay (from D-01) | BAL-01(b) | S | game-balancer → `js/balance.js` | in revision (first pass mixed outsiders into host pools; sent back to keep identity) |
-| J-15 | **Tabletop gold sinks**: Masterwork Full Plate and costly late upgrades for facilities/gear (from D-02) | BAL-04 | M | game-balancer → `js/balance.js` | done, commits with J-14 (5 gear sinks; facility upgrades not added — too heavy for now) |
+| J-14 | **Soften the hard hosts** at Tier 1 (Monsters, Greenskins, Orcs, Arcana) via their enemy pools, toward the middle of the spread; same pay (from D-01) | BAL-01(b) | S | game-balancer → `js/balance.js` | shipped (Index 86): Tier 1 troops of the four hosts move 10% slower and fight at -1 Skill; same troops, same pay |
+| J-15 | **Tabletop gold sinks**: Masterwork Full Plate and costly late upgrades for facilities/gear (from D-02) | BAL-04 | M | game-balancer → `js/balance.js` | shipped (Index 86): 5 gear sinks; facility upgrades not added (too heavy for now) |
 | J-16 | **Cayde's title** matches the Manual: Grand Master of the Grey Cloaks, no "Reynard" (from D-06) | STORY-05 | S | story-designer → `js/story.js` | shipped (Index 85c, 9d0b481) |
 | J-17 | **New named lieutenants** replace Orsolt and Ilvaryn as later bosses (from D-07) | STORY-04 | S–M | story-designer → `js/story.js` | shipped (Index 85d, 9d0b481) |
 | J-18 | **Prologue cold open, version 1** (from D-10) | audits/story.md → Onboarding cold open | S | story-designer (commander reviews flow) | shipped (Index 85b, 9d0b481) |

@@ -15,12 +15,12 @@ Last updated: 2026-11-06, after commit 9d0b481 (Index 85b-d).
 
 ## Code conventions
 - Each change is an "INDEX N" section with a header comment (what, why, ROLLBACK). Later sections wrap earlier functions: `{ const f = fn; fn = function(){ ... f() ... }; }`. In-place patches are tiny and marked `/* Index N */`.
-- Latest: Index 76 3D props · 77 baked soft terrain, tavern, build-anywhere + construction + builders · 78 Scribe's ledger, move/demolish, camp keys · 79 high-DPI sharp text, text size · 80 per-object draw guards · 81–82 audit bug fixes · 83 UX · 84 graphics · 85 story.
+- Latest (index.html): Index 76 3D props · 77 baked soft terrain, tavern, build-anywhere + construction + builders · 78 Scribe's ledger, move/demolish, camp keys · 79 high-DPI sharp text, text size · 80 per-object draw guards · 81–82 audit bug fixes · 83 UX · 84 graphics · 85 story · 86 balance (js/balance.js).
 - Calendar: one contract = one season (`chron().turn`). Construction uses that clock (`buildNow`).
 
 ## Running and testing
 - Local server: `powershell -NoProfile -ExecutionPolicy Bypass -File .claude\serve.ps1 -Root "<this folder>"` → http://localhost:8765.
-- Built-in browser pane is often hidden → `requestAnimationFrame` pauses; drive frames by hand (camp `updatePeople(); drawCamp();`, contracts `update(); draw();`).
+- Built-in browser pane is often hidden → `requestAnimationFrame` pauses; drive frames by hand (camp `updatePeople(); drawCamp();`, contracts `update(); draw();`). A hidden pane also reports a 0x0 window: call resize_window (e.g. 1280x800) before sweeps, then reset it to desktop.
 - `.claude/audit.js`: `AUD.campSweep(label)`, `AUD.contractSweep(label, contract, {ticks, setup})`, `AUD.run`, drawImage recorder. Load with a script tag (see its header).
 - Standard regression: camp in 4 holdings × seasons (`window.SEASON_FORCE`), all `CONTRACT_KEYS`, a raid (`makeRaidContract`), bar fight, prologue (`openStory()`); trap `error` events and check the console for "Draw error".
 - Git: `C:\Program Files\Git\cmd\git.exe` (not on PATH in older shells); `gh` at `C:\Program Files\GitHub CLI\gh.exe`, signed in as Pjdoranbrown.
@@ -38,7 +38,7 @@ Last updated: 2026-11-06, after commit 9d0b481 (Index 85b-d).
 
 ## In flight
 - story-designer: J-16/17/18 shipped (Index 85b-d, commit 9d0b481).
-- game-balancer: J-15 gear sinks done; J-14 host pools sent back (keep host identity: no levy/brigands in Monsters/Orcs/Arcana). js/balance.js and audits/balance.md are uncommitted until the revision passes review; index.html already loads js/balance.js.
+- game-balancer: J-14 (Tier 1 softening via speed x0.9 and -1 Skill for Greenskins, Monsters, Orcs, Arcana) and J-15 (5 gear sinks) shipped in Index 86.
 - Still waiting on the user: approval of jobs J-01..J-13.
 
 ## User preferences
