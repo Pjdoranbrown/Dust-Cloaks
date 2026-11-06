@@ -3,6 +3,25 @@
 (function(){
   const A = window.AUD = window.AUD || {};
   A.hits = A.hits || {}; A.scene = '-'; A.on = true; A.status = 'idle'; A.log = A.log || [];
+  // Test muted: the in-app browser plays through the user's speakers. Mute in memory only;
+  // when the game saves, the real volume settings are written, never the test's zeros.
+  A.mute = function(){
+    try {
+      if (typeof META === 'undefined' || !META) return;
+      const s = settings();
+      if (!A._vol){
+        let saved = null; try { saved = (JSON.parse(localStorage.getItem(SAVE_KEY) || 'null') || {}).settings; } catch (e) {}
+        A._vol = saved && saved.volume !== undefined ? {volume:saved.volume, music:saved.music} : {volume:s.volume, music:s.music};   // the saved values, in case the page was already muted
+        if (typeof saveMeta === 'function' && !saveMeta._muted){ const f = saveMeta;
+          saveMeta = function(){ const t = settings(), v = {volume:t.volume, music:t.music}; Object.assign(t, A._vol); try { return f.apply(this, arguments); } finally { Object.assign(t, v); } };
+          saveMeta._muted = true; } }
+      s.volume = 0; s.music = 0;
+      try { SFX.setVol(); } catch (e) {}
+      try { if (MUS && MUS.setVol) MUS.setVol(); } catch (e) {}
+    } catch (e) {}
+  };
+  A.mute();
+  if (!A._muteTimer) A._muteTimer = setInterval(A.mute, 2000);   // stays muted after loadMeta / switchSlot
   if (!window._origDI) window._origDI = CanvasRenderingContext2D.prototype.drawImage;
   const orig = window._origDI;
   const FRAME = /at (?:(\S+) )?\(?https?:\/\/localhost:\d+\/(?:index\.html)?(?:\?[^:]*)?:(\d+):\d+/;

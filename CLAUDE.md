@@ -19,3 +19,6 @@
 - For bulk drafting (level layouts, item lists, balance tables, enemy rosters) or wide searches through `index.html`, delegate to the `game-drafter` subagent and keep only its result.
 - Lead replies with the outcome; keep them short.
 - Make small, targeted edits to `index.html`; never rewrite it.
+
+## Testing in the browser
+- Always test muted: the in-app browser plays through the user's speakers. Set `settings().volume = 0; settings().music = 0;` in memory (never save it), or load `.claude/audit.js`, which mutes on load. Stop audio when you finish (suspend the audio, or navigate the tab to about:blank).

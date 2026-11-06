@@ -23,6 +23,7 @@ Last updated: 2026-11-06, after commit 790b303 (audio review).
 - Built-in browser pane is often hidden → `requestAnimationFrame` pauses; drive frames by hand (camp `updatePeople(); drawCamp();`, contracts `update(); draw();`). A hidden pane also reports a 0x0 window: call resize_window (e.g. 1280x800) before sweeps, then reset it to desktop.
 - `.claude/audit.js`: `AUD.campSweep(label)`, `AUD.contractSweep(label, contract, {ticks, setup})`, `AUD.run`, drawImage recorder. Load with a script tag (see its header).
 - Standard regression: camp in 4 holdings × seasons (`window.SEASON_FORCE`), all `CONTRACT_KEYS`, a raid (`makeRaidContract`), bar fight, prologue (`openStory()`); trap `error` events and check the console for "Draw error".
+- Always test muted (the in-app browser plays through the user's speakers): `.claude/audit.js` mutes on load; otherwise set `settings().volume = 0; settings().music = 0;` without saving. Stop audio after testing.
 - Git: `C:\Program Files\Git\cmd\git.exe` (not on PATH in older shells); `gh` at `C:\Program Files\GitHub CLI\gh.exe`, signed in as Pjdoranbrown.
 
 ## How we work (commander + delegates)
@@ -38,7 +39,7 @@ Last updated: 2026-11-06, after commit 790b303 (audio review).
 - For one-off heavy reading or drafting inside a chat, use the `game-drafter` subagent (`.claude/agents/game-drafter.md`). For audio work, the `sound-designer` subagent (`.claude/agents/sound-designer.md`).
 
 ## In flight (as of commit 790b303)
-- Nothing running. All delegates idle.
+- sound-designer is building J-19 (mellow town audio) in `js/audio.js` (Index 87; script tag added after `js/balance.js`, uncommitted until reviewed).
 - Waiting on the user:
   - **Audio:** listen to the demo at https://pjdoranbrown.github.io/Dust-Cloaks/audits/audio-demo.html (or `audits/audio-demo.html` locally), then approve J-19…J-22. Recommended order: J-19 (mellow town audio, delegate, M) first; J-20 (one continuous theme + Humanity-style tempo) is the big one.
   - **Jobs J-01…J-13** (new-player start, Reeve's Hall Day 1, planning-table sticky bar, HUD scaling, health rows, squad spacing, save backups, game feel, visual polish, mid-size story, portrait strip, plain tooltips, bible fill).
