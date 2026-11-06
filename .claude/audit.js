@@ -21,7 +21,9 @@
     } catch (e) {}
   };
   A.mute();
-  if (!A._muteTimer) A._muteTimer = setInterval(A.mute, 2000);   // stays muted after loadMeta / switchSlot
+  if (!A._muteTimer) A._muteTimer = setInterval(A.mute, 2000);   // a safety net
+  // re-mute the instant a save is loaded (prologue slot, holding moves), not up to 2s later
+  if (typeof loadMeta === 'function' && !loadMeta._muted){ const f = loadMeta; loadMeta = function(){ const r = f.apply(this, arguments); try { A._vol = null; A.mute(); } catch (e) {} return r; }; loadMeta._muted = true; }
   if (!window._origDI) window._origDI = CanvasRenderingContext2D.prototype.drawImage;
   const orig = window._origDI;
   const FRAME = /at (?:(\S+) )?\(?https?:\/\/localhost:\d+\/(?:index\.html)?(?:\?[^:]*)?:(\d+):\d+/;

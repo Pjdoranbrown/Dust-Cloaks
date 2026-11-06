@@ -164,3 +164,31 @@ Built from AUD-01, 02, 05, 06, 07, 10, 15, 16. Not built: AUD-03/04 (J-20), AUD-
 - Not reproduced (and not ruled out): a dropout inside the browser/OS when two AudioContexts play together (music and SFX are separate contexts; J-21's shared context would remove that class of problem).
 
 **Fix:** J-20 (Index 87b). The tune keeps playing through the end of a contract: no fade, no restart; the layers leave on the bar line and the tempo eases back. Measured the same way: output level steady (9-26) through `G.over` + `win`, no trough. **Still the old path** (and still dips) only where J-20 deliberately falls back: a contract that starts while the bard is resting, set to Off, or the music is muted, or `AUDIO_CLASSIC = true`. **Rollback:** the J-20 block (see "Implemented (J-20)"). **Needs committing to reach players:** the committed J-19 build (without 87b) still has the cut.
+
+## Implemented (J-21) - `js/audio.js`, block "INDEX 87c" (AUD-08, 09, 12, 13)
+| | Old | New | Roll back |
+|---|---|---|---|
+| Contexts | SFX, music and the whistle each made an `AudioContext` (three) | one shared context: `window.AudioContext` is replaced (before the first click) by a function that always returns the same instance, whose `destination` is steered: a gain node created at 0.0001 (the music master) goes to `musicIn`, anything else (SFX master, whistle) to `sfxIn`. Both feed one soft limiter (threshold -3 dB, ratio 12, attack 2 ms, release 120 ms) -> speakers. Hidden-tab suspend now acts on one context | delete the 87c block (and the one `sfxIn ||` mention in `installSfxChain`) |
+| Ducking | none (only the pause duck to 35 %) | `A.duck(db)`: music gain to -3..-6 dB in 30 ms, hold 120 ms, back with time constant 0.17 s (about 0.5 s). Leader hurt -3 dB (at most once a second), level-up, horn, boss, boss death, win -5, defeat/boss -6. Never hit, coin, pick, swing. Measured: horn takes `musicIn` gain to 0.56 (-5 dB) and it recovers; coin leaves it at 1.0 | `DUCK` table in 87c (empty it to switch off) |
+| Sliders | Volume (master), Music | + **Effects** (`settings().sfx`, 0-100, default 100; absent in old saves = 100), applied to `sfxIn`; a 'pick' plays while dragging it | the `settingsHTML`/`setSetting` wrappers in 87c |
+| Nodes | voices unbounded; boss-death noise cut at 0.5 s | hats, ticks, grace notes and claps are skipped while more than 44 voices are in flight (`AUDIO87.voices()` reports the count); boss-death rumble rewritten with a looped noise and softer saws | voice-cap block / `S.bossdie` |
+**Measured** (muted, same test before and after): camp live audio sources 28-45 before, 43-52 after (embers, now with the shared reverb path); contract level 2 up to 117 before, 103 after; arrays flat over 3 camp<->contract trips (`barLog` 8, J-20 log capped at 300, 9 cached lute buffers, `noteQ` under 12, `barQ` 2). A true 15-minute run was not done in this pane (hidden-pane timers); the counters above are bounded by construction and showed no growth over about 3 minutes and 4 trips. **Kill switch:** `window.AUDIO_CLASSIC = true` before page load keeps three contexts, no ducking, no Effects slider.
+
+## Implemented (J-22) - `js/audio.js`, block "INDEX 87d" (AUD-11, 14)
+| Context | What plays | Notes |
+|---|---|---|
+| Title screen | the camp theme as a **solo lute** (melody only: no drums, bass, arpeggio), 15 % slower (`pk x 1.15`, eased), music 40 % quieter (`mood` gain 0.6), back to normal when the title closes | detected by `#screen-title` not hidden; a contract starting cancels it |
+| Prologue (Varnholt) | the town is the camp tune; sorties, assaults and nights are contracts, so J-20 builds from it | no extra code; the prologue opens and runs without errors |
+| Debrief | the fanfare (win / level / defeat at `G.over`) is replaced by a **lute stinger** on the music: victory A4 C5 E5 A5 rising; withdrawal A4 C5 A4; defeat or flight A2 then E2, low and sparse; the camp theme carries on (no fade), music ducked 3 dB for 0.6 s | measured: the music output bumps up with no dip |
+| Raid | camp tune, then the contract layers at **x1.08** tempo (`G.raidT` defined) | measured ratio 1.08 |
+| Bar fight | unchanged (Index 41, `barNow`), now on the shared context and ducking | |
+New sounds, each quiet and on rare events (none on hits or steps):
+| Sound | Call site (wrapped in `js/audio.js`) | Recipe |
+|---|---|---|
+| build | `startBuild()` (index.html ~24648), only when the treasury was charged | two wood knocks 0.11 s apart: sine 170 -> 130 Hz 60 ms (0.07) + 600 Hz low-passed noise 40 ms (0.08) |
+| demolish | `doDemolish()` (~24975), only when the building is gone | sine 90 -> 50 Hz 0.28 s (0.10) + band-pass 300 Hz noise 0.26 s (0.10) |
+| pause / resume | `togglePause()` (~5429), only when the pause state changed | sine 200 -> 150 Hz 60 ms (0.06) / 260 -> 330 Hz 60 ms (0.05) |
+| low health | a 250 ms poll: Leader Con <= a third, not paused or over, at most every 1.4 s | two soft thumps, sine 62 -> 45 Hz (0.09) then 58 -> 42 Hz (0.06) |
+| +1 Luck | `momentum()` (~2453), only when `G.luck` rose | sine 660 Hz 0.22 s (0.045) + 990 Hz 0.16 s (0.02), 60 ms later |
+Rollback: delete the 87d block (the title filter, stinger and sounds are all in it; the raid factor is one line in `targetM`, 87b, marked J-22). **Not built:** a 'kill' sound (every kill: too frequent), a construction-complete sound (no single hook found), hover sounds.
+**Demo:** sections 6 and 7 of `audits/audio-demo.html` (sliders, ducking buttons, title lute, stingers, new sounds). The demo's effects now run on their own bus, so ducking only dips the music.

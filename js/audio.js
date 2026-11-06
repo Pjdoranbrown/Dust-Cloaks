@@ -253,7 +253,7 @@ function capRest(){
 function installSfxChain(){
   const X = SFX._g(); if (!X.ac || !X.master || sfxLP) return;
   sfxLP = X.ac.createBiquadFilter(); sfxLP.type = 'lowpass'; sfxLP.frequency.value = 20000; sfxLP.Q.value = .5;
-  X.master.disconnect(); X.master.connect(sfxLP); sfxLP.connect(X.ac.destination);
+  X.master.disconnect(); X.master.connect(sfxLP); sfxLP.connect((window.AUDIO87 && window.AUDIO87.sfxIn) || X.ac.destination);   /* J-21: sfxIn exists when the shared context is on */
 }
 document.addEventListener('visibilitychange', () => {
   const X = SFX._g(); if (!X.ac) return;
@@ -283,7 +283,7 @@ setInterval(() => {
   } catch (e) {}
 }, 250);
 
-window.AUDIO87 = {barLog, ksCache, amb:() => amb};
+window.AUDIO87 = {barLog, ksCache, amb:() => amb, ksBuf, nburst, jit};
 })();
 
 /* ============================================================================
@@ -331,7 +331,8 @@ function targetM(){
     if (g.paused) ts *= 0.85;
   }
   const rank = g ? Math.min(0.08, 0.01 * (g.lvl || 0)) : 0;
-  return clamp(RANGE[0], RANGE[1], (1.10 + 0.08 * M.level + rank) * ts);
+  const raid = (g && g.raidT !== undefined) ? 1.08 : 1;                                 // J-22: a raid is urgent and personal
+  return clamp(RANGE[0], RANGE[1], (1.10 + 0.08 * M.level + rank) * ts * raid);
 }
 
 const L1 = {kick:['thump', .7], snare:['tick', .9], hat:['hat', .45], bass:['bass', .8]};
@@ -430,3 +431,238 @@ setInterval(() => { if (M.ac && M.timer && !window.AUDIO_CLASSIC && !taken) take
 A87.tick87 = tick87; A87.targetM = targetM;
 })();
 /* ===== END INDEX 87b ====================================================== */
+
+/* ============================================================================
+   INDEX 87c - AUDIO PLUMBING (J-21; AUD-08, 09, 12, 13)
+   ONE AudioContext. The game made two (SFX and MUS) and a third for the whistle. This
+   replaces window.AudioContext, before the first click, with a function that always
+   returns one shared context, whose `destination` is steered by who asks:
+       music master (M.out)  -> musicIn (the DUCK gain) -> mood (title quieting) -\
+       effects master        -> sfxIn (the EFFECTS slider) -----------------------+-> soft limiter -> speakers
+   (a gain node created at 0.0001 is the music master; anything else is an effect).
+   DUCKING: important effects dip the music by -3 to -6 dB: 30 ms attack, 120 ms hold,
+   about 500 ms release. Leader hurt (-3, at most once a second), level-up, horn,
+   boss, boss death, win and defeat (-5/-6). Never hits, coins or picks.
+   SLIDERS: Settings has Volume (master), Music (existing) and a new Effects slider
+   (settings().sfx, 0-100, default 100; older saves simply lack the key).
+   CLEANUP: a voice cap (hats, ticks, grace notes and claps are skipped while more than
+   44 voices are in flight), and the boss-death noise now loops (it was cut at 0.5 s).
+   KILL SWITCH: window.AUDIO_CLASSIC = true BEFORE the page loads leaves the three
+   separate contexts, no ducking and no Effects slider (J-20's live switch still works).
+   ROLLBACK: delete this block, and the "J-21" mentions in the first block (sfxIn).
+============================================================================ */
+(function(){
+'use strict';
+const A = window.AUDIO87;
+if (!A || window.AUDIO_CLASSIC || typeof MUS === 'undefined' || !MUS._V) return;
+const Real = window.AudioContext || window.webkitAudioContext; if (!Real) return;
+const M = MUS._M, V = MUS._V;
+const cfg = () => { try { return settings(); } catch (e) { return {}; } };
+let shared = null, lastGain = null;
+function build(ctx){
+  const realDest = Object.getOwnPropertyDescriptor(BaseAudioContext.prototype, 'destination').get.call(ctx);
+  const lim = ctx.createDynamicsCompressor();
+  lim.threshold.value = -3; lim.knee.value = 0; lim.ratio.value = 12; lim.attack.value = .002; lim.release.value = .12; lim.connect(realDest);
+  const musicIn = ctx.createGain(), mood = ctx.createGain(), sfxIn = ctx.createGain();
+  musicIn.connect(mood); mood.connect(lim); sfxIn.connect(lim);
+  A.musicIn = musicIn; A.mood = mood; A.sfxIn = sfxIn; A.limiter = lim; A.shared = ctx;
+  const cg = ctx.createGain.bind(ctx);
+  ctx.createGain = function(){ const g = cg(); lastGain = g; return g; };
+  Object.defineProperty(ctx, 'destination', {configurable:true, get(){ return (lastGain && lastGain.gain.value < .01) ? musicIn : sfxIn; }});
+}
+function Shared(){ if (!shared){ shared = new Real(); build(shared); } return shared; }
+window.AudioContext = Shared; window.webkitAudioContext = Shared;
+
+/* ---- ducking ------------------------------------------------------------------ */
+A.duck = function(db, hold){
+  const ctx = shared; if (!ctx || !A.musicIn) return;
+  const t = ctx.currentTime, g = A.musicIn.gain, lin = Math.pow(10, -db / 20), h = hold === undefined ? .12 : hold;
+  g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(lin, t + .03);
+  g.setValueAtTime(lin, t + .03 + h); g.setTargetAtTime(1, t + .03 + h, .17);
+};
+const DUCK = {hurt:[3, 1000], level:[5, 600], horn:[5, 600], boss:[6, 600], bossdie:[6, 600], win:[5, 600], down:[6, 600]};
+const duckLast = {};
+{ const p = SFX.play;
+  SFX.play = function(name){
+    const d = DUCK[name];
+    if (d && shared && cfg().volume > 0 && cfg().sfx !== 0){
+      const now = performance.now(); if (now - (duckLast[name] || 0) > d[1]){ duckLast[name] = now; try { A.duck(d[0]); } catch (e) {} }
+    }
+    return p.apply(this, arguments);
+  };
+}
+
+/* ---- the boss-death rumble: the original noise buffer is 0.5 s and not looped, so 0.8 s was cut ------ */
+{ const p = SFX.play, S = {};
+  S.bossdie = X => {
+    const t = X.ac.currentTime;
+    A.nburst(X.ac, X.noiseBuf, X.master, t, .8, .3, 'bandpass', 120, .4);
+    [392, 330, 262, 196].forEach((f, i) => {
+      const o = X.ac.createOscillator(), g = X.ac.createGain(), lp = X.ac.createBiquadFilter(), tt = t + i * .12;
+      o.type = 'sawtooth'; o.frequency.setValueAtTime(f, tt); o.frequency.exponentialRampToValueAtTime(f * .9, tt + .3); lp.type = 'lowpass'; lp.frequency.value = 1100;
+      o.connect(lp); lp.connect(g); g.connect(X.master); g.gain.setValueAtTime(.0001, tt); g.gain.exponentialRampToValueAtTime(.1, tt + .01); g.gain.exponentialRampToValueAtTime(.0001, tt + .3); o.start(tt); o.stop(tt + .32);
+    });
+  };
+  let last = 0;
+  SFX.play = function(name){
+    if (name !== 'bossdie') return p.apply(this, arguments);
+    try { const X = SFX._g(); if (!X.ac || !cfg().volume) return; const n = performance.now(); if (n - last < 400) return; last = n; S.bossdie(X); } catch (e) {}
+  };
+}
+
+/* ---- voice cap (AUD-13) -------------------------------------------------------- */
+{ const ends = [], LOW = {hat:1, tick:1, cut:1, clap:1};
+  for (const k of Object.keys(V)){
+    const f = V[k]; if (typeof f !== 'function') continue;
+    V[k] = function(t, e){
+      const now = M.ac ? M.ac.currentTime : 0;
+      while (ends.length && ends[0] < now) ends.shift();
+      if (ends.length > 44 && LOW[k]) return;
+      const end = t + (e && e.d ? e.d : .3) + .5; let i = ends.length; while (i > 0 && ends[i - 1] > end) i--; ends.splice(i, 0, end);
+      return f.apply(this, arguments);
+    };
+  }
+  A.voices = () => ends.length;
+}
+
+/* ---- sliders -------------------------------------------------------------------- */
+{ const f = window.settingsHTML;
+  if (typeof f === 'function') window.settingsHTML = function(dark){
+    const s = f(dark), v = cfg().sfx === undefined ? 100 : cfg().sfx;
+    const ctl = `<label title="How loud the sound effects are. Volume is the master.">Effects <input type="range" min="0" max="100" value="${v}" oninput="setSetting('sfx', +this.value)"></label>`;
+    const i = s.lastIndexOf('</div>');
+    return i < 0 ? s + ctl : s.slice(0, i) + ctl + s.slice(i);
+  };
+  const ss = window.setSetting;
+  if (typeof ss === 'function') window.setSetting = function(k, v){ const r = ss.apply(this, arguments); if (k === 'sfx'){ try { SFX.unlock(); SFX.play('pick'); } catch (e) {} } return r; };
+}
+setInterval(() => {
+  try { if (A.sfxIn && shared){ const v = cfg().sfx === undefined ? 100 : cfg().sfx; A.sfxIn.gain.setTargetAtTime(Math.max(0, Math.min(1, v / 100)), shared.currentTime, .05); } } catch (e) {}
+}, 250);
+})();
+/* ===== END INDEX 87c ====================================================== */
+
+/* ============================================================================
+   INDEX 87d - CONTEXTS AND FEEDBACK SOUNDS (J-22; AUD-11, 14)
+   TITLE SCREEN   the camp theme as a solo lute (melody only: no drums, bass or arpeggio),
+                  about 15 % slower and 40 % quieter. Back to normal when the title closes.
+   PROLOGUE       the town is the camp tune; its sorties, assaults and nights are contracts,
+                  so they build from it exactly as in J-20 (checked, no extra code).
+   DEBRIEF        when a contract ends, the win/defeat/withdrawal fanfare is replaced by a
+                  short lute stinger on the music: victory = a gentle rising cadence
+                  (A4 C5 E5 A5), withdrawal = three notes, defeat or flight = a low, sparse
+                  pair (A2, E2). The camp theme simply carries on underneath.
+   RAID           from the camp tune, then the contract layers at 1.08 x the usual tempo
+                  (in targetM, block 87b).
+   BAR FIGHT      unchanged (Index 41, barNow); it now shares the context and the ducking.
+   NEW SOUNDS (all quiet, none on frequent events; call sites in audits/audio.md):
+     build       a wood knock, twice, when a building is started (startBuild)
+     demolish    a low crumble when a building is taken down (doDemolish)
+     pause       a soft low "tock" going into the pause menu, a higher one coming out (togglePause)
+     low health  a faint heartbeat every 1.4 s while the Leader is at a third of Con or less
+     luck        a soft rising ping when Momentum gives +1 Luck (momentum)
+   ROLLBACK: delete this block. KILL SWITCH: window.AUDIO_CLASSIC = true skips the
+   feedback sounds' music side (the title quieting and the stinger) before page load.
+============================================================================ */
+(function(){
+'use strict';
+const A = window.AUDIO87;
+if (!A || typeof MUS === 'undefined' || !MUS._V) return;
+const M = MUS._M, SONGS = MUS.SONGS;
+const cfg = () => { try { return settings(); } catch (e) { return {}; } };
+const gOK = () => (typeof G !== 'undefined' && G) ? G : null;
+const classic = () => !!window.AUDIO_CLASSIC;
+
+/* ---- title screen: solo lute --------------------------------------------------- */
+const T = {on:false, base:1};
+const titleOpen = () => { const el = document.getElementById('screen-title'); return !!(el && !el.classList.contains('hidden')); };
+for (const id in SONGS){
+  const c = SONGS[id].camp, f = c.fn;
+  c.fn = function(bi, variant){
+    const r = f(bi, variant);
+    if (!T.want || classic()) return r;
+    return {len:r.len, ev:r.ev.filter(e => e.k === 'pipe' || e.k === 'cut' || e.k === 'lute' || e.k === 'fiddle')};
+  };
+}
+function titleStep(){
+  if (classic()){ if (T.on){ T.on = false; if (A.mood) A.mood.gain.value = 1; } return; }
+  const want = titleOpen() && M.track === 'camp' && !(A.U && A.U.active);
+  T.want = want;
+  if (want && !T.on){ T.on = true; T.base = M.pk || 1; }
+  if (T.on && !want && (M.track !== 'camp' || (A.U && A.U.active))) T.on = false;     // a contract began: nothing to ease back
+  if (T.on){
+    if (!want && Math.abs((M.pk || 1) - T.base) < .01){ M.pk = T.base; T.on = false; }
+    else if (M.track === 'camp' && !(A.U && A.U.active)){ const target = want ? T.base * 1.15 : T.base; M.pk = (M.pk || 1) + (target - (M.pk || 1)) * .2; }
+  }
+  if (A.mood && A.shared) A.mood.gain.setTargetAtTime(want ? .6 : 1, A.shared.currentTime, .6);
+}
+
+/* ---- debrief stinger ----------------------------------------------------------- */
+function stinger(kind){
+  const ac = M.ac; if (!ac || !MUS.vol() || ac.state !== 'running') return;
+  const dest = A.musicIn || M.out, t0 = ac.currentTime + .05;
+  const notes = kind === 'victory' ? [[69, 0, .2], [72, .16, .2], [76, .32, .2], [81, .5, .26]]
+              : kind === 'withdrawn' ? [[69, 0, .2], [72, .2, .2], [69, .45, .2]]
+              : [[45, 0, .34], [40, .6, .3]];
+  for (const [m, dt, v] of notes){
+    const f = MUS.hz(m), s = ac.createBufferSource(), lp = ac.createBiquadFilter(), g = ac.createGain(), t = t0 + dt;
+    s.buffer = A.ksBuf(ac, f); lp.type = 'lowpass'; lp.frequency.setValueAtTime(3000, t); lp.frequency.exponentialRampToValueAtTime(800, t + .8);
+    g.gain.setValueAtTime(v * MUS.vol() * 1.2, t); g.gain.setTargetAtTime(.0001, t + .5, .35);
+    s.connect(lp); lp.connect(g); g.connect(dest); s.start(t); s.stop(t + 1.8);
+  }
+  A.duck && A.duck(3, .6);
+}
+{ const p = SFX.play;
+  SFX.play = function(name){
+    if (!classic() && (name === 'win' || name === 'down' || name === 'level')){
+      const g = gOK();
+      if (g && g.over){
+        const res = g.result || (name === 'win' ? 'victory' : 'fallen');
+        try { stinger(res === 'victory' ? 'victory' : res === 'withdrawn' ? 'withdrawn' : 'defeat'); } catch (e) {}
+        return;
+      }
+    }
+    return p.apply(this, arguments);
+  };
+}
+
+/* ---- new feedback sounds ----------------------------------------------------------- */
+const jit = A.jit;
+function sfxTone(X, f, f2, dur, peak, delay){
+  const t = X.ac.currentTime + (delay || 0), o = X.ac.createOscillator(), g = X.ac.createGain();
+  o.type = 'sine'; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + dur);
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + .005); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+  o.connect(g); g.connect(X.master); o.start(t); o.stop(t + dur + .02);
+}
+const NEWSFX = {
+  build(X){ for (const d of [0, .11]){ sfxTone(X, 170 * jit(.04), 130, .06, .07, d); A.nburst(X.ac, X.noiseBuf, X.master, X.ac.currentTime + d, .04, .08, 'lowpass', 600, .7); } },
+  demolish(X){ sfxTone(X, 90, 50, .28, .1); A.nburst(X.ac, X.noiseBuf, X.master, X.ac.currentTime, .26, .1, 'bandpass', 300, .6); },
+  pausein(X){ sfxTone(X, 200, 150, .06, .06); },
+  pauseout(X){ sfxTone(X, 260, 330, .06, .05); },
+  heart(X){ sfxTone(X, 62, 45, .12, .09); sfxTone(X, 58, 42, .12, .06, .22); },
+  luck(X){ sfxTone(X, 660, 0, .22, .045); sfxTone(X, 990, 0, .16, .02, .06); }
+};
+function fx(name){ try { if (classic() || !cfg().volume) return; const X = SFX._g(); if (X.ac) NEWSFX[name](X); } catch (e) {} }
+A.fx = fx;
+{ const f = window.startBuild;
+  if (typeof f === 'function') window.startBuild = function(){ const before = META && META.treasury; const r = f.apply(this, arguments); if (META && META.treasury < before) fx('build'); return r; };
+}
+{ const f = window.doDemolish;
+  if (typeof f === 'function') window.doDemolish = function(id){ const had = typeof has === 'function' && has(id); const r = f.apply(this, arguments); if (had && !has(id)) fx('demolish'); return r; };
+}
+{ const f = window.togglePause;
+  if (typeof f === 'function') window.togglePause = function(){ const g = gOK(), was = g && g.paused; const r = f.apply(this, arguments); if (g && !g.over && g.paused !== was) fx(g.paused ? 'pausein' : 'pauseout'); return r; };
+}
+{ const f = window.momentum;
+  if (typeof f === 'function') window.momentum = function(){ const g = gOK(), before = g && g.luck; const r = f.apply(this, arguments); if (g && g.luck > before) fx('luck'); return r; };
+}
+let lastBeat = 0;
+function heartbeat(){
+  const g = gOK(); if (!g || g.over || g.paused || !g.leader || !g.leader.maxCon) return;
+  if (g.leader.con > Math.max(1, Math.floor(g.leader.maxCon / 3)) || g.leader.con <= 0) return;
+  const now = performance.now(); if (now - lastBeat < 1400) return; lastBeat = now; fx('heart');
+}
+
+setInterval(() => { try { titleStep(); heartbeat(); } catch (e) {} }, 250);
+})();
+/* ===== END INDEX 87d ====================================================== */

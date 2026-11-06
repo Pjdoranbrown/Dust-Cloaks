@@ -59,7 +59,18 @@
 <p class="n">Same two bars as section 1. "As built" uses the exact in-game values: lute peak 0.24 (lowpass 3600&rarr;900 Hz), frame drum dum/tek with small random variation, room reverb wet 0.14, high shelf &minus;2 dB. "Old town" is the pipe plus the old thump/tick, dry. The last button adds the wind bed and fire crackle that now fill the rests between verses.</p>
 <div class="row"><button id="j19old">Old town (pipe + old drum)</button><button id="j19new">J-19 town (as built)</button><button id="j19amb">Rest between verses (wind + crackle, 8 s)</button></div>
 
+<h2>6. J-21 as built: one context, ducking, sliders</h2>
+<p class="n">In the game, sound effects and music now share one audio context, so important effects can dip the music (&minus;3 to &minus;6 dB, 30 ms down, about half a second back). Start the theme (section 2, Play), then try the buttons. Horn, win, level-up, boss and Leader hurt duck the music; coin, pick and hits never do. Effects and Music are separate sliders in Settings, next to Volume.</p>
+<div class="row"><button data-j21="horn">Horn (ducks &minus;5 dB)</button><button data-j21="hurt">Leader hurt (&minus;3 dB)</button><button data-j21="win">Win (&minus;5 dB)</button><button data-j21="coin">Coin (no duck)</button><button data-j21="pick">Pick (no duck)</button></div>
+<div class="row"><label>Effects <input type="range" id="sfxv" min="0" max="100" value="100"></label><label>Music <input type="range" id="musv" min="0" max="100" value="100"></label> <span class="n" id="duckread"></span></div>
+
+<h2>7. J-22 as built: contexts and new feedback sounds</h2>
+<p class="n">Title screen: the camp theme as a solo lute, 15 % slower and quieter, no drums. Debrief: a short lute stinger instead of the fanfare, then the camp theme carries on. New quiet sounds: a wood knock when a building starts, a crumble when one is demolished, soft tocks for pause and resume, a faint heartbeat while the Leader is at a third of Con or less, and a small ping when Momentum gives +1 Luck.</p>
+<div class="row"><button id="j22title">Title screen (solo lute, 8 bars)</button><button data-st="victory">Stinger: victory</button><button data-st="withdrawn">Stinger: withdrawal</button><button data-st="defeat">Stinger: defeat / flight</button></div>
+<div class="row"><button data-fx="build">Build</button><button data-fx="demolish">Demolish</button><button data-fx="pausein">Pause</button><button data-fx="pauseout">Resume</button><button data-fx="heart">Low health (x3)</button><button data-fx="luck">+1 Luck</button></div>
+
 <script>
+let inSfx=false,musLvl,sfxBus;
 let ctx,master,comp,musicIn,duckG,revIn,revG,dryOld,bufCache={},noiseBuf;
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const PC={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
@@ -74,7 +85,7 @@ function init(){
   master=ctx.createGain();master.gain.value=.7;
   comp=ctx.createDynamicsCompressor();comp.threshold.value=-14;comp.ratio.value=3;comp.attack.value=.01;comp.release.value=.25;
   comp.connect(master);master.connect(ctx.destination);
-  duckG=ctx.createGain();duckG.connect(comp);              // everything musical goes through here
+  musLvl=ctx.createGain();musLvl.connect(comp);sfxBus=ctx.createGain();sfxBus.connect(comp);duckG=ctx.createGain();duckG.connect(musLvl);   // music: duck -> level -> comp; effects: own bus
   noiseBuf=ctx.createBuffer(1,ctx.sampleRate*2,ctx.sampleRate);
   const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
   // room reverb: decaying stereo noise, low-passed
@@ -89,6 +100,7 @@ $('#mv').oninput=e=>{if(master)master.gain.value=e.target.value/100};
 
 /* output chooser: new = dry + room send; old = dry only */
 function out(node,wet,forceOld){
+  if(inSfx){node.connect(sfxBus);return}
   if(mixNew&&!forceOld){const d=ctx.createGain();d.gain.value=1;node.connect(d);d.connect(duckG);const s=ctx.createGain();s.gain.value=wet;node.connect(s);s.connect(revIn)}
   else node.connect(dryOld);
 }
@@ -261,6 +273,28 @@ $('#j19amb').onclick=()=>{init();const t=ctx.currentTime;const s=ctx.createBuffe
   s.connect(lp);lp.connect(g);g.connect(duckG);g.gain.setValueAtTime(.0001,t);g.gain.setTargetAtTime(.04,t,1.2);g.gain.setTargetAtTime(.0001,t+6.5,.6);s.start(t);s.stop(t+9);
   for(let i=0,u=.9;u<7.5;i++,u+=.4+Math.random()*2.6)nb(t+u,.02,.012+Math.random()*.02,'bandpass',1200+Math.random()*2000,1.5,x=>x.connect(duckG))};
 
+/* ---------- sections 6 and 7: J-21 / J-22 ---------- */
+const dbread=()=>{ if(!duckG)return; $('#duckread').textContent='music duck gain: '+duckG.gain.value.toFixed(2) };
+const J21={horn:()=>{duckNow(.56,.17);SFXD[3].neu()},hurt:()=>{duckNow(.71,.17);SFXD[2].neu()},
+ win:()=>{duckNow(.56,.17);[392,523,659,784,1046].forEach((f,i)=>{const t=ctx.currentTime+i*.1,o=osc('sine',f,t),g=ctx.createGain();o.connect(g);out(g,0);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.11,t+.005);g.gain.exponentialRampToValueAtTime(.0001,t+(i==4?.7:.3));o.start(t);o.stop(t+.75)})},
+ coin:()=>SFXD[0].neu(),pick:()=>SFXD[1].neu()};
+$$('[data-j21]').forEach(b=>b.onclick=()=>{init();inSfx=true;try{J21[b.dataset.j21]()}finally{inSfx=false}dbread();setTimeout(dbread,100);setTimeout(dbread,700)});
+$('#sfxv').oninput=e=>{init();sfxBus.gain.value=e.target.value/100};
+$('#musv').oninput=e=>{init();musLvl.gain.value=e.target.value/100};
+function luteNote(m,t,v){const f=hz(m),s=ctx.createBufferSource();s.buffer=ksBuf(f,f<300?1.8:1.3);const lp=bq('lowpass',3000,.6),g=ctx.createGain();lp.frequency.setValueAtTime(3000,t);lp.frequency.exponentialRampToValueAtTime(800,t+.8);g.gain.setValueAtTime(v,t);g.gain.setTargetAtTime(.0001,t+.5,.35);s.connect(lp);lp.connect(g);out(g,.2);s.start(t);s.stop(t+1.8)}
+$('#j22title').onclick=()=>{init();const t0=ctx.currentTime+.1,k=1.15;let t=0;for(let bar=0;bar<8;bar++){for(const n of MEL[bar]){const d=n.l*E8*k;if(n.m!==null){luteNote(n.m,t0+t,.14);if(n.l>=5)luteNote(n.m,t0+t+d/2,.07)}t+=d}}};
+const ST={victory:[[69,0,.2],[72,.16,.2],[76,.32,.2],[81,.5,.26]],withdrawn:[[69,0,.2],[72,.2,.2],[69,.45,.2]],defeat:[[45,0,.34],[40,.6,.3]]};
+$$('[data-st]').forEach(b=>b.onclick=()=>{init();const t0=ctx.currentTime+.05;for(const[m,dt,v]of ST[b.dataset.st])luteNote(m,t0+dt,v*1.2)});
+function tone1(f,f2,dur,peak,delay){const t=ctx.currentTime+delay,o=osc('sine',f,t),g=ctx.createGain();if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+dur);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(peak,t+.005);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g);out(g,0);o.start(t);o.stop(t+dur+.02)}
+const FX={
+ build:()=>[0,.11].forEach(d=>{tone1(170*jit(.04),130,.06,.07,d);nb(ctx.currentTime+d,.04,.08,'lowpass',600,.7)}),
+ demolish:()=>{tone1(90,50,.28,.1,0);nb(ctx.currentTime,.26,.1,'bandpass',300,.6)},
+ pausein:()=>tone1(200,150,.06,.06,0),pauseout:()=>tone1(260,330,.06,.05,0),
+ heart:()=>{for(let i=0;i<3;i++){tone1(62,45,.12,.09,i*1.4);tone1(58,42,.12,.06,i*1.4+.22)}},
+ luck:()=>{tone1(660,0,.22,.045,0);tone1(990,0,.16,.02,.06)}};
+$$('[data-fx]').forEach(b=>b.onclick=()=>{init();inSfx=true;try{FX[b.dataset.fx]()}finally{inSfx=false}});
+const inS=fn=>()=>{inSfx=true;try{fn()}finally{inSfx=false}};
+
 /* ---------- section 3: SFX pairs ---------- */
 const jit=(a)=>1+(Math.random()*2-1)*a;
 function oT(f,dur,type,vol,slide,delay){const t=ctx.currentTime+(delay||0),o=osc(type,f,t),g=ctx.createGain();if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(30,f*slide),t+dur);g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);o.connect(g);out(g,0,true);o.start(t);o.stop(t+dur+.02)}
@@ -287,7 +321,7 @@ const SFXD=[
 const box=$('#sfx');
 SFXD.forEach((s,i)=>{
   const r=document.createElement('div');r.className='pair';r.innerHTML=`<span>${s.n}</span><div><button data-o="${i}">Now</button><button data-os="${i}">x8</button></div><div><button data-n="${i}">Proposed</button><button data-ns="${i}">Spam x8</button></div>`;box.appendChild(r)});
-function spam(fn){init();for(let i=0;i<8;i++)setTimeout(fn,i*(90+Math.random()*60))}
+function spam(fn){init();for(let i=0;i<8;i++)setTimeout(inS(fn),i*(90+Math.random()*60))}
 box.onclick=e=>{const a=e.target.dataset;if(!a)return;init();
- if(a.o)SFXD[a.o].old();if(a.os)spam(SFXD[a.os].old);if(a.n)SFXD[a.n].neu();if(a.ns)spam(SFXD[a.ns].neu)};
+ if(a.o)inS(SFXD[a.o].old)();if(a.os)spam(SFXD[a.os].old);if(a.n)inS(SFXD[a.n].neu)();if(a.ns)spam(SFXD[a.ns].neu)};
 </script></body></html>
