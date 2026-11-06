@@ -2,7 +2,7 @@
 
 Keep this current at the end of every task: what changed, what's in flight, where things are. Short facts only.
 
-Last updated: 2026-11-06, after commit c02f2d7 (Index 85).
+Last updated: 2026-11-06, after commit 9d0b481 (Index 85b-d).
 
 ## Where things are
 - Repo: this folder; GitHub `Pjdoranbrown/Dust-Cloaks` (branch `main`); live: https://pjdoranbrown.github.io/Dust-Cloaks/ (GitHub Pages, updates a minute after push).
@@ -37,11 +37,9 @@ Last updated: 2026-11-06, after commit c02f2d7 (Index 85).
 - For one-off heavy reading or drafting inside a chat, use the `game-drafter` subagent (`.claude/agents/game-drafter.md`).
 
 ## In flight
-- Decisions D-01…D-10 made (see `game-bible.md` log). Dispatched 2026-11-06:
-  - game-balancer → J-14 (soften hard hosts' Tier 1 pools) and J-15 (tabletop gold sinks) in `js/balance.js` (Index 86; script tag added after `js/story.js`).
-  - story-designer → J-16 (Cayde = Grand Master of the Grey Cloaks, no "Reynard"), J-17 (new lieutenants replace Orsolt/Ilvaryn after the prologue), J-18 (prologue cold open v1) in `js/story.js`.
-- When they report: review the diff, run the standard regression, commit `index.html` + `js/` + `audits/`, update the backlog statuses.
-- Still waiting on the user: approval of jobs J-01…J-13.
+- story-designer: J-16/17/18 shipped (Index 85b-d, commit 9d0b481).
+- game-balancer: J-15 gear sinks done; J-14 host pools sent back (keep host identity: no levy/brigands in Monsters/Orcs/Arcana). js/balance.js and audits/balance.md are uncommitted until the revision passes review; index.html already loads js/balance.js.
+- Still waiting on the user: approval of jobs J-01..J-13.
 
 ## User preferences
 - Plain, non-technical summaries; leads with the outcome.
