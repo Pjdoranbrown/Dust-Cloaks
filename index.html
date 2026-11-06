@@ -4419,7 +4419,7 @@ const SFX = (() => {
     try { SOUNDS[name](); } catch(e){}
   }
   window.addEventListener('pointerdown', unlock);
-  return {play, unlock, setVol};
+  return {play, unlock, setVol, _g:() => ({ac, master, noiseBuf})};   /* Index 87: lets js/audio.js reach the context */
 })();
 
 /* ============================================================================
@@ -14287,7 +14287,7 @@ const MUS = (() => {
     for (const ev of ['pointerdown', 'keydown', 'touchend']) window.addEventListener(ev, start);
     if (typeof document !== 'undefined' && document.addEventListener) document.addEventListener('visibilitychange', () => { if (M.ac) tick(); });
   }
-  return {start, tick, bar, state:() => ({track:M.track, bar:M.bar, level:M.level, variant:M.variant, song:M.song, fsong:M.fsong, pk:M.pk}), _M:M, midi, hz, CAMP_BARS, FBARS, CBAR, FBAR, fightLevel, vol, wantTrack, SONGS, SONG_IDS, takeNotes, playing, barNow, setSong, chosenSong, combatTune, combatName, passTempo, fightK, beat:() => (SONGS[M.song] || SONGS.jig).camp.beat * (M.pk || 1)};
+  return {_V:V /* Index 87 */, start, tick, bar, state:() => ({track:M.track, bar:M.bar, level:M.level, variant:M.variant, song:M.song, fsong:M.fsong, pk:M.pk}), _M:M, midi, hz, CAMP_BARS, FBARS, CBAR, FBAR, fightLevel, vol, wantTrack, SONGS, SONG_IDS, takeNotes, playing, barNow, setSong, chosenSong, combatTune, combatName, passTempo, fightK, beat:() => (SONGS[M.song] || SONGS.jig).camp.beat * (M.pk || 1)};
 })();
 
 // The Music slider sits in Settings, beside Volume.   (Index 29)
@@ -25312,5 +25312,6 @@ window.addEventListener('storage', e => {
 <script src="js/graphics.js"></script>
 <script src="js/story.js"></script>
 <script src="js/balance.js"></script>
+<script src="js/audio.js"></script>
 </body>
 </html>

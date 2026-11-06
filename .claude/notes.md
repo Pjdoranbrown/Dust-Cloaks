@@ -15,7 +15,7 @@ Last updated: 2026-11-06, after commit 790b303 (audio review).
 
 ## Code conventions
 - Each change is an "INDEX N" section with a header comment (what, why, ROLLBACK). Later sections wrap earlier functions: `{ const f = fn; fn = function(){ ... f() ... }; }`. In-place patches are tiny and marked `/* Index N */`.
-- Latest (index.html): Index 76 3D props · 77 baked soft terrain, tavern, build-anywhere + construction + builders · 78 Scribe's ledger, move/demolish, camp keys · 79 high-DPI sharp text, text size · 80 per-object draw guards · 81–82 audit bug fixes · 83 UX · 84 graphics · 85 story · 86 balance (js/balance.js).
+- Latest (index.html): Index 76 3D props · 77 baked soft terrain, tavern, build-anywhere + construction + builders · 78 Scribe's ledger, move/demolish, camp keys · 79 high-DPI sharp text, text size · 80 per-object draw guards · 81–82 audit bug fixes · 83 UX · 84 graphics · 85 story · 86 balance (js/balance.js) · 87 audio (js/audio.js).
 - Calendar: one contract = one season (`chron().turn`). Construction uses that clock (`buildNow`).
 
 ## Running and testing
@@ -39,9 +39,9 @@ Last updated: 2026-11-06, after commit 790b303 (audio review).
 - For one-off heavy reading or drafting inside a chat, use the `game-drafter` subagent (`.claude/agents/game-drafter.md`). For audio work, the `sound-designer` subagent (`.claude/agents/sound-designer.md`).
 
 ## In flight (as of commit 790b303)
-- sound-designer is building J-19 (mellow town audio) in `js/audio.js` (Index 87; script tag added after `js/balance.js`, uncommitted until reviewed).
+- J-19 shipped (Index 87, js/audio.js). Demo section 4 "J-19 as built" lets the user compare old and new town audio.
 - Waiting on the user:
-  - **Audio:** listen to the demo at https://pjdoranbrown.github.io/Dust-Cloaks/audits/audio-demo.html (or `audits/audio-demo.html` locally), then approve J-19…J-22. Recommended order: J-19 (mellow town audio, delegate, M) first; J-20 (one continuous theme + Humanity-style tempo) is the big one.
+  - **Audio:** J-19 shipped; next audio jobs J-20 (continuous theme + Humanity-style tempo), J-21 (audio plumbing), J-22 (more music contexts and feedback sounds) await approval. Demo: https://pjdoranbrown.github.io/Dust-Cloaks/audits/audio-demo.html
   - **Jobs J-01…J-13** (new-player start, Reeve's Hall Day 1, planning-table sticky bar, HUD scaling, health rows, squad spacing, save backups, game feel, visual polish, mid-size story, portrait strip, plain tooltips, bible fill).
 - Shipped this run: Index 81–82 bugs, 83 UX, 84 graphics, 85/85b-d story, 86 balance; decisions D-01…D-10 (see bible).
 

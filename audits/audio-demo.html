@@ -50,6 +50,10 @@
 <div class="row"><label><input type="checkbox" id="duck" checked> Duck the music under big sound effects</label>
  <span class="n">(start the theme above, then press a "blast" or "horn" button)</span></div>
 
+<h2>4. J-19 as built (what is now in the game, js/audio.js)</h2>
+<p class="n">Same two bars as section 1. "As built" uses the exact in-game values: lute peak 0.24 (lowpass 3600&rarr;900 Hz), frame drum dum/tek with small random variation, room reverb wet 0.14, high shelf &minus;2 dB. "Old town" is the pipe plus the old thump/tick, dry. The last button adds the wind bed and fire crackle that now fill the rests between verses.</p>
+<div class="row"><button id="j19old">Old town (pipe + old drum)</button><button id="j19new">J-19 town (as built)</button><button id="j19amb">Rest between verses (wind + crackle, 8 s)</button></div>
+
 <script>
 let ctx,master,comp,musicIn,duckG,revIn,revG,dryOld,bufCache={},noiseBuf;
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
@@ -205,6 +209,33 @@ $$('[data-p]').forEach(b=>b.onclick=()=>{
   if(mode==='lutedrum')for(let bar=0;bar<2;bar++){const o=bar*BARU*E8;NEW.dum(t0+o,{v:.45});NEW.dum(t0+o+4*E8,{v:.25});NEW.tek(t0+o+2*E8,{v:.2});NEW.tek(t0+o+6*E8,{v:.2})}
   mixNew=keep;
 });
+
+/* ---------- section 4: J-19 as built ---------- */
+function j19(mode){
+  init();const t0=ctx.currentTime+.1,keep=mixNew;let t=0;
+  const old=mode==='old';mixNew=!old;
+  // as-built lute: peak .24, 1.6 s max life, finger click .02 (the game's lute() in js/audio.js)
+  const lute=(tt,n,d,v)=>{const f=hz(n),life=Math.min(1.6,.7+Math.max(.1,d)*.9),s=ctx.createBufferSource();s.buffer=ksBuf(f,f<300?1.8:1.3);
+    const lp=bq('lowpass',3600,.6),body=bq('peaking',230,1.2),g=ctx.createGain();body.gain.value=5;lp.frequency.setValueAtTime(3600,tt);lp.frequency.exponentialRampToValueAtTime(900,tt+.7);
+    g.gain.setValueAtTime(.24*v,tt);g.gain.setTargetAtTime(.0001,tt+life*.55,life*.15);s.connect(lp);lp.connect(body);body.connect(g);out(g,.14);s.start(tt);s.stop(tt+life+.5);nb(tt,.02,.02*v,'bandpass',Math.min(5000,f*3),1.4)};
+  for(let bar=0;bar<2;bar++){
+    for(const n of MEL[bar]){const d=n.l*E8;
+      if(n.m!==null){const v=t===0?.9:.75;
+        if(old)OLD.pipe(t0+t,{m:n.m,d:d*.96,v,vib:n.l>=3});
+        else{lute(t0+t,n.m,d,v);if(d>=1.5)lute(t0+t+d/2,n.m,d/2,v*.5)}}
+      t+=d}
+    const o=bar*BARU*E8;
+    if(old){ // old thump / tick
+      const th=(tt,v)=>{const o1=osc('sine',118,tt),g=ctx.createGain();o1.frequency.exponentialRampToValueAtTime(52,tt+.16);o1.connect(g);out(g,0,true);g.gain.setValueAtTime(.5*v,tt);g.gain.exponentialRampToValueAtTime(.0001,tt+.24);o1.start(tt);o1.stop(tt+.26);nb(tt,.04,.2*v,'lowpass',800,.7,g=>out(g,0,true))};
+      th(t0+o,.3);th(t0+o+4*E8,.18);nb(t0+o+2*E8,.035,.16*.14,'bandpass',2300,1.2,g=>out(g,0,true));nb(t0+o+6*E8,.035,.16*.14,'bandpass',2300,1.2,g=>out(g,0,true));
+    }else{NEW.dum(t0+o,{v:.3*1.4});NEW.dum(t0+o+4*E8,{v:.18*1.4});NEW.tek(t0+o+2*E8,{v:.14});NEW.tek(t0+o+6*E8,{v:.14})}
+  }
+  mixNew=keep;
+}
+$('#j19old').onclick=()=>j19('old');$('#j19new').onclick=()=>j19('new');
+$('#j19amb').onclick=()=>{init();const t=ctx.currentTime;const s=ctx.createBufferSource(),lp=bq('lowpass',280,.3),g=ctx.createGain();s.buffer=noiseBuf;s.loop=true;
+  s.connect(lp);lp.connect(g);g.connect(duckG);g.gain.setValueAtTime(.0001,t);g.gain.setTargetAtTime(.04,t,1.2);g.gain.setTargetAtTime(.0001,t+6.5,.6);s.start(t);s.stop(t+9);
+  for(let i=0,u=.9;u<7.5;i++,u+=.4+Math.random()*2.6)nb(t+u,.02,.012+Math.random()*.02,'bandpass',1200+Math.random()*2000,1.5,x=>x.connect(duckG))};
 
 /* ---------- section 3: SFX pairs ---------- */
 const jit=(a)=>1+(Math.random()*2-1)*a;
