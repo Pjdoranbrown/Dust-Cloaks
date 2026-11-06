@@ -24684,7 +24684,7 @@ function tickBuilds(){
   SFX.play('win');
 }
 // What an empty plot says when you point at it.
-function plotLabel(o){ return o.id === 'palisade' ? [facility('palisade').name, `Plot: ${facCost(facility('palisade'))}gp`] : ['Empty plot', 'Click to choose a building']; }
+function plotLabel(o){ return FIXED_SITE.has(o.id) ? [facility(o.id).name, `Plot: ${facCost(facility(o.id))}gp`] :   /* Index 88 */ ['Empty plot', 'Click to choose a building']; }
 campObjects = (function(prev){
   return function(){
     const out = prev();
@@ -24775,9 +24775,9 @@ openPanel = (function(prev){
 })(openPanel);
 function plotPanelHTML(P){
   const slot = (SITE.map && SITE.map[P.id]) || P.id, L = curLayout();
-  const opts = FACILITIES.filter(f => L.plots[f.id] && !has(f.id) && !inBuild(f.id) && (slot === 'palisade' ? f.id === 'palisade' : !FIXED_SITE.has(f.id)));
+  const opts = FACILITIES.filter(f => L.plots[f.id] && !has(f.id) && !inBuild(f.id) && (FIXED_SITE.has(slot) ? f.id === slot : !FIXED_SITE.has(f.id)));   /* Index 88: a fixed slot lists only its own facility */
   const cats = [...new Set(opts.map(f => f.cat))];
-  let h = `<h2>${slot === 'palisade' ? facility('palisade').name : 'An Empty Plot'}</h2>
+  let h = `<h2>${FIXED_SITE.has(slot) ? facility(slot).name : 'An Empty Plot'}</h2>
     <div class="desc" style="text-align:left">Choose what to build here. Builders from the town raise it over the seasons (a season passes with every contract); it does nothing until it is finished. Change your mind before the next contract and you get every coin back.</div>
     <div class="desc" style="text-align:left;margin:4px 0"><b>Treasury:</b> ${META.treasury}gp</div>`;
   if (!opts.length) h += `<div class="desc">Everything that can be built is built or under way.</div>`;
@@ -25009,7 +25009,7 @@ closePanel = (function(prev){ return function(){ if (CAMP.moving){ CAMP.moving =
 const KEYS78 = {alt:false};
 function nearestPlot(){
   const L = META.leader && CAMP.people.find(q => q.kind === 'leader'), cx = L ? L.x : CAMP.cam.x + VW / 2, cy = L ? L.y : CAMP.cam.y + VH / 2;
-  let best = null, bd = 1e9; for (const o of campObjects()) if (o.kind === 'plot' && o.id !== 'palisade'){ const d = Math.hypot(o.x - cx, o.y - cy); if (d < bd){ bd = d; best = o; } }
+  let best = null, bd = 1e9; for (const o of campObjects()) if (o.kind === 'plot' && !FIXED_SITE.has(o.id)){   /* Index 88 */ const d = Math.hypot(o.x - cx, o.y - cy); if (d < bd){ bd = d; best = o; } }
   return best;
 }
 window.addEventListener('keydown', e => {
@@ -25031,12 +25031,12 @@ function campOverlays78(){
   const mv = CAMP.moving, alt = KEYS78.alt; if (!mv && !alt) return;
   ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.translate(-Math.round(CAMP.cam.x), -Math.round(CAMP.cam.y));
   for (const o of campObjects()){
-    if (mv && o.kind === 'plot' && o.id !== 'palisade'){ const a = 0.5 + 0.35 * Math.sin(CAMP.t / 8);
+    if (mv && o.kind === 'plot' && !FIXED_SITE.has(o.id)){   /* Index 88 */ const a = 0.5 + 0.35 * Math.sin(CAMP.t / 8);
       ctx.strokeStyle = `rgba(255,216,96,${a})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(o.x, o.y - 10, 60, 27, 0, 0, TAU); ctx.stroke(); }
     if (alt){
       if (o.kind === 'building') campLabel(o.x, o.y - o.img.height * BSCALE * 0.9, facility(o.id).name, staffOf(o.id) ? 'Staffed by ' + staffOf(o.id).name : upkeepLabel(o.id));
       else if (o.kind === 'site') campLabel(o.x, o.y - 60, facility(o.id).name, 'Building: ' + leftText(o.id));
-      else if (o.kind === 'plot') campLabel(o.x, o.y - 60, o.id === 'palisade' ? facility('palisade').name : 'Empty plot', o.id === 'palisade' ? 'Gate plot' : 'B to build');
+      else if (o.kind === 'plot') campLabel(o.x, o.y - 60, FIXED_SITE.has(o.id) ? facility(o.id).name : 'Empty plot', FIXED_SITE.has(o.id) ? 'Fixed plot' : 'B to build');   /* Index 88 */
       else if (o.kind === 'house') campLabel(o.x, o.y - 120, HS().house, 'Planning table (P)');
       else if (o.kind === 'wagon') campLabel(o.x, o.y - 80, HS().qm, 'Squad gear (Q)');
     }
@@ -25305,6 +25305,45 @@ window.addEventListener('storage', e => {
     document.body.appendChild(d); } catch (err) {}
 });
 /* ===== END INDEX 82 ======================================================= */
+
+/* ============================================================================
+   INDEX 88 - FIXED BUILD SITES FOR THE PALISADE AND THE WATCHTOWERS
+   WHAT        The Palisade (the gate plot on the south road) and the Watchtowers
+               (the plot beside it) have fixed sites: each can be built only on its
+               own plot, and nothing else can be built there. Every other building
+               still goes on any empty plot (Index 77).
+   HOW         FIXED_SITE (Index 77) now holds 'palisade' and 'watchtower'. To make
+               another facility fixed, add its id to FIXED_SITE (it must have a plot
+               of its own id in CAMP_LAYOUT, which every holding's layout has for the
+               palisade and watchtower). The code that used to special-case
+               'palisade' now asks FIXED_SITE: the plot panel (a fixed slot lists
+               only its own facility, other slots list no fixed facility), the plot
+               label, the Alt label, the B key and the move highlight; Index 78's
+               Move button and drop target already did. startBuild refuses a fixed
+               facility anywhere but its own plot, and another facility on a fixed
+               plot.
+   OLD SAVES   sitePlan() already ignores META.sites entries that point at a fixed
+               plot and re-homes the building on its own default plot, or the next
+               free one, so nothing overlaps.
+   GATES       The palisade's gates are the gaps at north, east and west (the
+               south gate is the Gatehouse itself). With the 3D world on they are
+               pairs of gate towers (Index 72). With it off (Settings, or the
+               Pixel sprite look) the ring drew no gate at all; it now gets plain
+               timber gate towers too.
+   ROLLBACK    Delete from this comment to END INDEX 88 and undo the patches marked
+               "Index 88" (plot panel, plot label, B key, move highlight, Alt label).
+============================================================================ */
+FIXED_SITE.add('watchtower');
+{ const f = startBuild; startBuild = function(fid, slot){ if (FIXED_SITE.has(fid)) slot = fid; if (FIXED_SITE.has(slot) && slot !== fid) return; return f.call(this, fid, slot); }; }
+function gateTowers88(){
+  const g = ctx; for (const gt of [0, Math.PI, Math.PI * 1.5]) for (const s of [-1, 1]){
+    const t = gt + s * 0.09, x = 880 + Math.cos(t) * 760, y = 640 + Math.sin(t) * 470; if (!wOn(x, y, 80)) continue;
+    g.fillStyle = 'rgba(0,0,0,.28)'; g.beginPath(); g.ellipse(x, y + 6, 14, 5, 0, 0, TAU); g.fill();
+    g.fillStyle = '#5a3a1c'; g.fillRect(x - 8, y - 60, 16, 64); g.fillStyle = '#7a5428'; g.fillRect(x - 8, y - 60, 6, 64);
+    g.fillStyle = '#3a2412'; g.fillRect(x - 11, y - 68, 22, 10); g.fillStyle = '#8a1a1a'; g.fillRect(x - 3, y - 80, 6, 12); }
+}
+{ const f = drawPalisadeRing; drawPalisadeRing = function(){ const r = f.apply(this, arguments); try { if (!r && has('palisade') && holding() === 'fort') gateTowers88(); } catch (e) {} return r; }; }
+/* ===== END INDEX 88 ======================================================= */
 
 </script>
 <!-- Index 83+: improvement modules, loaded after the game script; each one wraps game functions the same way the Index sections do. -->

@@ -46,7 +46,7 @@ const M = MUS._M, V = MUS._V;
 const hz = MUS.hz;
 const cfg = () => { try { return (typeof settings === 'function') ? settings() : {}; } catch (e) { return {}; } };
 const jit = a => 1 + (Math.random() * 2 - 1) * a;
-const camp = () => M.track === 'camp';
+const camp = () => M.track === 'camp' || !!(window.AUDIO87 && window.AUDIO87.U && window.AUDIO87.U.active);   // J-20: the continuous theme keeps the town voices in a contract
 
 /* ---- shared helpers ------------------------------------------------------ */
 function nburst(ac, buf, dest, t, dur, vol, type, f, q){
@@ -285,3 +285,148 @@ setInterval(() => {
 
 window.AUDIO87 = {barLog, ksCache, amb:() => amb};
 })();
+
+/* ============================================================================
+   INDEX 87b - ONE CONTINUOUS THEME (J-20; AUD-03 + AUD-04)
+   Before: a contract faded the camp tune out and started a different arrangement of
+   it (the "combat" tune) at bar 0, at its own fixed tempo. After: the tune the
+   bard is playing KEEPS PLAYING when a contract starts. One transport (bus, bar
+   counter and clock) runs camp -> contract -> camp:
+     level 0 (nobody near)   the camp arrangement as it is: lute melody and soft frame drum
+     level 1 (contact)       + bass, and the combat drum part played softly on hand drums
+     level 2 (boss, crowd,   + the full combat drums (kick, snare, hats, taiko), bass and
+              Leader hurt)     the synth lead
+   Layers change only on bar lines. The combat material (the notes) is the same
+   data as before; it is stretched onto the camp tune's bar so both sit in one key
+   and one tempo grid. Tempo: each bar eases toward a target (time constant 2.5 s,
+   ramped inside the bar, so it never jumps) that follows Game speed, slow-mo,
+   a pause for the Momentum choice, the fight level and the Momentum rank, in
+   a range of 0.7x-1.35x of the camp tempo. Camp stays at its own tempo; the climb is
+   only in contracts. When the contract ends the layers drop at once and the tempo
+   eases back down before the camp scheduler takes over again.
+   FALLBACKS (the old behaviour, exactly, for that contract): the bard is resting
+   between verses or set to Off, the music is muted, or the song has no combat part.
+   KILL SWITCH: set window.AUDIO_CLASSIC = true (before the page loads, or in the console
+   and then start a new contract) to restore the old switching.
+   ROLLBACK: delete this whole block (from "INDEX 87b" to "END INDEX 87b").
+============================================================================ */
+(function(){
+'use strict';
+if (typeof MUS === 'undefined' || !MUS._V || !window.AUDIO87) return;
+const M = MUS._M, V = MUS._V, SONGS = MUS.SONGS, A87 = window.AUDIO87;
+const SCALE_D = {pipe:1, fiddle:1, lead:1, bass:1, pad:1, lute:1};
+const TAU = 2.5, RANGE = [0.7, 1.35];
+const U = {active:false, decay:false, pk0:1, k:1, seq:0};
+const log = A87.log = [];
+A87.U = U;
+const clamp = (a, b, x) => Math.max(a, Math.min(b, x));
+const gOK = () => (typeof G !== 'undefined' && G) ? G : null;
+
+function targetM(){
+  if (U.decay) return 1;
+  const g = gOK(); let ts = (typeof gameSpeed === 'function') ? gameSpeed() : 1;
+  if (g){
+    if (g.slowmo > 0) ts *= 0.6;
+    if (g.momChoice && !g.momHidden) ts *= 0.8;
+    if (g.paused) ts *= 0.85;
+  }
+  const rank = g ? Math.min(0.08, 0.01 * (g.lvl || 0)) : 0;
+  return clamp(RANGE[0], RANGE[1], (1.10 + 0.08 * M.level + rank) * ts);
+}
+
+const L1 = {kick:['thump', .7], snare:['tick', .9], hat:['hat', .45], bass:['bass', .8]};
+const L2 = {kick:1, snare:1, hat:1, taiko:1, bass:1, lead:.75};
+function layerEvents(S, bi, lvl, ratio){
+  const cb = S.combat.fn(bi, lvl, M.variant), out = [], lg = clamp(0.8, 1.6, 1 / (S.camp.trim || 1));
+  for (const e of cb.ev){
+    let k = e.k, v;
+    if (lvl === 1){ const m = L1[k]; if (!m) continue; k = m[0]; v = e.v * m[1] * 0.6 * lg; }
+    else { if (!(k in L2)) continue; v = e.v * L2[k] * 0.8 * lg; }
+    out.push({t:e.t * ratio, k, m:e.m, d:e.d === undefined ? undefined : e.d * ratio, v});
+  }
+  return {ev:out, len:cb.len};
+}
+
+// Returns false when it handed the transport back to the camp scheduler.
+function scheduleBar(){
+  const S = SONGS[M.song], C = S.camp, bi = M.bar % C.bars, t0 = M.nextT, k0 = U.k;
+  if (U.decay && Math.abs(k0 / U.pk0 - 1) < 0.03){                                   // tempo is home: give the transport back
+    U.active = false; U.decay = false; M.pk = k0; M.bar = M.bar % C.bars; M.level = 0; return false;
+  }
+  const lvl = U.decay ? 0 : M.level;
+  const cbar = C.fn(bi, M.variant), len = cbar.len;                                  // len in base seconds (k = 1)
+  let ev = cbar.ev;
+  if (lvl >= 1){
+    const lay = layerEvents(S, bi, lvl, len / (S.combat.len || len));
+    ev = ev.filter(e => e.k !== 'thump' && e.k !== 'tick').concat(lay.ev);
+  }
+  const target = U.pk0 / targetM(), realGuess = len * k0;
+  const k1 = k0 + (target - k0) * (1 - Math.exp(-realGuess / TAU)), kAvg = (k0 + k1) / 2, realLen = len * kAvg;
+  const warp = u => k0 * u + (k1 - k0) * u * u / (2 * len);                          // base time -> real time with a steady ramp of the tempo
+  for (const e of ev){
+    const kl = k0 + (k1 - k0) * (e.t / len), x = (SCALE_D[e.k] && e.d !== undefined) ? Object.assign({}, e, {d:e.d * kl}) : e;
+    try { V[e.k](t0 + warp(e.t), x); } catch (er) {}
+  }
+  if (!U.decay){ (M.barQ || (M.barQ = [])).push({t:t0, len:realLen, song:M.song, id:M.barSeq = (M.barSeq || 0) + 1}); if (M.barQ.length > 6) M.barQ.shift(); }
+  if (log.length > 300) log.shift();
+  log.push({bar:++U.seq, mbar:M.bar, t:+t0.toFixed(2), len:+realLen.toFixed(2), k0:+k0.toFixed(3), k1:+k1.toFixed(3), lvl, decay:U.decay, song:M.song});
+  U.k = k1; M.pk = k1; M.nextT += realLen; M.bar++;
+  return true;
+}
+
+function unifiedTick(){
+  const ac = M.ac; if (!ac) return;
+  const hidden = typeof document !== 'undefined' && document.hidden;
+  if (hidden && ac.state === 'running'){ try { ac.suspend(); } catch (e) {} return; }
+  if (!hidden && ac.state === 'suspended'){ try { ac.resume(); } catch (e) {} }
+  if (ac.state !== 'running') return;
+  const g = gOK(), v = MUS.vol(), paused = (g && g.paused && !g.over) ? 0.35 : 1, now = ac.currentTime;
+  M.out.gain.setTargetAtTime(v * paused * 0.5, now, 0.12);
+  if (v < 0.005){ M.silent = true; return; }
+  if (M.silent){ M.silent = false; M.nextT = Math.max(M.nextT, now + 0.05); }
+  const want = MUS.wantTrack();
+  if (want === 'camp' && !U.decay){ U.decay = true; M.track = 'camp'; M.level = 0; }       // contract over: layers leave on the next bar line
+  else if (want === 'fight' && U.decay){ U.decay = false; M.track = 'fight'; M.fsong = M.song; M.lastUp = now; }
+  if (!U.decay){
+    const lv = MUS.fightLevel();
+    if (lv > M.level){ M.level = lv; M.lastUp = now; } else if (lv < M.level && now - M.lastUp > 5){ M.level = Math.max(lv, M.level - 1); M.lastUp = now; }
+    else if (lv === M.level) M.lastUp = now;
+  }
+  if (M.nextT < now - 0.4) M.nextT = now + 0.05;
+  let guard = 0;
+  while (U.active && M.bus && M.nextT < now + 0.7 && guard++ < 6){ if (!scheduleBar()) break; }
+}
+
+function canUnify(){
+  const ac = M.ac, S = SONGS[M.song];
+  return !!(ac && ac.state === 'running' && M.track === 'camp' && M.bus && M.song !== 'off' && S && S.combat && S.combat.fn && S.camp.fn && MUS.vol() > 0.005 && !(typeof document !== 'undefined' && document.hidden));
+}
+function enterUnified(){
+  const now = M.ac.currentTime;
+  Object.assign(U, {active:true, decay:false, pk0:M.pk || 1, k:M.pk || 1});
+  M.track = 'fight'; M.fsong = M.song; M.lastFight = M.song; M.level = 0; M.lastUp = now; M.barQ = []; M.noteQ.length = 0;
+  log.push({event:'enter', song:M.song, mbar:M.bar, t:+now.toFixed(2)});
+}
+function abortUnified(){                                                          // kill switch flipped on mid-contract
+  if (!U.active) return;
+  U.active = false; U.decay = false; M.track = 'camp'; M.pk = U.pk0;                // the old tick then switches to its own fight track
+}
+
+function tick87(){
+  if (window.AUDIO_CLASSIC){ if (U.active) abortUnified(); return MUS.tick(); }
+  if (U.active) return unifiedTick();
+  if (MUS.wantTrack() === 'fight' && canUnify()){ enterUnified(); return unifiedTick(); }
+  return MUS.tick();
+}
+
+// Take over the 120 ms music timer once the music engine has started (after the first click).
+let taken = null;
+function takeOver(){
+  if (M.timer && M.timer !== taken){ clearInterval(M.timer); taken = M.timer = setInterval(() => { try { tick87(); } catch (e) {} }, 120); }
+}
+for (const ev of ['pointerdown', 'keydown', 'touchend']) window.addEventListener(ev, () => { if (M.ac && !window.AUDIO_CLASSIC) takeOver(); });   // registered after the engine's own start()
+setInterval(() => { if (M.ac && M.timer && !window.AUDIO_CLASSIC && !taken) takeOver(); }, 250);
+
+A87.tick87 = tick87; A87.targetM = targetM;
+})();
+/* ===== END INDEX 87b ====================================================== */

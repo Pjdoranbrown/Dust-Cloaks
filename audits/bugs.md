@@ -104,3 +104,18 @@ Status: **fixed in Index 82** (was "needs commander").
 | **B-6** two tabs on one save | **Fixed in Index 82.** A `storage` listener shows one dismissible banner ("This save was changed in another tab or window...") the first time another tab writes the current save key; no auto-reload. Verified: two events produce one banner. |
 
 No console errors during the checks.
+
+## Update: camp gates and fixed build sites (Index 88)
+
+### Palisade gates at N, E, W (user report)
+**Could not reproduce with the 3D world on; one real gap found and covered.** With the Palisade built through the plot panel, through construction (`startBuild`, then `chron().turn++`), or set directly (old-save style), all three gaps get their gate-tower pair: 6 towers per sweep in every season and in fort and waystation (barge and warehouse have no ring by design). The raid gates (4) and the watchtowers (4) also appear in a raid. Nothing in Index 77 (`sitePlan`, `FIXED_SITE`), 78 (move, demolish), 72 (`drawPalisadeRing`) or construction blocks them; `git diff` of Index 77 shows no change to the ring or its towers.
+What I did find: with the 3D world **off** (Settings, or the "Pixel sprite" Squad Leader look, which turns the 3D world off) the ring was drawn as bare stakes with empty gaps and no gate at all (the gate towers only ever existed in the 3D path). Index 88 gives that mode plain timber gate towers at N, E and W. If the user still sees empty gaps with 3D on, please ask which look and 3D-world setting they use, and whether the Palisade shows as built in the Ledger: a Palisade still under construction (or pulled down in the Works panel) also has no ring.
+
+### Fixed sites for Palisade and Watchtowers
+**Done in Index 88.**
+- `FIXED_SITE` now holds `palisade` and `watchtower` (header note: add an id to make another facility fixed).
+- Generalised from `'palisade'` to `FIXED_SITE`: plot panel (title and list: a fixed slot lists only its own facility, other slots list none of the fixed ones), plot label, Alt label ("Fixed plot"), B key, move-mode highlight. Index 78's Move button and drop target already used `FIXED_SITE`.
+- `startBuild` wrapper: a fixed facility always goes on its own plot; any other facility on a fixed plot is refused.
+- Verified: watchtower slot lists only "Watchtowers", the palisade slot only the Palisade, an ordinary slot lists 21 others and none of the two; building Hospital on the tower slot and Watchtowers on the Hospital slot are refused; Palisade then Watchtowers build and finish; the Watchtower's panel has Pull down but no Move.
+- Old saves: with a Hospital recorded on the tower slot, the Watchtowers recorded elsewhere and a chain of swaps, all four holdings map every facility to a distinct plot, nothing sits on the tower slot but the Watchtowers, no facility is unmapped; no draw errors.
+- Also checked: a raid with Palisade and Watchtowers (4 gates, 4 towers, 60 frames), 3D on and off, no console errors. Testing was silent (audit.js mutes) at 1280x800; viewport reset to desktop afterwards.
