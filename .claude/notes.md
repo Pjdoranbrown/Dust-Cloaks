@@ -40,7 +40,7 @@ Last updated: 2026-11-06, after commit 9d0b481 (Index 85b-d).
 ## In flight
 - story-designer: J-16/17/18 shipped (Index 85b-d, commit 9d0b481).
 - game-balancer: J-14 (Tier 1 softening via speed x0.9 and -1 Skill for Greenskins, Monsters, Orcs, Arcana) and J-15 (5 gear sinks) shipped in Index 86.
-- sound-designer started 2026-11-06: reviewing SFX and music (user wants a mellow lute-and-drum town theme that carries into contracts and speeds up, Humanity-style). Results go into the backlog for the user to approve.
+- sound-designer review done: `audits/audio.md` (AUD-01…16), demo `audits/audio-demo.html` (live on Pages). Backlog J-19…J-22 await the user after they listen.
 - Still waiting on the user: approval of jobs J-01..J-13.
 
 ## User preferences

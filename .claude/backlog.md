@@ -8,7 +8,7 @@ The one list of bigger jobs and open decisions. Keep it current: when something 
 - Owner: **commander** (the main chat) or **delegate** (a Sonnet session or the `game-drafter` subagent).
 - Status: `proposed` → `approved` → `in progress` → `shipped (Index N, commit)` / `dropped (why)`.
 
-Last updated: 2026-11-06 (J-14, J-15 shipped in Index 86).
+Last updated: 2026-11-06 (audio review added J-19…J-22).
 
 ---
 
@@ -34,6 +34,10 @@ Last updated: 2026-11-06 (J-14, J-15 shipped in Index 86).
 | J-16 | **Cayde's title** matches the Manual: Grand Master of the Grey Cloaks, no "Reynard" (from D-06) | STORY-05 | S | story-designer → `js/story.js` | shipped (Index 85c, 9d0b481) |
 | J-17 | **New named lieutenants** replace Orsolt and Ilvaryn as later bosses (from D-07) | STORY-04 | S–M | story-designer → `js/story.js` | shipped (Index 85d, 9d0b481) |
 | J-18 | **Prologue cold open, version 1** (from D-10) | audits/story.md → Onboarding cold open | S | story-designer (commander reviews flow) | shipped (Index 85b, 9d0b481) |
+| J-19 | **Mellow town audio (first pass)**: lute carries the melody instead of the pipe, mellower pipe where it stays, frame drum and hand drums for the Bard, a small room reverb, softer fatiguing SFX (coin, pick, horn, nope, level, win), gentler gaps between verses, bard strumming synced to the real tempo, audio accessibility basics | AUD-01, 02, 05, 06, 07, 10, 15, 16 | M | sound-designer → `js/audio.js` | proposed |
+| J-20 | **One continuous theme with Humanity-style tempo**: town and contract play the same tune, layers added as the fight builds; tempo eases with game speed, danger, momentum and slow-mo | AUD-03, 04 | L | commander (music transport) + sound-designer (arrangement) | proposed |
+| J-21 | **Audio plumbing**: one shared audio context, music ducks under important SFX, separate SFX and music sliders, node cleanup for long sessions | AUD-08, 09, 12, 13 | M | commander + sound-designer | proposed |
+| J-22 | **Audio contexts and feedback**: music for the title, prologue, debrief, raid and bar fight; missing feedback sounds | AUD-11, 14 | M | sound-designer (commander picks contexts) | proposed |
 
 ## Decisions (user's call)
 

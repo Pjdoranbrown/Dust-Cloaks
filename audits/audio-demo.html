@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dust Cloaks - audio listening demo</title>
+<style>
+ body{font-family:Georgia,serif;background:#1d1a16;color:#e8dcc0;max-width:820px;margin:0 auto;padding:18px 16px 60px;line-height:1.45}
+ h1{font-size:24px;margin:0 0 4px} h2{font-size:18px;margin:26px 0 6px;color:#e0b860;border-bottom:1px solid #4a3f2c;padding-bottom:4px}
+ p.n{margin:4px 0 10px;color:#b8ac90;font-size:14px}
+ button{font:inherit;font-size:14px;background:#3a2f20;color:#f0e4c4;border:1px solid #7a6540;border-radius:4px;padding:7px 12px;margin:3px 4px 3px 0;cursor:pointer}
+ button:hover{background:#5a4528} button.on{background:#a07a28;color:#fff;border-color:#e0b860} button.stop{background:#5a2222;border-color:#a04040}
+ .row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:6px 0}
+ .pair{display:grid;grid-template-columns:150px 1fr 1fr;gap:6px;align-items:center;margin:4px 0}
+ .pair span{font-size:14px;color:#d8c8a0} label{font-size:14px;margin-right:12px}
+ input[type=range]{width:260px;vertical-align:middle} .big{font-size:20px;color:#e0b860;min-width:90px;display:inline-block}
+ #start{font-size:18px;padding:12px 22px;background:#a07a28}
+ @media(max-width:600px){.pair{grid-template-columns:1fr 1fr}.pair span{grid-column:1/3}}
+</style></head><body>
+<h1>Dust Cloaks - audio listening demo</h1>
+<p class="n">Standalone page: no game code. Everything is made live with Web Audio. Use headphones or decent speakers; the problem frequencies are around 800-2000 Hz. Click Start first (browsers need a click before audio).</p>
+<button id="start">Start audio</button> <label>Master <input type="range" id="mv" min="0" max="100" value="70"></label>
+
+<h2>1. Timbre: current pipe vs proposed lute (same notes)</h2>
+<p class="n">Same phrase (Embers, first two bars, A minor). "Pipe" is the game's current melody voice re-created from the code (sine + octave triangle, 5 Hz vibrato, breath chiff, no reverb). "Lute" is a Karplus-Strong string, filtered, with a touch of room.</p>
+<div class="row"><button data-p="pipe">Current pipe</button><button data-p="pluckold">Current pluck (game's 'pluck' voice)</button><button data-p="lute">Proposed lute (Karplus-Strong)</button><button data-p="lutedrum">Lute + frame drum</button></div>
+
+<h2>2. The theme: Town &rarr; Contract, one tune that builds</h2>
+<p class="n">One looping 8-bar melody. Hit a preset, or switch layers by hand while it plays. The tempo changes smoothly over about two bars, like Humanity's time speed-up.</p>
+<div class="row">Melody voice:
+ <button data-v="lute" class="on">Lute</button><button data-v="pipe">Current pipe</button>
+ &nbsp; Mix: <button data-mix="new" class="on">New (room reverb, softer)</button><button data-mix="old">Old (dry)</button></div>
+<div class="row"><button id="play" class="on">&#9654; Play</button><button id="stopm" class="stop">&#9632; Stop</button></div>
+<div class="row">Presets:
+ <button data-pre="camp">Town / camp</button>
+ <button data-pre="start">Contract starts</button>
+ <button data-pre="danger">Danger / momentum</button>
+ <button data-pre="boss">Boss (fastest)</button></div>
+<div class="row">Layers:
+ <label><input type="checkbox" data-l="drum" checked> Frame drum (soft)</label>
+ <label><input type="checkbox" data-l="bass"> Bass</label>
+ <label><input type="checkbox" data-l="arp"> Lute arpeggio</label>
+ <label><input type="checkbox" data-l="perc"> Hand-drum groove + shaker</label>
+ <label><input type="checkbox" data-l="pad"> Soft pad</label>
+ <label><input type="checkbox" data-l="drive"> Big drum + octave lute</label></div>
+<div class="row">Tempo (Game speed / danger): <input type="range" id="tempo" min="60" max="210" value="100"> <span class="big" id="bpm">71 BPM</span>
+ <button data-tp="70">Slow-mo</button><button data-tp="100">Normal</button><button data-tp="145">Contract</button><button data-tp="190">Rush</button></div>
+<p class="n">Idea for the game: tempo = base BPM &times; (game speed &divide; 100) &times; (1 + 0.35 &times; danger), and slow-mo/pause eases the tempo down.</p>
+
+<h2>3. Sound effects: current vs improved</h2>
+<p class="n">Each pair: left = what the game plays now (re-created from the code), right = proposal. "Spam x8" plays it 8 times quickly, like the game does, to show fatigue: the proposal varies pitch and timbre a little each time.</p>
+<div id="sfx"></div>
+<div class="row"><label><input type="checkbox" id="duck" checked> Duck the music under big sound effects</label>
+ <span class="n">(start the theme above, then press a "blast" or "horn" button)</span></div>
+
+<script>
+let ctx,master,comp,musicIn,duckG,revIn,revG,dryOld,bufCache={},noiseBuf;
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const PC={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
+const midi=n=>{const m=/^([A-G])(#|b)?(-?\d)$/.exec(n);return 12*(+m[3]+1)+PC[m[1]]+(m[2]==='#'?1:m[2]==='b'?-1:0)};
+const hz=m=>440*Math.pow(2,(m-69)/12);
+const seq=s=>s.trim().split(/\s+/).map(x=>{const[n,l]=x.split(':');return{m:n==='r'?null:midi(n),l:+l}});
+let mixNew=true;
+
+function init(){
+  if(ctx){ctx.resume();return}
+  ctx=new (window.AudioContext||window.webkitAudioContext)();
+  master=ctx.createGain();master.gain.value=.7;
+  comp=ctx.createDynamicsCompressor();comp.threshold.value=-14;comp.ratio.value=3;comp.attack.value=.01;comp.release.value=.25;
+  comp.connect(master);master.connect(ctx.destination);
+  duckG=ctx.createGain();duckG.connect(comp);              // everything musical goes through here
+  noiseBuf=ctx.createBuffer(1,ctx.sampleRate*2,ctx.sampleRate);
+  const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+  // room reverb: decaying stereo noise, low-passed
+  const len=ctx.sampleRate*1.7,imp=ctx.createBuffer(2,len,ctx.sampleRate);
+  for(let c=0;c<2;c++){const a=imp.getChannelData(c);let lp=0;for(let i=0;i<len;i++){const w=Math.random()*2-1;lp+=(w-lp)*.35;a[i]=lp*Math.pow(1-i/len,3.2)}}
+  const conv=ctx.createConvolver();conv.buffer=imp;revIn=ctx.createGain();revG=ctx.createGain();revG.gain.value=.5;
+  revIn.connect(conv);conv.connect(revG);revG.connect(duckG);
+  dryOld=ctx.createGain();dryOld.connect(duckG);
+}
+$('#start').onclick=()=>{init();$('#start').textContent='Audio running'};
+$('#mv').oninput=e=>{if(master)master.gain.value=e.target.value/100};
+
+/* output chooser: new = dry + room send; old = dry only */
+function out(node,wet,forceOld){
+  if(mixNew&&!forceOld){const d=ctx.createGain();d.gain.value=1;node.connect(d);d.connect(duckG);const s=ctx.createGain();s.gain.value=wet;node.connect(s);s.connect(revIn)}
+  else node.connect(dryOld);
+}
+function nb(t,dur,vol,type,f,q,dest){
+  const s=ctx.createBufferSource(),fl=ctx.createBiquadFilter(),g=ctx.createGain();
+  s.buffer=noiseBuf;s.loop=true;fl.type=type;fl.frequency.value=f;fl.Q.value=q||.7;
+  g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  s.connect(fl);fl.connect(g);dest?dest(g):out(g,.1);s.start(t,Math.random());s.stop(t+dur+.02);
+}
+function env(g,t,a,peak,hold,rel){g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(Math.max(.0002,peak),t+a);g.gain.setValueAtTime(Math.max(.0002,peak),t+Math.max(a,hold));g.gain.exponentialRampToValueAtTime(.0001,t+Math.max(a,hold)+rel)}
+function osc(type,f,t){const o=ctx.createOscillator();o.type=type;o.frequency.setValueAtTime(f,t);return o}
+function bq(type,f,q){const b=ctx.createBiquadFilter();b.type=type;b.frequency.value=f;b.Q.value=q||.7;return b}
+
+/* ---------- OLD voices, copied from index.html (MUS.V) ---------- */
+const OLD={
+ pipe(t,e){const f=hz(e.m),d=Math.max(.08,e.d),g=ctx.createGain(),lp=bq('lowpass',3400,.5),o1=osc('sine',f,t),o2=osc('triangle',f*2,t),g2=ctx.createGain();g2.gain.value=.13;
+  o1.connect(g);o2.connect(g2);g2.connect(g);g.connect(lp);out(lp,0,true);env(g,t,.035,.36*e.v,d-.03,.09);
+  if(e.vib&&d>.3){const l=osc('sine',5.3,t),lg=ctx.createGain();lg.gain.setValueAtTime(0,t);lg.gain.linearRampToValueAtTime(7,t+Math.min(.35,d*.7));l.connect(lg);lg.connect(o1.detune);lg.connect(o2.detune);l.start(t);l.stop(t+d+.12)}
+  o1.start(t);o2.start(t);o1.stop(t+d+.14);o2.stop(t+d+.14);
+  nb(t,.05,.05*e.v,'bandpass',f*3,2.5,g=>out(g,0,true));nb(t+.03,Math.min(d,.6),.012*e.v,'bandpass',Math.min(5000,f*2.2),1.2,g=>out(g,0,true))},
+ pluck(t,e){const f=hz(e.m),g=ctx.createGain(),lp=bq('lowpass',2300,.6),o1=osc('triangle',f,t),o2=osc('sine',f*2,t),g2=ctx.createGain();g2.gain.value=.22;
+  o1.connect(g);o2.connect(g2);g2.connect(g);g.connect(lp);out(lp,0,true);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.3*e.v,t+.005);g.gain.exponentialRampToValueAtTime(.0001,t+.55);o1.start(t);o2.start(t);o1.stop(t+.6);o2.stop(t+.6)}
+};
+
+/* ---------- NEW voices ---------- */
+// Karplus-Strong string, rendered once per pitch into a buffer and cached (one BufferSource per note at play time)
+function ksBuf(f,dur){
+  const key=Math.round(f*10)+':'+dur;if(bufCache[key])return bufCache[key];
+  const sr=ctx.sampleRate,N=Math.floor(sr*dur),b=ctx.createBuffer(1,N,sr),y=b.getChannelData(0);
+  const D=sr/f-.5,Di=Math.floor(D),fr=D-Di;
+  let lp=0;for(let i=0;i<Di+2;i++){const w=Math.random()*2-1;lp+=(w-lp)*.55;y[i]=lp}   // softened pick pluck
+  for(let n=Di+2;n<N;n++){
+    const a=y[n-Di]*(1-fr)+y[n-Di-1]*fr,c=y[n-Di-1]*(1-fr)+y[n-Di-2]*fr;
+    y[n]=0.997*.5*(a+c);
+  }
+  let mx=0;for(let i=0;i<N;i++)mx=Math.max(mx,Math.abs(y[i]));for(let i=0;i<N;i++)y[i]/=mx;
+  return bufCache[key]=b;
+}
+const NEW={
+ lute(t,e){
+  const f=hz(e.m),dur=Math.min(2.4,.9+e.d*1.2),s=ctx.createBufferSource();s.buffer=ksBuf(f,2.4);
+  const lp=bq('lowpass',3600,.6),body=bq('peaking',230,1.2),g=ctx.createGain();body.gain.value=5;
+  lp.frequency.setValueAtTime(3600,t);lp.frequency.exponentialRampToValueAtTime(900,t+.7);        // bright pluck, mellows as it rings
+  g.gain.setValueAtTime(.5*e.v,t);g.gain.setTargetAtTime(.0001,t+dur*.6,dur*.15);
+  s.connect(lp);lp.connect(body);body.connect(g);out(g,.16);s.start(t);s.stop(t+dur+.4);
+  nb(t,.02,.03*e.v,'bandpass',Math.min(5000,f*3),1.4);                                               // tiny fingertip click
+ },
+ bass(t,e){const f=hz(e.m),o=osc('sine',f,t),o2=osc('triangle',f,t),g=ctx.createGain(),lp=bq('lowpass',360,.7),g2=ctx.createGain();g2.gain.value=.35;
+  o.connect(g);o2.connect(g2);g2.connect(lp);lp.connect(g);out(g,.04);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.34*e.v,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+Math.max(.2,e.d));o.start(t);o2.start(t);o.stop(t+e.d+.1);o2.stop(t+e.d+.1)},
+ // frame drum: low sine thump with a quick pitch drop + lowpassed skin noise. 'dum' = centre, 'tek' = rim
+ dum(t,e){const o=osc('sine',130,t),g=ctx.createGain();o.frequency.exponentialRampToValueAtTime(68,t+.14);o.connect(g);out(g,.25);g.gain.setValueAtTime(.55*e.v,t);g.gain.exponentialRampToValueAtTime(.0001,t+.3);o.start(t);o.stop(t+.32);nb(t,.05,.1*e.v,'lowpass',700,.7)},
+ tek(t,e){const o=osc('sine',320,t),g=ctx.createGain();o.frequency.exponentialRampToValueAtTime(220,t+.05);o.connect(g);out(g,.2);g.gain.setValueAtTime(.16*e.v,t);g.gain.exponentialRampToValueAtTime(.0001,t+.07);o.start(t);o.stop(t+.09);nb(t,.045,.1*e.v,'bandpass',1800,1.1)},
+ shaker(t,e){nb(t,.06,.07*e.v,'bandpass',6000,.9)},
+ big(t,e){const o=osc('sine',92,t),g=ctx.createGain();o.frequency.exponentialRampToValueAtTime(48,t+.4);o.connect(g);out(g,.3);g.gain.setValueAtTime(.7*e.v,t);g.gain.exponentialRampToValueAtTime(.0001,t+.6);o.start(t);o.stop(t+.62);nb(t,.09,.18*e.v,'lowpass',420,.7)},
+ pad(t,e){const f=hz(e.m),d=e.d,g=ctx.createGain(),lp=bq('lowpass',1000,.5),o1=osc('triangle',f,t),o2=osc('sine',f*1.004,t);o1.connect(g);o2.connect(g);g.connect(lp);out(lp,.5);env(g,t,.8,.06*e.v,d-.4,.9);o1.start(t);o2.start(t);o1.stop(t+d+1);o2.stop(t+d+1)}
+};
+
+/* ---------- the theme (Embers section A, from the game's own note data) ---------- */
+const E8=.42,BARU=8;
+const CH={Am:['A2','E3','C4','E4'],F:['F2','C3','A3','C4'],C:['C3','G3','E4','G4'],G:['G2','D3','B3','D4']};
+const PROG='Am F C G Am F G Am'.split(' ');
+const MEL=['E5:4 D5:2 C5:2','A4:3 C5:1 F5:4','E5:2 G5:2 E5:2 D5:1 C5:1','D5:4 B4:2 D5:2','C5:2 E5:2 A5:3 G5:1','F5:3 E5:1 C5:4','D5:2 B4:2 G4:2 B4:2','A4:8'].map(seq);
+
+const S={on:false,voice:'lute',speed:1,target:1,bar:0,nextT:0,L:{drum:true,bass:false,arp:false,perc:false,pad:false,drive:false},timer:0};
+function barEvents(bi){
+  const b=bi%8,ch=CH[PROG[b]],ev=[],L=S.L,V=S.voice==='lute'?'lute':'pipe',oct=S.L.drive;
+  let t=0;
+  MEL[b].forEach((n,i)=>{const d=n.l*E8;if(n.m!==null){
+    ev.push({t,k:V,m:n.m,d:d*.96,v:i===0?1:.82,vib:n.l>=3});
+    if(V==='lute'&&n.l>=5)ev.push({t:t+d/2,k:'lute',m:n.m,d:d/2,v:.5});             // long notes are re-plucked halfway
+    if(oct&&n.l>=2)ev.push({t:t+.012,k:V,m:n.m+12,d:d*.8,v:.35});
+  }t+=d});
+  if(!L.bass&&!L.arp&&V==='lute')ev.push({t:0,k:'lute',m:midi(ch[0]),d:2,v:.55});     // camp: one low thumb per bar under the melody
+  if(L.drum){ev.push({t:0,k:'dum',v:.45},{t:4*E8,k:'dum',v:.25});ev.push({t:2*E8,k:'tek',v:.2},{t:6*E8,k:'tek',v:.2})}
+  if(L.bass)[[0,0,1],[3,1,.7],[4,0,.9],[6,1,.7]].forEach(([i,n,v])=>ev.push({t:i*E8,k:'bass',m:midi(ch[n])+(n?0:0),d:E8*1.8,v}));
+  if(L.arp)[1,2,3,2,1,2,3,2].forEach((n,i)=>ev.push({t:i*E8+.02,k:'lute',m:midi(ch[n]),d:E8,v:.28}));
+  if(L.perc){[0,3,4,7].forEach(i=>ev.push({t:i*E8,k:'dum',v:.55}));[2,6].forEach(i=>ev.push({t:i*E8,k:'tek',v:.45}));for(let i=0;i<16;i++)ev.push({t:i*E8/2,k:'shaker',v:i%2?.25:.5});}
+  if(L.pad)[1,2,3].forEach(n=>ev.push({t:0,k:'pad',m:midi(ch[n])-(n===3?12:0),d:BARU*E8,v:1}));
+  if(L.drive){ev.push({t:0,k:'big',v:.8},{t:4*E8,k:'big',v:.55});if(b%2===1)ev.push({t:6*E8,k:'big',v:.4})}
+  return ev;
+}
+function play1(e,t,k){
+  const x=Object.assign({},e);if(x.d!==undefined)x.d*=k;
+  if(x.k==='pipe')OLD.pipe(t,x);else if(x.k==='lute')NEW.lute(t,x);else NEW[x.k](t,x);
+}
+function sched(){
+  while(S.on&&S.nextT<ctx.currentTime+.7){
+    S.speed+=(S.target-S.speed)*.55;                       // ease toward the target, per bar
+    const k=1/S.speed,t0=S.nextT;
+    for(const e of barEvents(S.bar)){
+      // the old pipe used the old dry/old-style bus
+      play1(e,t0+e.t*k,k);
+    }
+    S.nextT+=BARU*E8*k;S.bar++;
+  }
+}
+function startM(){init();if(S.on)return;S.on=true;S.bar=0;S.nextT=ctx.currentTime+.1;S.timer=setInterval(sched,100);sched();$('#play').classList.add('on')}
+function stopM(){S.on=false;clearInterval(S.timer)}
+$('#play').onclick=startM;$('#stopm').onclick=stopM;
+function setLayers(o){for(const k in S.L){S.L[k]=!!o[k]}$$('[data-l]').forEach(c=>c.checked=S.L[c.dataset.l])}
+const PRE={camp:[{drum:1},100],start:[{drum:1,bass:1,arp:1,perc:1},140],danger:[{drum:1,bass:1,arp:1,perc:1,pad:1,drive:1},165],boss:[{drum:1,bass:1,arp:1,perc:1,pad:1,drive:1},200]};
+$$('[data-pre]').forEach(b=>b.onclick=()=>{startM();const[l,sp]=PRE[b.dataset.pre];setLayers(l);setTempo(sp)});
+$$('[data-l]').forEach(c=>c.onchange=()=>{S.L[c.dataset.l]=c.checked});
+function setTempo(p){$('#tempo').value=p;S.target=p/100;bpmShow()}
+function bpmShow(){const p=+$('#tempo').value;$('#bpm').textContent=Math.round(60/(E8*2)*p/100)+' BPM'}
+$('#tempo').oninput=()=>{S.target=$('#tempo').value/100;bpmShow()};
+$$('[data-tp]').forEach(b=>b.onclick=()=>setTempo(+b.dataset.tp));
+$$('[data-v]').forEach(b=>b.onclick=()=>{S.voice=b.dataset.v;$$('[data-v]').forEach(x=>x.classList.toggle('on',x===b))});
+$$('[data-mix]').forEach(b=>b.onclick=()=>{mixNew=b.dataset.mix==='new';$$('[data-mix]').forEach(x=>x.classList.toggle('on',x===b))});
+bpmShow();
+
+/* ---------- section 1: A/B timbre ---------- */
+$$('[data-p]').forEach(b=>b.onclick=()=>{
+  init();const mode=b.dataset.p,k=1,t0=ctx.currentTime+.1;let t=0;const keep=mixNew;
+  if(mode==='lute'||mode==='lutedrum')mixNew=true;
+  for(let bar=0;bar<2;bar++){
+    for(const n of MEL[bar]){const d=n.l*E8;if(n.m!==null){
+      const e={m:n.m,d:d*.96,v:1,vib:n.l>=3};
+      if(mode==='pipe')OLD.pipe(t0+t,e);else if(mode==='pluckold')OLD.pluck(t0+t,e);
+      else{NEW.lute(t0+t,e);if(n.l>=5)NEW.lute(t0+t+d/2,{m:n.m,d:d/2,v:.5})}}
+      t+=d}
+  }
+  if(mode==='lutedrum')for(let bar=0;bar<2;bar++){const o=bar*BARU*E8;NEW.dum(t0+o,{v:.45});NEW.dum(t0+o+4*E8,{v:.25});NEW.tek(t0+o+2*E8,{v:.2});NEW.tek(t0+o+6*E8,{v:.2})}
+  mixNew=keep;
+});
+
+/* ---------- section 3: SFX pairs ---------- */
+const jit=(a)=>1+(Math.random()*2-1)*a;
+function oT(f,dur,type,vol,slide,delay){const t=ctx.currentTime+(delay||0),o=osc(type,f,t),g=ctx.createGain();if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(30,f*slide),t+dur);g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);o.connect(g);out(g,0,true);o.start(t);o.stop(t+dur+.02)}
+function oN(dur,vol,f,delay,q){nb(ctx.currentTime+(delay||0),dur,vol,'bandpass',f,q||.8,g=>out(g,0,true))}
+function duckNow(depth,rel){if(!$('#duck').checked||!duckG)return;const t=ctx.currentTime;duckG.gain.cancelScheduledValues(t);duckG.gain.setValueAtTime(duckG.gain.value,t);duckG.gain.linearRampToValueAtTime(depth,t+.04);duckG.gain.setTargetAtTime(1,t+.12,rel)}
+const SFXD=[
+ {n:'Coin pickup (heard constantly)',
+  old:()=>{oT(1320,.05,'square',.07);oT(1760,.08,'square',.07,1,.05)},
+  neu:()=>{const t=ctx.currentTime,b=jit(.04),f=[1568,1976,2349][Math.random()*3|0]/2*b;                       // soft glassy ping, pitch varies a little
+    for(const[m,d,v]of[[1,.28,.09],[2.76,.12,.03]]){const o=osc('sine',f*m,t),g=ctx.createGain();o.connect(g);out(g,.2);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+.004);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.start(t);o.stop(t+d+.02)}}},
+ {n:'Menu click / pick (40 uses)',
+  old:()=>oT(880,.1,'triangle',.15),
+  neu:()=>{const t=ctx.currentTime,f=420*jit(.06),o=osc('triangle',f,t),g=ctx.createGain(),lp=bq('lowpass',1800,.7);o.frequency.exponentialRampToValueAtTime(f*.8,t+.05);o.connect(g);g.connect(lp);out(lp,.1);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.12,t+.003);g.gain.exponentialRampToValueAtTime(.0001,t+.07);o.start(t);o.stop(t+.09);nb(t,.02,.03,'bandpass',2200,1.2)}},
+ {n:'Hurt (Leader takes damage)',
+  old:()=>{oT(180,.18,'sawtooth',.18,.5);oN(.1,.2,500)},
+  neu:()=>{const t=ctx.currentTime,o=osc('sine',150*jit(.05),t),g=ctx.createGain();o.frequency.exponentialRampToValueAtTime(70,t+.14);o.connect(g);out(g,.12);g.gain.setValueAtTime(.4,t);g.gain.exponentialRampToValueAtTime(.0001,t+.22);o.start(t);o.stop(t+.24);nb(t,.09,.22,'lowpass',900,.7);nb(t,.05,.06,'bandpass',2500,1)}},
+ {n:'Horn (29 uses, sawtooth)',
+  old:()=>{oT(220,.35,'sawtooth',.15);oT(330,.35,'sawtooth',.1,1,.05)},
+  neu:()=>{const t=ctx.currentTime;[110,164.8,220].forEach((f,i)=>{const o=osc('sawtooth',f,t),g=ctx.createGain(),lp=bq('lowpass',700,.8);lp.frequency.setValueAtTime(300,t);lp.frequency.linearRampToValueAtTime(900,t+.18);lp.frequency.linearRampToValueAtTime(500,t+.7);o.connect(lp);lp.connect(g);out(g,.35);env(g,t,.1,.07/(1+i*.4),.3,.45);o.start(t);o.stop(t+.95)})}},
+ {n:'Blast / big hit (ducks the music)',
+  old:()=>{oN(.45,.45,200,0,.5);oT(70,.4,'sine',.4,.5)},
+  neu:()=>{duckNow(.4,.35);const t=ctx.currentTime,o=osc('sine',110,t),g=ctx.createGain();o.frequency.exponentialRampToValueAtTime(38,t+.5);o.connect(g);out(g,.4);g.gain.setValueAtTime(.5,t);g.gain.exponentialRampToValueAtTime(.0001,t+.7);o.start(t);o.stop(t+.72);nb(t,.5,.3,'lowpass',500,.6)}}
+];
+const box=$('#sfx');
+SFXD.forEach((s,i)=>{
+  const r=document.createElement('div');r.className='pair';r.innerHTML=`<span>${s.n}</span><div><button data-o="${i}">Now</button><button data-os="${i}">x8</button></div><div><button data-n="${i}">Proposed</button><button data-ns="${i}">Spam x8</button></div>`;box.appendChild(r)});
+function spam(fn){init();for(let i=0;i<8;i++)setTimeout(fn,i*(90+Math.random()*60))}
+box.onclick=e=>{const a=e.target.dataset;if(!a)return;init();
+ if(a.o)SFXD[a.o].old();if(a.os)spam(SFXD[a.os].old);if(a.n)SFXD[a.n].neu();if(a.ns)spam(SFXD[a.ns].neu)};
+</script></body></html>
