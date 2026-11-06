@@ -242,3 +242,130 @@
     }
   } catch (e) { console.warn('story briefs', e); }
 })();
+
+/* ============================================================================
+   INDEX 85b - J-16: CAYDE'S TITLE MATCHES THE MANUAL
+   The Manual keeps "Reynard" secret and calls Cayde Grand Master of the Grey
+   Cloaks. HEROES.cayde.title is the one source for hero cards, the founding
+   chair screen, the Chapter Master panel, the Epilogue and the Elder panel.
+   A saved Elder carries its own copy of the title, so that is cleaned up too.
+   ROLLBACK: delete this block.
+============================================================================ */
+(function(){
+  const NEW = 'Grand Master of the Grey Cloaks';
+  try { if (HEROES && HEROES.cayde) HEROES.cayde.title = NEW; } catch (e) {}
+  const fix = s => typeof s === 'string' ? s.replace(/Reynard, Grand Master of the Dust Cloaks/g, NEW) : s;
+  try {
+    if (typeof elderHTML === 'function'){ const f = elderHTML; elderHTML = function(){ try { if (META && META.elder) META.elder.title = fix(META.elder.title); } catch (e) {} return fix(f()); }; }
+    if (typeof loadMeta === 'function'){ const f = loadMeta; loadMeta = function(){ const r = f.apply(this, arguments); try { if (META && META.elder) META.elder.title = fix(META.elder.title); } catch (e) {} return r; }; }
+  } catch (e) { console.warn('story cayde', e); }
+})();
+
+/* ============================================================================
+   INDEX 85c - J-17: ORSOLT AND ILVARYN STAY DEAD AFTER THE PROLOGUE
+   The game already rolls a fresh name for every commander (commanderName,
+   NAME_RULES). Two faults: the prologue's own Orsolt and Ilvaryn were being
+   renamed at random too, and the Hollow name pool could still roll "Orsolt".
+   Now: in the prologue they keep their own names; in every later contract the
+   Hollow and Frost-Vault bosses are named lieutenants of the same host, each
+   with a one-line voice when they see you and when they fall.
+   ROLLBACK: delete this block.
+============================================================================ */
+(function(){
+  const LT = {
+    orsolt:[
+      ['Wendel the Hollow Bailiff', 'Wendel counts the levy as they pass him. He is not counting for their sake.', 'The bailiff stops counting.'],
+      ['Mabry the Hollow Sexton', 'Mabry rings a small bell at the back of the levy. The levy walk faster.', 'The bell stops.'],
+      ['Corvin the Hollow Warden', 'Corvin has the keys to a cage and the manner of a man who has lost the lock.', 'Corvin goes down with the keys still on his belt.'],
+      ['Edda the Hollow Abbot', 'Edda blesses the levy with a wet hand. Nobody looks pleased about it.', 'Edda’s blessing runs out all at once.'],
+      ['Ulric the Hollow Reeve', 'Another Reeve, same tithe, different coat.', 'The tithe goes uncollected.'],
+      ['Sibyl the Hollow Warden', 'Sibyl keeps her levy in step with a tally stick and no kindness.', 'Sibyl’s tally stick cracks under her.']
+    ],
+    ilvaryn:[
+      ['Strategos Aurelian Vask', 'Vask has brought a banner and a proper line, and the line is looking at you.', 'Vask’s line wavers, then holds out of habit.'],
+      ['Strategos Thessaly Orne', 'Orne is reading your formation the way you read a letter.', 'Orne falls, still annotating.'],
+      ['Strategos Caldrus Veyne', 'Veyne does not shout. His line moves anyway.', 'Veyne goes quiet. The line takes a moment to notice.'],
+      ['Strategos Maera Valdane', 'Valdane salutes you with the flat of her blade. She means it politely.', 'Valdane is down. The salute was sincere.'],
+      ['Strategos Hadriel Sorn', 'Sorn has done this before, and says so by not hurrying.', 'Sorn falls; the line needs a moment to find a new opinion.']
+    ]
+  };
+  const BY = {}; for (const k in LT) for (const [n, seen, fall] of LT[k]) BY[n] = {seen, fall};
+  const FIXED = {orsolt:'Orsolt the Hollow Reeve', ilvaryn:'Strategos Ilvaryn'};
+  if (typeof commanderName === 'function'){
+    const f = commanderName;
+    commanderName = function(k){
+      if (!LT[k]) return f(k);
+      try {
+        if (typeof inStoryNow === 'function' && inStoryNow()) return FIXED[k];
+        META.usedNames = META.usedNames || [];
+        const free = LT[k].filter(x => !META.usedNames.includes(x[0]));
+        const n = (free.length ? free[Math.random() * free.length | 0] : LT[k][Math.random() * LT[k].length | 0])[0] + (free.length ? '' : ' the Younger');
+        META.usedNames.push(n); return n;
+      } catch (e) { return f(k); }
+    };
+  }
+  if (typeof note === 'function'){
+    const f = note;
+    note = function(t){
+      f(t);
+      try {
+        if (typeof t !== 'string' || !G) return;
+        const key = s => s.replace(/ the Younger$/, '');
+        let m = /^(.+) has seen you\.$/.exec(t); if (m && BY[key(m[1])]) return f(BY[key(m[1])].seen);
+        m = /^(.+) falls\.$/.exec(t); if (m && BY[key(m[1])]) return f(BY[key(m[1])].fall);
+      } catch (e) {}
+    };
+  }
+})();
+
+/* ============================================================================
+   INDEX 85d - J-18: PROLOGUE COLD OPEN, VERSION 1 (text and one panel)
+   - The intro and the muster text say the company was on the north road when
+     the smoke rose (two came with you; two are hires from the mill camp).
+   - Before Day 1, once, a short arrival card: the man in the good coat and
+     the Reeve's "you are a beginning". It reuses askConfirm; "Back to the
+     market" returns to the Charter Kit panel.
+   - On Day 1 the Sergeant points at the three jobs the Reeve asked for.
+   No change to days, assaults, saves or the fight. ROLLBACK: delete this block.
+============================================================================ */
+(function(){
+  const sw = s => typeof s === 'string' ? s : '';
+  if (typeof openStoryIntro === 'function'){
+    const f = openStoryIntro;
+    openStoryIntro = function(){
+      f();
+      try {
+        const ti = document.getElementById('title-inner');
+        if (ti) ti.innerHTML = ti.innerHTML.replace('happened to be camped by the mill when the smoke rose in the north', 'happened to be on the north road when the smoke rose');
+      } catch (e) {}
+    };
+  }
+  if (typeof storyMusterHTML === 'function'){
+    const f = storyMusterHTML;
+    storyMusterHTML = function(){
+      return sw(f()).replace('two companions and two hires, camped by the mill when the smoke rose.', 'two companions who came down the road with you, and two hires from the camp by the mill.');
+    };
+  }
+  if (typeof startSiege === 'function'){
+    const f = startSiege;
+    startSiege = function(){
+      const C = CP();
+      if (C && !C.arrived && typeof askConfirm === 'function'){
+        return askConfirm('Varnholt', 'You come in off the north road at dusk with smoke behind you. A man in a good coat is standing on the gate step, counting heads.<br><br><i>“The Reeve will see you now,” he says. “He says he has a purse, a mill and no soldiers. He says you are a beginning.”</i>',
+          () => { C.arrived = true; f(); }, {ok:'ENTER THE GATE', cancel:'BACK TO THE MARKET'});
+      }
+      return f();
+    };
+  }
+  if (typeof coachLines === 'function'){
+    const f = coachLines;
+    coachLines = function(){
+      const out = f();
+      try {
+        const C = CP();
+        if (C && C.part === 'siege' && C.day === 1) out.unshift('The Reeve asked for three things: <b>Scout</b> the north road, <b>Rally the Town</b> for spears, and <b>Ditch and Stakes</b> for the gate. Start there.');
+      } catch (e) {}
+      return out;
+    };
+  }
+})();

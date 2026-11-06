@@ -220,3 +220,21 @@ Tested in the browser at localhost:8765 (saves backed up and restored): prologue
 | STORY-17 | Only the text-only part done (Grey Cloaks ledger note). Left as is: Work Orders 3/day vs Manual 2 (probably deliberate balance), "seven districts" (the game has six districts plus walls) | n/a |
 
 Notes: the in-fight feed keeps only four messages, so a voice line can push an older note off sooner. Rollback: remove the `js/story.js` script tag and restore the Bard intro line marked `Index 85`.
+
+### Round 2 (Index 85b, 85c, 85d in `js/story.js`)
+
+**J-16 Cayde's title (85b).** `HEROES.cayde.title` is now "Grand Master of the Grey Cloaks". That one field feeds the hero cards, the chair screen, the Chapter Master panel and the Epilogue face, so all show the new title (checked: hero step shows it, zero "Reynard" in the card HTML). A saved Elder keeps its own copy of the title; it is cleaned on load and in the Elder panel. "Reynard's Skulk" (the faction name) is untouched, as in the Manual. Code comments mentioning "Cayde (Reynard)" are not shown to players.
+
+**J-17 Orsolt and Ilvaryn (85c).** Finding: the game already rolled a random name for every commander (`commanderName`, `NAME_RULES`), so the earlier fear was only partly right: later contracts could roll the first name "Orsolt" ("Orsolt the Hollow Abbot"), and the *prologue's own* Orsolt and Ilvaryn were also being renamed at random. Now:
+- In the prologue they keep their names (Orsolt the Hollow Reeve, Strategos Ilvaryn). This fixes a bug in the prologue itself, and makes the earlier STORY-02/03 lines (which match those exact names) fire reliably.
+- In later contracts the Hollow boss is one of six lieutenants, the Frost-Vault boss one of five, never reused until all are used (then "the Younger"). Each has a line when seen and when felled, for example: Wendel the Hollow Bailiff, "Wendel counts the levy as they pass him. He is not counting for their sake."; Mabry the Hollow Sexton, "Mabry rings a small bell at the back of the levy. The levy walk faster."; Strategos Thessaly Orne, "Orne is reading your formation the way you read a letter."; fall: "Orne falls, still annotating."
+- The Dominion finale's boss (named in the FINALES table) is unchanged. Existing nemeses keep their saved names.
+
+**J-18 Cold open version 1 (85d).** All text or a modal card; no change to days, assaults or saves.
+- Intro now says the company "happened to be on the north road when the smoke rose"; the muster says "two companions who came down the road with you, and two hires from the camp by the mill".
+- Pressing BEGIN THE SIEGE the first time shows a Varnholt arrival card (once per campaign, stored as `CP().arrived`): the man in the good coat, "He says you are a beginning." Buttons: ENTER THE GATE / BACK TO THE MARKET (back returns to the Charter Kit).
+- Day 1: the Sergeant's advice leads with "The Reeve asked for three things: Scout the north road, Rally the Town for spears, and Ditch and Stakes for the gate."
+- Together with the Day 1 Reeve line from round 1, the player now meets the Reeve and a first request before the Work Orders panel.
+- **For the commander:** nothing risky was needed. The larger versions (ready-made archetypes with auto-picked mates, the actual ambush fight with a no-death flag and a new `ambush` part in the state flow) are still described in the cold-open section and were not attempted.
+
+Tested in the browser (saves backed up and restored; no console errors): hero step text, commander names in the main slot and in a fresh `newStory()`, the arrival card flow into Day 1, coach line, muster text, voice lines including "the Younger" names, and `spawnEnemy('orsolt')` inside a started Hollow contract.
