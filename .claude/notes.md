@@ -34,11 +34,13 @@ Last updated: 2026-11-06, after commit 9d0b481 (Index 85b-d).
   - game-graphics `local_c7b7b6e4-c3eb-4429-8389-0acac45ab847` — `js/graphics.js`.
   - story-designer `local_f57aa233-9ce1-47b6-bc71-47f1599d89a4` — `js/story.js`.
   - game-balancer `local_90755013-6a51-4dc2-9076-1d1d037c2b84` — `js/balance.js` (Index 86).
-- For one-off heavy reading or drafting inside a chat, use the `game-drafter` subagent (`.claude/agents/game-drafter.md`).
+  - sound-designer `local_c09b4f98-2340-447d-a424-ae1e42c0b183` — audio review (`audits/audio.md`, demo `audits/audio-demo.html`); future code in `js/audio.js`. Role card: `.claude/agents/sound-designer.md`.
+- For one-off heavy reading or drafting inside a chat, use the `game-drafter` subagent (`.claude/agents/game-drafter.md`). For audio work, the `sound-designer` subagent (`.claude/agents/sound-designer.md`).
 
 ## In flight
 - story-designer: J-16/17/18 shipped (Index 85b-d, commit 9d0b481).
 - game-balancer: J-14 (Tier 1 softening via speed x0.9 and -1 Skill for Greenskins, Monsters, Orcs, Arcana) and J-15 (5 gear sinks) shipped in Index 86.
+- sound-designer started 2026-11-06: reviewing SFX and music (user wants a mellow lute-and-drum town theme that carries into contracts and speeds up, Humanity-style). Results go into the backlog for the user to approve.
 - Still waiting on the user: approval of jobs J-01..J-13.
 
 ## User preferences
