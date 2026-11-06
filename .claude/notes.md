@@ -75,3 +75,7 @@ Last updated: 2026-11-06, after commit 790b303 (audio review).
 - Music cut at effects: cause measured at contract end (fade/restart) → fixed by J-20; if the user still hears cuts, J-21's single shared AudioContext is the next step.
 - Palisade gates: missing only with the 3D world off (or the Pixel sprite look) → fixed in Index 88; not reproducible with 3D on — ask the user which look they use if it recurs.
 - Fixed build plots for palisade and watchtowers (J-23, Index 88; extend via FIXED_SITE).
+
+## Round 2 build (dispatched 2026-11-06)
+- All jobs J-01…J-13 approved and in progress, split by file: ux → `js/ux.js` (J-03, 04, 05, 07, 11, 12); graphics → `js/graphics.js` (J-06, 08, 09); balancer → `js/balance.js` (J-01); story → `js/story.js` (J-02, J-10); bug-finder → `game-bible.md` (J-13); sound → `js/audio.js` (J-21, J-22).
+- Next: as each reports, review + muted regression + commit. When all are in, send every delegate a re-audit of its specialty on the new build (write `audits/<role>-r2.md`), then triage.
