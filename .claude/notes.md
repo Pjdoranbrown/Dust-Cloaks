@@ -2,7 +2,17 @@
 
 Keep this current at the end of every task: what changed, what's in flight, where things are. Short facts only.
 
-Last updated: 2026-11-06, after commit 790b303 (audio review).
+Last updated: 2026-11-07, after commit a537d58.
+
+## RESUME HERE (parked 2026-11-07, resume Monday 2026-11-09)
+- Everything is PARKED. No work is in flight, every file is committed and pushed (main = origin/main), and the six delegates are idle.
+- Round 2 is fully done: re-audit → bug fixes (a90d59f) → proposals backlogged (a537d58).
+- On resume, go through with the user what to action:
+  1. Round 2 proposal bundles A–G in `.claude/backlog.md` → "Round 2 proposals" (A guidance, B table/save comfort, C story depth, D visual polish, E audio polish, F testing tools, G balance questions for the user).
+  2. AUD2-05: the user should listen to the low-health heartbeat volume.
+- Nothing is approved yet; don't start any bundle without the user's OK.
+- Delegate session IDs are under "Delegate IDs" below. If a session is gone, start a fresh Sonnet session with the role card and point it at its `audits/<role>-r2.md`.
+- The local server (`.claude/serve.ps1`, port 8765) won't survive the break, so restart it in the background before testing.
 
 ## Where things are
 - Repo: this folder; GitHub `Pjdoranbrown/Dust-Cloaks` (branch `main`); live: https://pjdoranbrown.github.io/Dust-Cloaks/ (GitHub Pages, updates a minute after push).
