@@ -41,7 +41,7 @@
         const C = CP(); if (!C || C.part !== 'siege' || !C.dayNews) return;
         const say = t => C.dayNews.push(`<i>${t}</i>`);
         if (C.day === 1) say(REEVE_DAY1);
-        else if (C.day === lastDay()) say(REEVE_LAST);
+        else if (C.day === lastDay()){ if (C.lastReeve) say(C.lastReeve); say(REEVE_LAST); }
         else if (C.starving) say(REEVE_EVENT.starving);
         else if (C.district.mill === 'overrun' && !C.reeveMill){ C.reeveMill = true; say(REEVE_EVENT.mill); }
         else if (C.lastReeve) { say(C.lastReeve); }
@@ -76,14 +76,14 @@
   const ASSAULT_AFTER = {
     'The First Wave': {win:'They came in a line and went away in pieces. The gate has a new scar and the Mill still turns. These were Hollow Levy: field-hands with a tithe-mark on the wrist, driven by Overseers at the back. The Reeve says it quietly: “Those are somebody’s farmers.”',
                        loss:'The levy are through the gate, and nobody on the wall has the heart to say how many there were.'},
-    "The Reeve's Tithe": {win:'The host draws off. The levy that were driving at the gate stop where they stand, and someone brings them bread.', loss:'The north is lost. The tithe was collected in full.'},
+    "The Reeve's Tithe": {win:'The host draws off in good order, which is the only good thing about it.', loss:'The north is lost. The tithe was collected in full.'},
     'The Hired Line': {win:'The ram burned. The Overseer is still deciding whether to be brave.', loss:'The ram reached the gate and the gate did not argue.'},
     'Over the Wall': {win:'The night was long and the palisade is shorter than it was. The Tithe-Priest’s lamp goes out on the ridge.', loss:'They came over the wall in the dark, and it is hard to say when it stopped being a wall.'},
     'The Tithe Is Called': {win:'Three sides, one town, and the town is still standing. Nobody has slept.', loss:'The town stands, in the sense that some of it is still on its feet.'},
     'The Last Wall': {win:'Horns from the ridge are the best sound anyone has heard all year. Varnholt still has a keep.', loss:'The Keep Gate is down, and the carts are loading in the smoke.'},
-    'The Last Day of Varnholt': {win:'The host draws back to wait for its engines. Varnholt cannot take another.', loss:'The town goes down the sally gate in the smoke, on foot and in carts.'}
+    'The Last Day of Varnholt': {win:'One day, three sides, and the town has not been taken. It has not been kept either.', loss:'The town goes down the sally gate in the smoke, on foot and in carts.'}
   };
-  const ORSOLT = {slain:'Orsolt the Hollow Reeve is dead, and no one pretends to be sorry.', fled:'Orsolt is gone down the mill road. He will be back, and he knows now where the wall is thin.'};
+  const ORSOLT = {slain:'The levy that were driving at the gate stop where they stand, and someone brings them bread.', fled:'Orsolt is gone down the mill road. He will be back, and he knows now where the wall is thin.'};
   const RESULT = {
     hold:{victory:['The relief column arrived and found a fort. The patron’s thanks arrived a week later.', 'The wall held. The patron says the column was always going to come.'], withdrawn:['The fort is behind you. The relief column will find it empty and say so.'], fled:['The fort fell behind you. The Scribe wrote “withdrew in good order”, in pencil.']},
     hunt:{victory:['Every commander is accounted for. Nobody thought to ask the dead for a receipt.'], withdrawn:['The commanders will be there next time, and so will the camps.'], fled:['The camps are still there. So are the commanders.']},
@@ -130,14 +130,14 @@
   }
   if (typeof campNote === 'function'){
     const f = campNote;
-    campNote = function(msg){
+    campNote = function(msg){ const args = Array.prototype.slice.call(arguments);
       try {
         if (typeof msg === 'string' && /is finished\.$|are finished\.$/.test(msg) && lastDone.length){
           const d = document.getElementById('screen-debrief');
           if (!d || d.classList.contains('hidden')) msg += ' ' + worksFlavour(lastDone);
         }
       } catch (e) {}
-      return f.call(this, msg);
+      args[0] = msg; return f.apply(this, args);
     };
   }
   if (typeof renderDebrief === 'function'){
@@ -508,7 +508,8 @@
 
   // ---- 09: what just happened ----
   function mood(){
-    const L = logTail(8).reverse(), out = {};
+    const all = chron().log, ci = []; all.forEach((e, i) => { if (e.k === 'contract') ci.push(i); });
+    const L = all.slice(ci.length >= 2 ? ci[ci.length - 2] + 1 : 0).reverse(), out = {};
     const d = L.find(e => e.k === 'death'); if (d) out.death = d.name;
     const c = L.find(e => e.k === 'contract'); if (c) out.result = c.result;
     const w = L.find(e => e.k === 'works' && e.act === 'done'); if (w) out.works = w.name;
@@ -651,16 +652,121 @@
       try {
         if (snap && META && !META.cp && !META.prologueChron){
           META.prologueChron = true;
-          if (typeof ensureScribe === 'function') ensureScribe();
-          chron({k:'open'});
-          const T0 = META.chron.turn;
+if (typeof ensureScribe === 'function') ensureScribe();          const CH = chron(); CH.log = CH.log.filter(e => e.k === 'death').map(e => Object.assign({}, e, {t:-34}));   /* the prologue's own entries are replaced by the story below */          CH.turn = 0; chronAdd('open', {}, true);
           const add = (t, text) => { chronAdd('prologue', {text}, true); META.chron.log[META.chron.log.length - 1].t = t; };
-          add(T0 - 35, `The company held Varnholt for ${snap.days} days. ${snap.won ? 'The Keep stood, and the Reeve paid what he had promised.' : 'The Keep fell, and the town went out through the sally gate.'} ${snap.orsolt === 'slain' ? 'Orsolt the Hollow Reeve did not live to see the end of it.' : snap.orsolt === 'fled' ? 'Orsolt the Hollow Reeve got away, and the Scribe has left him a page.' : ''}`.trim());
-          add(T0 - 34, `${snap.nights ? snap.nights + ' nights' : 'The nights'} on the road with the elves of Tarim. Column Strength at the ford of Kalloon: ${snap.cs}. The cloaks were the colour of the road by the end of it.${snap.dead ? ' ' + (snap.dead === 1 ? 'One name' : snap.dead + ' names') + ' did not reach Kalloon.' : ''}`);
+          add(-35, `The company held Varnholt for ${snap.days} days. ${snap.won ? 'The Keep stood, and the Reeve paid what he had promised.' : 'The Keep fell, and the town went out through the sally gate.'} ${snap.orsolt === 'slain' ? 'Orsolt the Hollow Reeve did not live to see the end of it.' : snap.orsolt === 'fled' ? 'Orsolt the Hollow Reeve got away, and the Scribe has left him a page.' : ''}`.trim());
+          add(-34, `${snap.nights ? snap.nights + ' nights' : 'The nights'} on the road with the elves of Tarim. Column Strength at the ford of Kalloon: ${snap.cs}. The cloaks were the colour of the road by the end of it.${snap.dead ? ' ' + (snap.dead === 1 ? 'One name' : snap.dead + ' names') + ' did not reach Kalloon.' : ''}`);
           chronAdd('found', {holding:META.holding, master:META.master ? META.master.name : '', hero:META.master ? META.master.hero || null : null, ambition:META.ambition ? META.ambition.track : null}, false);
         }
       } catch (e) { console.warn('story prologue chronicle', e); }
       return r;
     };
   }
+})();
+
+/* ============================================================================
+   INDEX 85g - STORY RE-AUDIT FIXES (audits/story-r2.md, STORY2-01 to 10; UX R2-02)
+   01  The fight-opening note read "for a the Reeve. Enemy: Frost-Vault deserters."
+   02  Orsolt and Ilvaryn speak when they arrive (the story spawns them already
+       "seen", so the game's "has seen you" note never fired).
+   03  The Quick ending panel shows the body text for its own tier.
+   04  (Chronicle seasons and the opening line: fixed in the 85f block above.)
+   06  The "back in Varnholt, first fight" tutorial shows once, after the first
+       siege fight or sortie, never on the road.
+   07-09 (Master staleness, Reeve lines, Orsolt wording: fixed in 85f and 85 above.)
+   10  Contract briefs no longer say "the ruins of the Ruins of ...".
+   R2-02  campNote keeps all its arguments (fixed in the 85 block above).
+   ROLLBACK: delete this block.
+============================================================================ */
+(function(){
+  const storyOn = () => { try { return typeof inStoryNow === 'function' && inStoryNow(); } catch (e) { return false; } };
+
+  // 01: the opening note of a prologue fight
+  if (typeof note === 'function'){
+    const f = note;
+    note = function(t){
+      try {
+        if (typeof t === 'string'){
+          const m = /^(.+) for a the Reeve\. Enemy: .+\.$/.exec(t);
+          if (m){
+            if (/Siege/i.test(m[1])) t = 'The Siege of Varnholt, for the Reeve. The levy come first, and the host behind them.';
+            else if (/Road/i.test(m[1])) t = 'The Long Road: keep the column alive until morning.';
+            else t = m[1] + ', for the Reeve.';
+          }
+        }
+      } catch (e) {}
+      return f.call(this, t);
+    };
+  }
+
+  // 02: spawn voices in the prologue
+  const SPAWN = {orsolt:'Orsolt walks to the front of his own levy and does not look back at them.',
+    ilvaryn:'Ilvaryn has brought a banner and a proper line. He is the first one tonight who looks as if he is enjoying it.'};
+  if (typeof spawnEnemy === 'function'){
+    const f = spawnEnemy;
+    spawnEnemy = function(k){
+      const e = f.apply(this, arguments);
+      try { if (e && SPAWN[k] && storyOn() && G && !(G.sxSpawn && G.sxSpawn[k])){ (G.sxSpawn = G.sxSpawn || {})[k] = true; note(SPAWN[k]); } } catch (x) {}
+      return e;
+    };
+  }
+
+  // 03: the Quick ending: one body sentence per tier, matching the heading
+  const END_BODY = ['Kalloon offers the company three charters and a seat on the Free Cities’ council.', 'The column is smaller but whole. Kalloon offers one charter.',
+    'The elves are alive, and the company is owed more favours than it can spend. Kalloon offers a charter on harsh terms.', 'A handful survive. The company is remembered, and not kindly.'];
+  if (typeof endingHTML === 'function'){
+    const f = endingHTML;
+    endingHTML = function(){
+      let h = f.apply(this, arguments);
+      try {
+        if (!isFull()){
+          const cs = Math.max(0, CP().column), want = cs >= 15 ? 0 : cs >= 11 ? 1 : cs >= 7 ? 2 : 3;
+          for (let i = 0; i < END_BODY.length; i++) if (i !== want && h.indexOf(END_BODY[i]) >= 0) h = h.replace(END_BODY[i], END_BODY[want]);
+        }
+      } catch (e) {}
+      return h;
+    };
+  }
+
+  // 06: the tutorial block after the first fight, once
+  if (typeof renderDebrief === 'function'){
+    const f = renderDebrief;
+    renderDebrief = function(h, l){
+      try {
+        // ux.js adds the block inside this call (it is the inner wrapper), and only while META.uxTown matches the head:
+        // a sentinel there switches it off for every later fight.
+        if (Array.isArray(l) && storyOn()){
+          const C = CP(), c = G && G.contract, ok = c && (c.obj === 'siege' || c.obj === 'sortie') && (!C.sxTown || C.sxTown === c.seed);
+          if (ok){ C.sxTown = c.seed; if (META.uxTown === 'sx-off') delete META.uxTown; }
+          else if (!META.uxTown) META.uxTown = 'sx-off';
+          else if (META.uxTown !== 'sx-off') META.uxTown = 'sx-off';
+        }
+      } catch (e) {}
+      return f.call(this, h, l);
+    };
+  }
+
+  // 10: brief wording with the new place names
+  if (typeof makeContract === 'function'){
+    const f = makeContract;
+    makeContract = function(){
+      const c = f.apply(this, arguments);
+      try {
+        if (c && typeof c.brief === 'string')
+          c.brief = c.brief.replace(/(?:in the ruins of|in a ruin at|in the ruin at) (the )?(Ruins of )/g, 'in the $2').replace(/\bthe the\b/g, 'the').replace(/\bof the (the |The )/g, 'of the ');
+      } catch (e) {}
+      return c;
+    };
+  }
+})();
+
+/* Index 85g (cont.): the Reeve on the Quick retreat panel (STORY2-08) */
+(function(){
+  if (typeof retreatHTML !== 'function') return;
+  const f = retreatHTML;
+  retreatHTML = function(){
+    let h = f.apply(this, arguments);
+    try { if (!isFull()) h = h.replace('orders the town onto the carts.', 'orders the town onto the carts. <i>“Load the carts,” says the Reeve. “I will count the town twice and sit on the last one.”</i>'); } catch (e) {}
+    return h;
+  };
 })();

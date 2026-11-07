@@ -80,4 +80,14 @@ Last updated: 2026-11-06, after commit 790b303 (audio review).
 - All jobs J-01…J-13 approved and in progress, split by file: ux → `js/ux.js` (J-03, 04, 05, 07, 11, 12); graphics → `js/graphics.js` (J-06, 08, 09); balancer → `js/balance.js` (J-01); story → `js/story.js` (J-02, J-10); bug-finder → `game-bible.md` (J-13); sound → `js/audio.js` (J-21, J-22).
 - Next: as each reports, review + muted regression + commit. When all are in, send every delegate a re-audit of its specialty on the new build (write `audits/<role>-r2.md`), then triage.
 - Round 2 COMPLETE: J-01…J-13 and J-19…J-23 all shipped (round-2 code committed after the usage-limit pause; full muted regression clean). Next: re-audit round — each delegate writes `audits/<role>-r2.md` on the new build.
-- Re-audit round 2 STARTED (commit 1c5c9d7): all six delegates, read-only, brief in `audits/leads/reaudit-r2.md`, reports `audits/<role>-r2.md`. When all are in: fix regressions as found (bug-finder or owner), put proposals in the backlog, ask the user.
+- Re-audit round 2 DONE: all six reports are in, at `audits/<role>-r2.md`.
+- R2 fixes IN FLIGHT (2026-11-07). Each delegate edits only its own file, in a new sub-section, and logs its fixes under "Fixed" in its r2 report:
+  - bug finder: R2-01 (old prologue saves), R2-03 (the debrief +gp figure) and STORY2-05 (Orsolt standing), in `index.html` Index 89. It also switches `audit.js` to mute through the master gains (AUD2-B5).
+  - UX: R2-02…08 plus the Large-text HUD bug, in `ux.js` 83c.
+  - Graphics: GFX2-R1…R3 plus the builder-label wording, in 84c.
+  - Story: STORY2-01…04 and 06…10 plus the `campNote` kind argument, in 85g.
+  - Balance: BAL2-01 (Elven Mail) and BAL2-02 (the prologue kit charge), in 86c. Any number changes need user sign-off.
+  - Audio: AUD2-B1…B4 and B6, in 87e.
+  - ALL DONE and committed 2026-11-07 (Elven Mail AC 6 approved; GFX2-R3 was by design: in the bar fight mates chase brawlers). Muted regression: camp + 3 contracts, no errors.
+  - audit.js now mutes with a gain node after Index 87's limiter (settings untouched); `AUD.unmute()` undoes it.
+  - Next: put the r2 proposals in the backlog and ask the user.

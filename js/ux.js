@@ -153,7 +153,7 @@
         const flex = ps.firstElementChild; if (!flex || flex.dataset.uxp) return; flex.dataset.uxp = '1';
         const more = document.createElement('div'); more.className = 'ux-more hidden';
         const inner = document.createElement('div'); inner.style.cssText = flex.getAttribute('style') || ''; more.appendChild(inner);
-        for (const c of [...flex.children]){ const t = (c.textContent || '').trim(); if (!/^(Volume|Game speed|Momentum|Music)\b/.test(t)) inner.appendChild(c); }
+        for (const c of [...flex.children]){ const t = (c.textContent || '').trim(); if (!/^(Volume|Game speed|Momentum|Music|Effects)\b/.test(t)) inner.appendChild(c); }
         const btn = document.createElement('button'); btn.className = 'btn small ux-moreb'; btn.textContent = 'More settings…';
         btn.onclick = () => { more.classList.toggle('hidden'); btn.textContent = more.classList.contains('hidden') ? 'More settings…' : 'Fewer settings'; };
         ps.appendChild(btn); ps.appendChild(more); groupSettings(inner);
@@ -252,6 +252,8 @@
       let m;
       if ((m = t.match(/^THESE FOUR \((\d) \/ 4\)/))) why = `Choose ${4 - +m[1]} more.`;
       else if (/^CONTINUE/.test(t)){ const h = $q('h1', root); why = h ? h.textContent.trim().replace(/\s+/g, ' ') + ' to continue.' : 'Make a choice above to continue.'; }
+      else if (/^(NEXT|TAKE THE CHAIR)/.test(t)){ const h = $q('h1', root), ht = h ? h.textContent : '';   /* Index 83c */
+        why = /Ambition/i.test(ht) ? 'Choose an Ambition to continue.' : /Chair/i.test(ht) ? 'Choose who sits in the chair to continue.' : /Holding/i.test(ht) ? 'Choose a holding to continue.' : 'Make a choice above to continue.'; }
       else if (b.title) why = b.title;
       if (!why) return;
       const d = document.createElement('div'); d.className = 'ux-why'; d.textContent = why; b.after(d);
@@ -341,20 +343,13 @@
   window.addEventListener('resize', () => { clearTimeout(rsT); rsT = setTimeout(() => { try { if (!G && !$q('#topbar').classList.contains('hidden')) renderTopbar(); } catch (e) {} }, 150); });
 
   /* ---- UX-15: the camp hint strip ----------------------------------------- */
-  { const f = renderTitle;
-    renderTitle = function(){
-      const r = f.apply(this, arguments);
-      try { if (META && !(typeof inStoryNow === 'function' && inStoryNow())){ META.uxCampVisits = (META.uxCampVisits || 0) + 1; } } catch (e) {}
-      return r;
-    };
-  }
   const SHORT_HINT = 'WASD walks your Squad Leader · click buildings, plots and people · press ? for the camp keys';
   { const f = hint81;
     hint81 = function(){
       const r = f.apply(this, arguments);
       const h = $q('#camp-hint'); if (!h) return r;
       const story = typeof inStoryNow === 'function' && inStoryNow();
-      if (story || !META || (META.uxCampVisits || 0) < 3) return r;
+      if (story || !META || (META.deployments || 0) < 3) return r;   /* Index 83c: after three contracts, not three redraws */
       if (UX.hintOpen){ if (h.textContent === SHORT_HINT){ h.dataset.i81 = ''; f.apply(this, arguments); } }
       else if (h.textContent !== SHORT_HINT) h.textContent = SHORT_HINT;
       return r;
@@ -569,10 +564,9 @@
   /* ---- J-04: the HUD scales with the window ---------------------------------- */
   const hudSet = () => { try { return settings().hudSize || 'auto'; } catch (e) { return 'auto'; } };
   function hudK(){
-    const s = hudSet(); let k;
-    if (s === 'auto') k = Math.min(1.6, Math.max(1, VH / 760)) * (typeof textScale === 'function' ? textScale() : 1);
-    else k = (+s || 100) / 100;
-    return Math.min(2, Math.max(0.75, k));
+    const s = hudSet(), ts = typeof textScale === 'function' ? textScale() : 1;   /* Index 83c: text size multiplies the panel scale; fonts inside are not scaled again */
+    const base = s === 'auto' ? Math.min(1.6, Math.max(1, VH / 760)) : (+s || 100) / 100;
+    return Math.max(0.75, Math.min(base * ts, VW / 1000, VH / 620, 2));   // never wider than the 1000 x 620 design layout
   }
   UX.hudK = hudK;
   const FILL = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillStyle');
@@ -656,7 +650,7 @@
       ctx.textAlign = 'left';
     });
     ctx.font = '10.5px Georgia'; ctx.fillStyle = '#c8bca8'; ctx.textAlign = 'left'; ctx.fillText('[N] hide', 16, top + S + 26);
-    if (!UX.stripTip){ UX.stripTip = true; tip('squadstrip'); }
+    if (!UX.stripTip && G.frame > 300 && !G.tip && !(UX.tq && UX.tq.length)){ UX.stripTip = true; tip('squadstrip'); }   /* Index 83c: after the first tips have been read */
   }
   TIPS.squadstrip = 'The portraits under your Leader show each Squad Mate’s Condition. A red X is dead. N hides them.';
   window.addEventListener('keydown', e => {
@@ -765,3 +759,72 @@
   UX.plainify = plainify;
 })();
 /* ===== END INDEX 83b ====================================================== */
+
+/* ============================================================================
+   INDEX 83c - UX FIXES FROM THE ROUND 2 RE-AUDIT
+   R2-03  Tips queue instead of overwriting each other (the WASD tip was never
+          seen). The squad-strip tip waits until the first ones have been read.
+   R2-04  The "save changed in another tab" box is a small bottom-right notice
+          that fades after ten seconds, instead of covering the objective.
+   R2-05  No "upkeep -0gp" chip while nothing is built and nothing is owed.
+   R2-06  "NEXT:" and "TAKE THE CHAIR" give a reason when disabled (in 83).
+   R2-07  The hint strip shortens after three finished contracts, not three
+          camp redraws (in 83).
+   R2-08  The Effects slider stays on the pause screen (in 83).
+   R2-02  (bugs audit) Text size and the HUD scale compose: the HUD is scaled as
+          a whole by base x text size, and fonts drawn inside it are not scaled
+          a second time by Index 79. The scale is also capped so the HUD never
+          needs more than 1000 x 620 units to lay out (wider windows keep room,
+          narrow ones shrink it instead of overlapping).
+   ROLLBACK  Delete from this comment to END INDEX 83c and undo the three
+             marked "Index 83c" edits above.
+============================================================================ */
+(function(){
+  const UX = window.UX83 = window.UX83 || {};
+  const safe = (n, fn) => { try { return fn(); } catch (e) { console.warn('Index 83c ' + n + ':', e); } };
+  const st = document.createElement('style');
+  st.textContent = `#tab-warn{left:auto !important;right:12px;top:auto !important;bottom:12px;transform:none !important;max-width:min(300px,86vw) !important;
+    font-size:12.5px !important;padding:8px 30px 8px 12px !important;z-index:120 !important;animation:uxtabw .6s ease 10s forwards}
+    @keyframes uxtabw{to{opacity:0;visibility:hidden}}`;
+  document.head.appendChild(st);
+
+  /* R2-02: fonts inside the scaled HUD are already scaled with the panels */
+  { const f = fixFont;
+    fixFont = function(v){
+      if (!UX.inHud) return f.apply(this, arguments);
+      return String(v).replace(/(\d+(?:\.\d+)?)px/, (m, n) => (Math.round(Math.max(10.5, parseFloat(n)) * 2) / 2) + 'px');
+    };
+  }
+
+  /* R2-03: a tip queue */
+  { const f = tip;
+    tip = function(id){
+      if (!G){ return f.apply(this, arguments); }
+      if (UX.tg !== G){ UX.tg = G; UX.tq = []; }
+      const cur = G.tip, before = META && META.tipsSeen && META.tipsSeen[id];
+      f.apply(this, arguments);
+      if (!before && cur && cur.life > 20 && G.tip && G.tip !== cur){ UX.tq.push(G.tip); G.tip = cur; }
+    };
+  }
+  { const f = drawHUD;
+    drawHUD = function(){
+      const r = f.apply(this, arguments);
+      safe('tip queue', () => { if (G && UX.tg === G && UX.tq && UX.tq.length && !G.tip){ G.tip = UX.tq.shift(); G.tip.life = 540; } });
+      return r;
+    };
+  }
+
+  /* R2-05: no empty ledger chip */
+  { const f = renderTopbar;
+    renderTopbar = function(){
+      const r = f.apply(this, arguments);
+      safe('ledger chip', () => {
+        const tb = document.getElementById('topbar'); if (!tb) return;
+        [...tb.querySelectorAll('span.stat')].forEach(c => { const t = c.textContent.trim();
+          if ((/^Ledger:/.test(t) || /^\u2692/.test(t)) && /-0gp/.test(t) && !/building/.test(t) && !/^\u2692\s*\d/.test(t)) c.remove(); });
+      });
+      return r;
+    };
+  }
+})();
+/* ===== END INDEX 83c ====================================================== */

@@ -8786,7 +8786,7 @@ NIGHTS.push(
 );
 const QUICK_ASSAULTS = ASSAULTS.slice(), QUICK_NIGHTS = NIGHTS.slice();
 function setChronicle(full){ ASSAULTS.length = 0; ASSAULTS.push(...(full ? FULL_ASSAULTS : QUICK_ASSAULTS)); NIGHTS.length = 0; NIGHTS.push(...(full ? FULL_NIGHTS : QUICK_NIGHTS)); }
-const isFull = () => !!(META && META.cp && META.cp.full);
+const isFull = () => !!(META && META.cp && META.cp.full !== false);   /* Index 89: a save with no flag is a pre-split (14 day) prologue */
 const lastDay = () => ASSAULTS[ASSAULTS.length - 1].day;
 { const f = newStory; newStory = function(){ f(); META.settings.tips = true; META.tipsSeen = {}; saveMeta(); }; }
 // The intro, the retreat and the ending, told for the shorter prologue
@@ -25345,6 +25345,49 @@ function gateTowers88(){
 }
 { const f = drawPalisadeRing; drawPalisadeRing = function(){ const r = f.apply(this, arguments); try { if (!r && has('palisade') && holding() === 'fort') gateTowers88(); } catch (e) {} return r; }; }
 /* ===== END INDEX 88 ======================================================= */
+
+/* ============================================================================
+   INDEX 89 - BUG FIXES FROM THE ROUND 2 AUDIT
+   R2-01  A prologue save with no cp.full flag is a pre-split save, which was always the
+          14-day game. isFull() treated it as the Quick prologue, so a save on day 9 never met
+          another assault. Only an explicit full:false is Quick now (one marked line at
+          isFull); new games always set the flag when the player picks).
+   R2-03  The debrief headline "Treasury +916gp" is now the true change in the Treasury over
+          the contract (it was the sum of the lines written before Detailed Salvage and upkeep).
+   STORY2-05  Killing Orsolt (or Ilvaryn) in the prologue no longer costs Standing with the
+          Mendorian Order (or the Frost-Vault Houses): the prologue skips those changes.
+          Saves that already carry it: a founded Chapter that has not yet marched on a contract
+          (META.prologueChron true, deployments 1 or less) whose Mendor or Frost-Vault Standing
+          is exactly -1 gets it back to 0, once. Any other save is left alone, because there is
+          no way to tell that -1 from one earned later.
+   ROLLBACK   Delete from this comment to END INDEX 89 and undo the marked isFull line.
+============================================================================ */
+let DEB89 = null;
+{ const f = endDeployment;
+  endDeployment = function(result){
+    try { DEB89 = {t0:META ? META.treasury : 0}; if (G && inStoryNow() && G.slainFactions) G.slainFactions.length = 0; } catch (e) {}
+    return f.apply(this, arguments);
+  };
+}
+{ const f = renderDebrief;
+  renderDebrief = function(head, lines){
+    try {
+      if (lines && lines.length && META && DEB89 && typeof lines[0] === 'string'){
+        const d = META.treasury - DEB89.t0;
+        lines = lines.map((l, i) => i === 0 ? l.replace(/Treasury [+-]?\d+gp/, `Treasury ${d >= 0 ? '+' : '-'}${Math.abs(d)}gp`) : l);
+      }
+    } catch (e) {}
+    return f.call(this, head, lines);
+  };
+}
+function fixStanding89(){
+  const m = META; if (!m || m.cp || !m.prologueChron || m.standingFix89 || (m.deployments || 0) > 1 || !m.standing) return;
+  for (const k of ['mendor', 'frostvault']) if (m.standing[k] === -1) m.standing[k] = 0;
+  m.standingFix89 = true;
+}
+{ const f = loadMeta; loadMeta = function(){ const r = f.apply(this, arguments); try { fixStanding89(); } catch (e) {} return r; }; }
+try { fixStanding89(); } catch (e) {}
+/* ===== END INDEX 89 ======================================================= */
 
 </script>
 <!-- Index 83+: improvement modules, loaded after the game script; each one wraps game functions the same way the Index sections do. -->

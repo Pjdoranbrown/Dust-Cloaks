@@ -190,7 +190,7 @@ if (typeof GEAR !== 'undefined' && !GEAR.some(g => g.id === 'mwgreatswords')){
       try {
         const P = CAMP.panel; if (!P || P.kind !== 'cpkit' || !inStory()) return r;
         const d = document.querySelector('#camp-panel .desc'); if (!d) return r;
-        d.innerHTML = `The Reeve has opened the town's purse: <b>${META.treasury}gp</b> between the Chapter and the Reeve's town works. Your company has been issued the <b>Standard Charter Kit</b>: Studded Brigandine, Heavy Infantry Shields, Spears and Shortbows. That is a sound kit; you can begin the siege with it as it stands.<br><br>To change it, the Market is open today and every card is available, but the kit may hold at most <b>${KIT_CAP}gp</b> of gear (it holds ${kitValue(META.gear)}gp now). Handing back an issued piece refunds it. After today, metal must be forged at Smithy Row.`;
+        d.innerHTML = `The Reeve has opened the town's purse: <b>${META.treasury}gp</b> between the Chapter and the Reeve's town works. Your company has been issued the <b>Standard Charter Kit</b>: Studded Brigandine, Heavy Infantry Shields, Spears and Shortbows. That is a sound kit; you can begin the siege with it as it stands. The kit is bought with the charter money: its 200gp has already come out of the 350gp Charter Kit allowance (850gp - 200gp = 650gp), so no gold is lost.<br><br>To change it, the Market is open today and every card is available, but the kit may hold at most <b>${KIT_CAP}gp</b> of gear (it holds ${kitValue(META.gear)}gp now). Handing back an issued piece refunds it. After today, metal must be forged at Smithy Row.`;
       } catch (e) { console.error('Index 86b kit panel', e); }
       return r;
     };
@@ -198,7 +198,7 @@ if (typeof GEAR !== 'undefined' && !GEAR.some(g => g.id === 'mwgreatswords')){
   { const f = renderCamp;
     renderCamp = function(){
       const r = f.apply(this, arguments);
-      try { if (kitStage()){ const ci = document.getElementById('camp-inner'); if (ci) ci.innerHTML = ci.innerHTML.replace('Founding purchases: every card is open to you today.', `Founding purchases: every card is open to you today, but the kit holds at most ${KIT_CAP}gp of gear (${kitValue(META.gear)}gp now).`); } } catch (e) {}
+      try { if (kitStage()){ const ci = document.getElementById('camp-inner'); if (ci) ci.innerHTML = ci.innerHTML.replace('Founding purchases: every card is open to you today.', `Founding purchases: every card is open to you today, but the kit holds at most ${KIT_CAP}gp of gear (${kitValue(META.gear)}gp now). The issued kit's 200gp was taken from the charter money; handing a piece back refunds it.`); } } catch (e) {}
       return r;
     };
   }
@@ -222,3 +222,19 @@ if (typeof GEAR !== 'undefined' && !GEAR.some(g => g.id === 'mwgreatswords')){
   }
 }
 /* END INDEX 86b */
+
+/* ============================================================================
+   INDEX 86c - fixes from audits/balance-r2.md
+   BAL2-01  Elven Mail was a trap: AC 5, shift 2, Ward 1 for 1,100gp, against the Chain Shirt
+            (AC 5, shift 1, Ward 1, 240gp). OLD: AC 5, shift 2.  NEW: AC 6, shift 2, Move 0,
+            Ward 1, light, still 1,100gp. It beats the Cuirass (950gp, AC 6, shift 2, Move -1) by
+            Move and Ward, and stays under Half-Plate (AC 6, shift 3, Move -2, 2,200gp).
+   BAL2-02  Kept the 200gp charge for the prologue kit (it is bought with the 350gp charter
+            money, as the founding always was) and said so in the Market and kit text (Index 86b).
+   ROLLBACK: delete this section; restore ac:5 on Elven Mail.
+============================================================================ */
+{
+  const em = typeof GEAR !== 'undefined' && GEAR.find(g => g.id === 'elvenmail');
+  if (em){ em.ac = 6; em.note = 'Light mail with no Move penalty, and a Ward Token each contract. AC 6.'; }
+}
+/* END INDEX 86c */

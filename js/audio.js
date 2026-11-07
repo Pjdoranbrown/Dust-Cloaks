@@ -614,7 +614,7 @@ function stinger(kind){
 }
 { const p = SFX.play;
   SFX.play = function(name){
-    if (!classic() && (name === 'win' || name === 'down' || name === 'level')){
+    if (!classic() && !A.noStinger && (name === 'win' || name === 'down' || name === 'level')){   /* 87e: noStinger set for repeats */
       const g = gOK();
       if (g && g.over){
         const res = g.result || (name === 'win' ? 'victory' : 'fallen');
@@ -666,3 +666,73 @@ function heartbeat(){
 setInterval(() => { try { titleStep(); heartbeat(); } catch (e) {} }, 250);
 })();
 /* ===== END INDEX 87d ====================================================== */
+
+/* ============================================================================
+   INDEX 87e - RE-AUDIT ROUND 2 FIXES (audits/audio-r2.md)
+   B1  The debrief stinger plays once per finished contract, in the first 2.5 s after
+       the end. Later win / down / level sounds while the debrief is open are the
+       normal sounds again.
+   B2  No music duck while the game is paused, or when a level-up is about to open the
+       Momentum choice (G.levelQueue): the pause duck already covers it (was -14 dB).
+   B3  Leader hurt ducks the music at most once in 3 s (was every second).
+   B4  A contract that starts in the bard's rest between verses now continues the camp
+       tune (the camp bus is restarted first, then J-20 takes over). Bard Off or music
+       muted still uses the old path.
+   B6  Stale bar records are cleared once back in camp.
+   ROLLBACK: delete this block and the "noStinger" test in 87d.
+============================================================================ */
+(function(){
+'use strict';
+const A = window.AUDIO87;
+if (!A || typeof MUS === 'undefined' || !MUS._V || window.AUDIO_CLASSIC) return;
+const M = MUS._M, SONGS = MUS.SONGS;
+const gOK = () => (typeof G !== 'undefined' && G) ? G : null;
+
+/* B2 + B3: guard the duck */
+const duck0 = A.duck;
+if (duck0) A.duck = function(){ if (A.skipDuck) return; return duck0.apply(this, arguments); };
+let lastHurt = -1e9;
+/* B1 + B2 + B3: one wrapper on top of the SFX chain */
+{ const p = SFX.play;
+  SFX.play = function(name){
+    const g = gOK(), now = performance.now();
+    let skipDuck = false, noSting = false;
+    if (g){
+      if (g.paused && !g.over) skipDuck = true;                                       // the pause duck covers it
+      if (name === 'level' && !g.over && (g.levelQueue > 0 || g.momChoice)) skipDuck = true;
+      if (name === 'hurt'){ if (now - lastHurt < 3000) skipDuck = true; else if (!skipDuck) lastHurt = now; }
+      if (g.over && (name === 'win' || name === 'down' || name === 'level')){
+        if (!g.overAt87) g.overAt87 = now;
+        if (g.stung87 || now - g.overAt87 > 2500) noSting = true; else g.stung87 = true;
+      }
+    }
+    A.skipDuck = skipDuck; A.noStinger = noSting;
+    try { return p.apply(this, arguments); } finally { A.skipDuck = false; A.noStinger = false; }
+  };
+}
+
+/* B4: resume the camp tune before a contract begins if the bard is between verses */
+function newCampBus(song){
+  const ac = M.ac, C = SONGS[song].camp, t = ac.currentTime + .28, g = ac.createGain(), bus = {g, oscs:[], track:'camp'};
+  g.connect(M.comp); g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(C.trim, t + .8);
+  const dg = ac.createGain(); dg.connect(g); bus.droneG = dg; dg.gain.value = C.drone.g;
+  for (const [type, m, vol, det] of C.drone.o){
+    const o = ac.createOscillator(), og = ac.createGain(); o.type = type; o.frequency.setValueAtTime(MUS.hz(m), t);
+    og.gain.value = vol; o.connect(og); og.connect(dg); if (det) o.detune.setValueAtTime(det, t); o.start(t); bus.oscs.push(o);
+  }
+  return bus;
+}
+function resumeFromRest(){
+  const ac = M.ac;
+  if (!ac || ac.state !== 'running' || M.track !== 'camp' || M.bus || !isFinite(M.restartAt) || M.song === 'off' || !SONGS[M.song] || MUS.vol() <= .005 || A.U && A.U.active) return;
+  M.bar = 0; M.pk = MUS.passTempo(); M.nextT = ac.currentTime + .3; M.bus = newCampBus(M.song); M.restartAt = 0;
+  if (A.log) A.log.push({event:'resume-from-rest', song:M.song});
+}
+{ const f = window.startDeployment;
+  if (typeof f === 'function') window.startDeployment = function(){ try { resumeFromRest(); } catch (e) {} return f.apply(this, arguments); };
+}
+
+/* B6 */
+setInterval(() => { try { if (M.track === 'camp' && !(A.U && A.U.active) && M.barQ && M.barQ.length) M.barQ.length = 0; } catch (e) {} }, 1000);
+})();
+/* ===== END INDEX 87e ====================================================== */

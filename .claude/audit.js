@@ -3,27 +3,37 @@
 (function(){
   const A = window.AUD = window.AUD || {};
   A.hits = A.hits || {}; A.scene = '-'; A.on = true; A.status = 'idle'; A.log = A.log || [];
-  // Test muted: the in-app browser plays through the user's speakers. Mute in memory only;
-  // when the game saves, the real volume settings are written, never the test's zeros.
+  // Test muted: the in-app browser plays through the user's speakers. The mute is a gain of 0 on the
+  // final audio stage (after the limiter of Index 87's shared context), so settings are never touched,
+  // nothing wrong can be saved, and the music engine keeps running silently. When the shared context
+  // does not exist yet (or the game runs the classic audio), the SFX master gain is zeroed instead and
+  // the 2 second timer tries again. AUD.unmute() undoes it.
   A.mute = function(){
     try {
-      if (typeof META === 'undefined' || !META) return;
-      const s = settings();
-      if (!A._vol){
-        let saved = null; try { saved = (JSON.parse(localStorage.getItem(SAVE_KEY) || 'null') || {}).settings; } catch (e) {}
-        A._vol = saved && saved.volume !== undefined ? {volume:saved.volume, music:saved.music} : {volume:s.volume, music:s.music};   // the saved values, in case the page was already muted
-        if (typeof saveMeta === 'function' && !saveMeta._muted){ const f = saveMeta;
-          saveMeta = function(){ const t = settings(), v = {volume:t.volume, music:t.music}; Object.assign(t, A._vol); try { return f.apply(this, arguments); } finally { Object.assign(t, v); } };
-          saveMeta._muted = true; } }
-      s.volume = 0; s.music = 0;
-      try { SFX.setVol(); } catch (e) {}
-      try { if (MUS && MUS.setVol) MUS.setVol(); } catch (e) {}
+      const W = window.AUDIO87;
+      if (W && W.limiter && W.shared){
+        if (!W._mute){
+          const ctx = W.shared, real = Object.getOwnPropertyDescriptor(BaseAudioContext.prototype, 'destination').get.call(ctx);
+          const g = new GainNode(ctx, {gain:0});          // not ctx.createGain: Index 87 patches that to steer sounds
+          W.limiter.disconnect(); W.limiter.connect(g); g.connect(real); W._mute = g; W._real = real;
+        }
+        W._mute.gain.value = 0;
+      } else if (typeof SFX !== 'undefined' && SFX._g){
+        const X = SFX._g(); if (X && X.master) X.master.gain.value = 0;
+      }
     } catch (e) {}
   };
+  A.unmute = function(){
+    try { const W = window.AUDIO87; if (W && W._mute){ W._mute.gain.value = 1; } clearInterval(A._muteTimer); A._muteTimer = null; if (typeof SFX !== 'undefined' && SFX.setVol) SFX.setVol(); } catch (e) {}
+  };
   A.mute();
+  // the shared audio context is built lazily on the first sound: mute it the moment it exists
+  if (window.AudioContext && !window.AudioContext._aud){ const Orig = window.AudioContext;
+    const Wrapped = function(){ const c = new Orig(...arguments); try { setTimeout(A.mute, 0); A.mute(); } catch (e) {} return c; };
+    Wrapped._aud = true; window.AudioContext = Wrapped; window.webkitAudioContext = Wrapped; }
   if (!A._muteTimer) A._muteTimer = setInterval(A.mute, 2000);   // a safety net
-  // re-mute the instant a save is loaded (prologue slot, holding moves), not up to 2s later
-  if (typeof loadMeta === 'function' && !loadMeta._muted){ const f = loadMeta; loadMeta = function(){ const r = f.apply(this, arguments); try { A._vol = null; A.mute(); } catch (e) {} return r; }; loadMeta._muted = true; }
+  // a loaded save re-applies the master volumes: re-mute straight away
+  if (typeof loadMeta === 'function' && !loadMeta._muted){ const f = loadMeta; loadMeta = function(){ const r = f.apply(this, arguments); try { A.mute(); } catch (e) {} return r; }; loadMeta._muted = true; }
   if (!window._origDI) window._origDI = CanvasRenderingContext2D.prototype.drawImage;
   const orig = window._origDI;
   const FRAME = /at (?:(\S+) )?\(?https?:\/\/localhost:\d+\/(?:index\.html)?(?:\?[^:]*)?:(\d+):\d+/;

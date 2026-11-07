@@ -250,7 +250,7 @@ function sepMates(){
       let dx = b.x - a.x, dy = (b.y - a.y) * 0.8, d = Math.hypot(dx, dy);   // vertical neighbours need more room: sprites are tall and the bar sits under the feet
       if (d >= SEP_R) continue;
       if (d < 0.01){ dx = (j % 2 ? 1 : -1); dy = 0.3; d = Math.hypot(dx, dy); }
-      const p = Math.min(1.2, (SEP_R - d) * 0.25), mx = dx / d * p, my = dy / d * p / 0.8;
+      const p = Math.min(2.0, (SEP_R - d) * 0.35), mx = dx / d * p, my = dy / d * p / 0.8;
       if (i < 0){ b.x += mx; b.y += my; }
       else { a.x -= mx / 2; a.y -= my / 2; b.x += mx / 2; b.y += my / 2; }
       b.sep84 = 2; if (i >= 0) a.sep84 = 2;
@@ -259,7 +259,7 @@ function sepMates(){
   for (const m of S) if (m.sep84 > 0){ m.sep84--; if (m.state === 'up') collide(m, 9, true); }
 }
 { const f = updateMates;
-  updateMates = function(sw){ f(sw); try { if (G && !G.over) sepMates(); } catch (e) {} };
+  updateMates = function(sw){ f(sw); try { if (G && !G.over){ sepMates(); sepMates(); } } catch (e) {} };   /* 84c: two passes, 2px cap */
 }
 // camp people who share a role spot (training yard, hospital, ...) stand in a small ring round it
 { const f = anchorFor;
@@ -407,4 +407,60 @@ campLabel = function(x, y, title, sub){
     ctx.save(); ctx.globalAlpha *= a; try { return f(o); } finally { ctx.restore(); }
   };
 }
+})();
+
+/* ============================================================================
+   INDEX 84c - FIXES FROM audits/graphics-r2.md
+   GFX2-R1  Brace line against walls: the arc picks the first of eight centre
+            angles whose slots are all free (the last choice is tried first, so
+            it does not flip); Brace only falls back to the old ring if none is.
+   GFX2-R2  mates overlapping while moving: two separation passes, 2px cap
+            (edit to 84b's sepMates / updateMates wrapper, marked 84c).
+   GFX2-R3  bar-fight mates far from the Leader: by design (they engage the nearest brawler); no change.
+   R2-01    campLabel keeps the UX builder wording (Building the Tents / Dunstan
+            . 1 season left . click for the site), drawn in the notched style.
+   ROLLBACK delete from this comment to the end of the file.
+============================================================================ */
+(function(){
+'use strict';
+const blk = (x, y) => blockedXY(x, y) || blockedXY(x + 11, y) || blockedXY(x - 11, y) || blockedXY(x, y + 11) || blockedXY(x, y - 11);
+const OFFS = [0, 0.785, -0.785, 1.571, -1.571, 2.356, -2.356, 3.142];
+function braceAngle(L, fa, n){
+  const B = G.br84 || (G.br84 = {t: -1, off: 0, key: ''}), key = n + ':' + Math.round(fa * 4) + ':' + (L.x / 20 | 0) + ':' + (L.y / 20 | 0);
+  if (B.t === G.frame) return B.off;
+  if (B.key === key && G.frame - B.t < 20) return B.off;   // keep the choice while nothing has changed
+  const step = Math.min(22 / 34, 2.4 / Math.max(1, n - 1));
+  const free = off => { for (let i = 0; i < n; i++){ const a = fa + off + (i - (n - 1) / 2) * step; if (blk(L.x + Math.cos(a) * 34, L.y + Math.sin(a) * 30)) return false; } return true; };
+  let pick = null;
+  if (free(B.off)) pick = B.off; else for (const o of OFFS) if (free(o)){ pick = o; break; }
+  B.off = pick === null ? B.off : pick; B.none = pick === null; B.t = G.frame; B.key = key;
+  return B.off;
+}
+{ const f = slotTarget;
+  slotTarget = function(i, n, shieldWall){
+    if (!shieldWall || (typeof isBrawl === 'function' && isBrawl())) return f(i, n, shieldWall);   // the bar fight keeps its own engage-the-nearest slots
+    try {
+      const L = G.leader, fa = (typeof G.facing === 'number') ? G.facing : 0, off = braceAngle(L, fa, n);
+      if (G.br84.none) return f(i, n, shieldWall);                    // walled in on every side: the old full ring
+      const step = Math.min(22 / 34, 2.4 / Math.max(1, n - 1)), a = fa + off + (i - (n - 1) / 2) * step;
+      return {x: L.x + Math.cos(a) * 34, y: L.y + Math.sin(a) * 30};
+    } catch (e) { return f(i, n, shieldWall); }
+  };
+}
+
+/* ---- R2-01: the label, with the UX builder wording ---------------------------------------- */
+{ const draw = campLabel;      // the 84b notched label
+  campLabel = function(x, y, title, sub){
+    if (typeof sub === 'string'){
+      const m = sub.match(/^Builder: (.+?)(?:, (.+) left)?$/);
+      if (m){ const site = m[1], left = m[2];
+        return draw.call(this, x, y, site === 'a new building' ? 'Building something new' : 'Building the ' + site, `${title}${left ? ' \u00b7 ' + left + ' left' : ''} \u00b7 click for the site`); }
+      if (sub === 'Resting') return draw.call(this, x, y, title, 'Resting \u00b7 sits out the next contract');
+    }
+    return draw.apply(this, arguments);
+  };
+}
+
+/* GFX2-R3: nothing to fix. In the bar fight the squad deliberately walks to the nearest brawler
+   (Index 72 slotTarget / updateMates wrappers), so mates 100-200px from the Leader are by design. */
 })();

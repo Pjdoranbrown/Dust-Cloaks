@@ -65,6 +65,7 @@ A bullet heaven / action RPG adaptation of the Dust Cloaks tabletop game. Runs i
 
 ## Decisions log
 Newest first. One line each: date — decision — why.
+- 2026-11-07 — Elven Mail AC 5 → 6 (price still 1,100gp; `js/balance.js` 86c) — it was no better than a 240gp Chain Shirt (BAL2-01). The prologue kit stays paid from charter money, now explained on screen (BAL2-02). Approved by the user.
 - 2026-11-06 — D-10: build the small (version 1) prologue cold open — eases new players in with the least rewrite.
 - 2026-11-06 — D-09: co-op multiplayer parked — finish single-player polish first; it touches almost every system.
 - 2026-11-06 — D-08: default Squad Leader look stays Crisp — the 3D world and sharp text are built for it.
