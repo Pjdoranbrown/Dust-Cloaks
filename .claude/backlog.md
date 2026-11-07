@@ -40,6 +40,20 @@ Last updated: 2026-11-06 (audio review added J-19…J-22).
 | J-21 | **Audio plumbing**: one shared audio context, music ducks under important SFX, separate SFX and music sliders, node cleanup for long sessions | AUD-08, 09, 12, 13 | M | commander + sound-designer | in progress (sound-designer, Index 87c) |
 | J-22 | **Audio contexts and feedback**: music for the title, prologue, debrief, raid and bar fight; missing feedback sounds | AUD-11, 14 | M | sound-designer (commander picks contexts) | in progress (sound-designer, Index 87d; contexts picked by commander: title lute solo, prologue = camp theme building, debrief stinger, raid = camp → contract layers ×1.08, bar fight reel kept) |
 
+## Round 2 proposals (awaiting the user's OK, 2026-11-07)
+Details in `audits/<role>-r2.md`. Grouped into bundles; the user approves by bundle letter.
+
+| Bundle | What | Items | Effort | Owner |
+|---|---|---|---|---|
+| A | **New-player guidance**: a "what now?" step after founding (hire first), a thin-squad warning at the table, tip setting hint, Hiring Line stats in words plus a hire toast | UX2-01, 02, 03, 05 | M | ux (+commander for UX2-01) |
+| B | **Table and save comfort**: dots on Prisoners/Doctrines tabs, "last backup" line, arrow-key tabs, wrap the HUD key strip on small windows, a proper two-tab "take over this save?" guard | UX2-06, 07, 08, 09, 10 | M | ux (+commander for UX2-08) |
+| C | **Story depth**: bigger result-line pools, say the Reeve's first request once, the Quick muster honours "two companions, two hires", Kalloon ending names and numbers, the refugee beat, bard line, a Chronicle line for a fallen Leader, an echo of the Hollow levy | STORY2-11…18 | M | story |
+| D | **Visual polish**: world text and bars scale with the window, plot signs per holding, camp people avoid furniture, dust on Shield Bash and landings, hit-stop hint plus an optional knock-back toggle | GFX2-N1…N5 | M | graphics |
+| E | **Audio polish**: a soft thud on big hits, the title plays Embers when the bard's choice is Party, a quieter debrief hush after a defeat | AUD2-04, 06, 07 | S | sound |
+| F | **Testing tools**: a smarter test bot (braces, uses abilities), an audio self-test in audit.js, a 15-minute soak, raid and prologue tests played through, old-save import check | BAL2-05, AUD2-08…10, GFX2-N6 | M | balance + commander |
+| G | **Balance questions** (decisions, no change without OK): Tier 2 cliff for the hard hosts (wait for a playtest?), the Hollow is the best pay for effort at T1, check Destrier at 900gp in a long campaign | BAL2-03, 04, 07 | S | user decides |
+| — | Needs the user's ears: is the low-health heartbeat too loud? | AUD2-05 | S | user |
+
 ## Decisions (user's call)
 
 | ID | Question | Options / recommendation | Sources | Status |

@@ -90,4 +90,5 @@ Last updated: 2026-11-06, after commit 790b303 (audio review).
   - Audio: AUD2-B1…B4 and B6, in 87e.
   - ALL DONE and committed 2026-11-07 (Elven Mail AC 6 approved; GFX2-R3 was by design: in the bar fight mates chase brawlers). Muted regression: camp + 3 contracts, no errors.
   - audit.js now mutes with a gain node after Index 87's limiter (settings untouched); `AUD.unmute()` undoes it.
-  - Next: put the r2 proposals in the backlog and ask the user.
+  - Round 2 proposals are in backlog.md as bundles A–G, waiting for the user's OK.
+  - Next (old note): put the r2 proposals in the backlog and ask the user.
